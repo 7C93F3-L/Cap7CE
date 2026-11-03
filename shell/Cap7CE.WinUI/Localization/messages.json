@@ -959,10 +959,6 @@
     "zh-CN": "复制路径",
     "en-US": "Copy path"
   },
-  "menu.copyPaths": {
-    "zh-CN": "复制选中的 {count} 条路径",
-    "en-US": "Copy {count} selected paths"
-  },
   "menu.delete": {
     "zh-CN": "删除",
     "en-US": "Delete"
@@ -3698,10 +3694,6 @@
  "ui.shortcuts.action.viewList": {
     "zh-CN": "列表视图",
     "en-US": "List view"
-  },
- "ui.shortcuts.action.metadata": {
-    "zh-CN": "打开元数据设置",
-    "en-US": "Open metadata settings"
   },
  "ui.shortcuts.action.openSelected": {
     "zh-CN": "用默认应用打开选中项",

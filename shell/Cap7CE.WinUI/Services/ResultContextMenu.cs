@@ -8,7 +8,7 @@ namespace Cap7CE.WinUI.Services;
 
 internal static class ResultContextMenu
 {
-    internal static MenuFlyout Build(FileCommands commands,FavoriteService favorites,IReadOnlyList<AssetItem> items,bool home)
+    internal static MenuFlyout Build(FileCommands commands,FavoriteService favorites,IReadOnlyList<AssetItem> items,bool home,ShellPreferences preferences)
     {
         var menu=ThemeService.Menu();if(items.Count==0)return menu;
         var first=items[0];
@@ -19,7 +19,7 @@ internal static class ResultContextMenu
                 "preview"=>L.MenuItem("menu.preview",()=>commands.Run(()=>{commands.Preview(first);return Task.CompletedTask;}),"\uE8A7"),
                 "open"=>L.MenuItem("menu.open",()=>commands.Run(()=>{commands.Open(first);return Task.CompletedTask;}),"\uE8A5"),
                 "reveal"=>L.MenuItem("menu.reveal",()=>commands.Run(()=>{commands.Reveal(first);return Task.CompletedTask;}),"\uE838"),
-                "copyPaths"=>L.MenuItem(items.Count>1?"menu.copyPaths":"menu.copyPath",()=>commands.Run(()=>{FileCommands.CopyPaths(items);return Task.CompletedTask;}),"\uE8C8",()=>new Dictionary<string,object?>{{"count",items.Count}}),
+                "copyPaths"=>L.MenuItem("menu.copyPath",()=>commands.Run(()=>{FileCommands.CopyPaths(items);return Task.CompletedTask;}),"\uE8C8"),
                 "rename"=>L.MenuItem("menu.rename",()=>commands.Rename(items),"\uE8AC"),
                 "delete"=>L.MenuItem("menu.delete",()=>commands.Run(()=>commands.DeleteAsync(items)),"\uE74D"),
                 "favorite"=>L.MenuItem(favorite is null?"menu.addFavorite":"menu.removeFavorite",()=>commands.Run(()=>favorite is null
@@ -41,6 +41,7 @@ internal static class ResultContextMenu
                 item.IsEnabled=reason is null;
                 if(reason is not null)L.Bind(item,ToolTipService.ToolTipProperty,reason);
             }
+            item.KeyboardAcceleratorTextOverride=ResultMenuRules.ShortcutText(action.Id,preferences);
             menu.Items.Add(item);
         }
         return menu;

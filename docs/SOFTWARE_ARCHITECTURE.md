@@ -8,6 +8,8 @@ DeletedPathTracker只拥有界面临时删除屏蔽，不参与物理回收或�
 
 DetailsPane的图片尺寸复用VisualConnection及既有sourceDimensions动作，在160毫秒选择防抖后读取源文件尺寸；格式范围来自现有image-dimensions提取器清单，结果保留EXIF方向校正。界面只更新当前选择及当前字段，取消/切换后的迟到结果不回写；不可读取保持未知，不使用缩略图尺寸或写入Catalog。
 
+ResultContextMenu通过ResultMenuRules映射菜单动作到ShortcutCatalog，使用当前偏好中通过校验的绑定设置原生KeyboardAcceleratorTextOverride；标注不另行注册按键，弹层阻断和执行归属不变。metadata维护快捷键退役，历史同名绑定不注册也不参与冲突检查；目录右键提取继续调用既有StartMetadataAsync。
+
 ## 运行边界
 
 文件操作期间ResultsView可暂停卡片请求并保留已完成的缓存图像；恢复时仅复用绑定身份未变的图像，正常隐藏/回收仍释放，不保留源文件句柄。删除在UI线程快照选择并显示确认对话框，批量FileAccessGuard检查在后台完成，回收站仍归原Core文件操作宿主所有。

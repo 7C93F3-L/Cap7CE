@@ -139,5 +139,5 @@ internal sealed class FileCommands(ShellServices services, Func<XamlRoot> xamlRo
         try{if(await Views.KeywordEditDialog.ShowAsync(xamlRoot(),services,items.ToArray(),notice))KeywordsEdited?.Invoke(items);}
         finally{editingKeywords=false;}
     });
-    public MenuFlyout Menu(IReadOnlyList<AssetItem> items,bool home=false)=>ResultContextMenu.Build(this,services.Favorites,items,home);
+    public MenuFlyout Menu(IReadOnlyList<AssetItem> items,bool home=false)=>ResultContextMenu.Build(this,services.Favorites,items,home,services.Preferences.Current);
 }

@@ -31,7 +31,13 @@ internal static class ShortcutChecks
             Check(ShortcutCatalog.Binding(overridden,action).Gesture=="","An explicit unbound preference must remain unbound: "+action.Id);
         }
         Check(ShortcutCatalog.All.Single(action=>action.Id=="editKeywords") is {Gesture:"Ctrl+K",Context:"results"},"Keyword editing is limited to file results.");
-        var retired=new[]{"newTab","closeTab","previousTab","nextTab"};
+        Check(ResultMenuRules.ShortcutText("preview",preferences)=="Space"&&ResultMenuRules.ShortcutText("rename",preferences)=="F2","Fixed menu hints resolve to actual fixed keys.");
+        var customMenu=preferences with{ShortcutBindings=new(){["copyPaths"]=new("Ctrl+Alt+C"),["aiKeywords"]=new("")}};
+        Check(ResultMenuRules.ShortcutText("copyPaths",customMenu)=="Ctrl+Alt+C","Menu hints follow saved custom keys.");
+        Check(ResultMenuRules.ShortcutText("autoKeywords",customMenu)==""&&ResultMenuRules.ShortcutText("metadata",preferences)=="","Unbound or unmapped actions have no shortcut hint.");
+        Check(ResultMenuRules.ShortcutText("copyPaths",preferences with{ShortcutBindings=new(){["copyPaths"]=new("F2")}})=="","Conflicting keys cannot advertise an inactive binding.");
+        Check(ShortcutCatalog.Validate(ShortcutCatalog.All.Single(action=>action.Id=="copyPaths"),new("Ctrl+Shift+I"),preferences) is null,"Removed maintenance shortcut no longer reserves its key.");
+        var retired=new[]{"newTab","closeTab","previousTab","nextTab","metadata"};
         Check(!ShortcutCatalog.All.Any(action=>retired.Contains(action.Id)),"Tab-page actions must not remain assignable.");
         var retiredPreferences=preferences with{ShortcutBindings=retired.ToDictionary(id=>id,_=>new ShortcutBinding("Ctrl+F"))};
         Check(ShortcutCatalog.Validate(ShortcutCatalog.All.Single(action=>action.Id=="focusSearch"),new("Ctrl+F"),retiredPreferences) is null,"Retired action overrides must not reserve combinations or block active actions.");
