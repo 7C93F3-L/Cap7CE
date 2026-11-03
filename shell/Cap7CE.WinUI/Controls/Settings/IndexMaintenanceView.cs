@@ -129,7 +129,9 @@ internal sealed class IndexMaintenanceView : UserControl
                     await services.Preferences.SaveAsync(services.Preferences.Current with{IndexVolumeSelection=new(selection)});
                 });
                 row.Children.Add(choice);
-                var up=Ui.Button("↑",()=>Move(row,-1));var down=Ui.Button("↓",()=>Move(row,1));
+                var up=Ui.Button("",()=>Move(row,-1));var down=Ui.Button("",()=>Move(row,1));
+                up.Content=new FontIcon{Glyph="\uE74A",FontSize=16};down.Content=new FontIcon{Glyph="\uE74B",FontSize=16};
+                up.Width=down.Width=32;up.Height=down.Height=32;up.Padding=down.Padding=new(0);
                 L.Label(up,"ui.index.earlier");L.Label(down,"ui.index.later");
                 up.IsEnabled=item!=items[0];down.IsEnabled=item!=items[^1];
                 var controls=Ui.Row(up,down);controls.VerticalAlignment=VerticalAlignment.Center;
