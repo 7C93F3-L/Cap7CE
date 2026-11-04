@@ -48,10 +48,17 @@ internal sealed class DetailsEmbeddedMetadata : UserControl
         timeout.CancelAfter(TimeSpan.FromSeconds(10));
         var id=Guid.NewGuid().ToString();
         try {
-            FileAccessGuard.Validate(item);timeout.Token.ThrowIfCancellationRequested();
+            // Path attributes and identity checks may wait on the filesystem.
+            var hasStoredMetadata=await Task.Run(()=>{
+                timeout.Token.ThrowIfCancellationRequested();
+                FileAccessGuard.Validate(item);
+                timeout.Token.ThrowIfCancellationRequested();
+                return File.Exists(Path.Combine(PreferenceStore.ProductData,"index","cap7ce-index.db"));
+            },timeout.Token);
+            timeout.Token.ThrowIfCancellationRequested();if(expected!=revision)return;
             JsonElement metadata=default;
             if(item.Entry.SizeBytes is {} size&&item.Entry.ModifiedUtcTicks is {} ticks
-                &&File.Exists(Path.Combine(PreferenceStore.ProductData,"index","cap7ce-index.db"))) {
+                &&hasStoredMetadata) {
                 try {
                     var modified=DateTime.FromFileTimeUtc(ticks).ToString("yyyy-MM-dd'T'HH:mm:ss.fff'Z'",CultureInfo.InvariantCulture);
                     var stored=await services.StoredMetadata.RequestAsync("storedMetadata",[id,item.FullPath,new{fileSize=size,modifiedAt=modified}],timeout.Token);
