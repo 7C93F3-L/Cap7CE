@@ -44,21 +44,22 @@ for (const [anchor, description] of [
 ]) requireAnchor(project, anchor, description);
 if (/<ProjectReference|<PackageReference/.test(project)) failures.push("Capability Setup must remain dependency-free.");
 for (const anchor of ["Microsoft.DotNet.ILCompiler", "runtime.win-x64.Microsoft.DotNet.ILCompiler",
-  "Microsoft.NETCore.App.Runtime.NativeAOT.win-x64"]) {
+  "Microsoft.NETCore.App.Runtime.NativeAOT.win-x64", "Microsoft.NETCore.App.Runtime.win-x64",
+  "Microsoft.WindowsDesktop.App.Runtime.win-x64", "Microsoft.AspNetCore.App.Runtime.win-x64"]) {
   requireAnchor(nugetConfig, anchor, `official NativeAOT package mapping: ${anchor}`);
 }
 const setupDependencies = setupLock.dependencies?.["net10.0-windows7.0"];
 const setupRidDependencies = setupLock.dependencies?.["net10.0-windows7.0/win-x64"];
-if (setupDependencies?.["Microsoft.DotNet.ILCompiler"]?.resolved !== "10.0.12"
-    || setupDependencies?.["Microsoft.NET.ILLink.Tasks"]?.resolved !== "10.0.12"
-    || setupRidDependencies?.["runtime.win-x64.Microsoft.DotNet.ILCompiler"]?.resolved !== "10.0.12") {
-  failures.push("Capability Setup NativeAOT compiler graph is not locked to .NET 10.0.12.");
+if (setupDependencies?.["Microsoft.DotNet.ILCompiler"]?.resolved !== "10.0.14"
+    || setupDependencies?.["Microsoft.NET.ILLink.Tasks"]?.resolved !== "10.0.14"
+    || setupRidDependencies?.["runtime.win-x64.Microsoft.DotNet.ILCompiler"]?.resolved !== "10.0.14") {
+  failures.push("Capability Setup NativeAOT compiler graph is not locked to .NET 10.0.14.");
 }
 
 const expectedRuntime = {
-  frameworkName: "Microsoft.NETCore.App", minimumVersion: "10.0.12", architecture: "win-x64",
-  installerUrl: "https://builds.dotnet.microsoft.com/dotnet/Runtime/10.0.12/dotnet-runtime-10.0.12-win-x64.exe",
-  installerSha512: "b937ae539c4ab21f885b033178dadea98018baad777252c76251e760d81c18463b2f802e86b6a67ea066690e9ede2d66a6bc3c3e614e391505e98c4c41121400",
+  frameworkName: "Microsoft.NETCore.App", minimumVersion: "10.0.14", architecture: "win-x64",
+  installerUrl: "https://builds.dotnet.microsoft.com/dotnet/Runtime/10.0.14/dotnet-runtime-10.0.14-win-x64.exe",
+  installerSha512: "6277b0feac2ec312276ec62ccaaec7fb49a22baa0c4157d0418eb4bfc7c443fa90aa06318725c113da1ea19343b5a315749825299a71e34010f4554496cf36e8",
   presentation: "foreground", installArguments: ["/install", "/norestart"],
   repairArguments: ["/repair", "/norestart"], successExitCodes: [0, 3010], automaticRestart: false
 };

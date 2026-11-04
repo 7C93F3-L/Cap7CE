@@ -9,7 +9,7 @@ internal static class CapabilitySetupContractTests
     {
         var manifest = CapabilitySetupManifest.LoadEmbedded();
         TestAssert.Equal("Microsoft.NETCore.App", manifest.Runtime.FrameworkName, "setup runtime framework");
-        TestAssert.Equal("10.0.12", manifest.Runtime.MinimumVersion, "setup minimum runtime");
+        TestAssert.Equal("10.0.14", manifest.Runtime.MinimumVersion, "setup minimum security-patched runtime");
         TestAssert.Equal("foreground", manifest.Runtime.Presentation, "setup runtime presentation");
         TestAssert.True(manifest.Runtime.InstallArguments.SequenceEqual(["/install", "/norestart"]),
             "runtime install must remain foreground and suppress automatic restart");

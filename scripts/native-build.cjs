@@ -9,15 +9,19 @@ const run = (exe, args) => {
   if (result.status !== 0) throw new Error(`${exe} ${args[0]} failed (${result.status}).`);
 };
 const node = script => run(process.execPath, [path.join('scripts', script)]);
+const sdkVersion = JSON.parse(fs.readFileSync(path.join(root, 'global.json'), 'utf8')).sdk.version;
+const runtimeStamp = path.join(root, 'core/artifacts/native-runtime-sdk.txt');
+const refreshRuntime = !fs.existsSync(runtimeStamp) || fs.readFileSync(runtimeStamp, 'utf8') !== sdkVersion;
 const prerequisites = [
   ['native/artifacts/core-visuals/v1/Cap7CE.Core.Visuals.exe', 'core-visuals-build.cjs'],
   ['native/artifacts/metadata-media/v1/Cap7CE.Media.Metadata.exe', 'metadata-media-build.cjs'],
   ['core/artifacts/configuration-host/Cap7CE.Core.Configuration.Host.exe', 'core-configuration-build.cjs'],
   ['core/artifacts/file-operations-host/Cap7CE.Core.FileOperations.Host.exe', 'core-file-operations-build.cjs']
 ];
-for (const [target, script] of prerequisites) if (!fs.existsSync(path.join(root, target)) || script==='core-file-operations-build.cjs'&&!require('./core-file-operations-freshness.cjs').isFresh(root)) node(script);
-if (!fs.existsSync(path.join(root, 'core/artifacts/product-capability/v1/bundle/Cap7CE.Core.Setup.exe')))
+for (const [target, script] of prerequisites) if (!fs.existsSync(path.join(root, target)) || refreshRuntime&&['core-configuration-build.cjs','core-file-operations-build.cjs'].includes(script) || script==='core-file-operations-build.cjs'&&!require('./core-file-operations-freshness.cjs').isFresh(root)) node(script);
+if (refreshRuntime || !fs.existsSync(path.join(root, 'core/artifacts/product-capability/v1/bundle/Cap7CE.Core.Setup.exe')))
   run(process.execPath, ['scripts/core-capability-payload-build.cjs', '--product']);
+fs.mkdirSync(path.dirname(runtimeStamp), { recursive: true }); fs.writeFileSync(runtimeStamp, sdkVersion);
 node('native-source-check.cjs');
 node('core-architecture-suite.cjs');
 run(process.execPath, ['node_modules/typescript/bin/tsc', '-p', 'tsconfig.json']);

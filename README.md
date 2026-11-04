@@ -141,6 +141,7 @@ models/
 开发环境需要：
 
 - Windows 10 / 11 x64
+- .NET SDK 10.0.403（版本要求见 `global.json`）
 - Node.js 20.16 或更新版本
 - npm
 - Git

@@ -15,7 +15,7 @@
     <AssemblyMetadata Include="Cap7CE.Core.Layer" Value="Reader.Host" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.NET.ILLink.Tasks" Version="10.0.12" PrivateAssets="all"
+    <PackageReference Include="Microsoft.NET.ILLink.Tasks" Version="10.0.14" PrivateAssets="all"
       Condition="'$(PublishAot)' != 'true' And '$(PublishTrimmed)' != 'true'" />
     <ProjectReference Include="..\Cap7CE.Core.Reader.Protocol\Cap7CE.Core.Reader.Protocol.csproj" />
   </ItemGroup>

@@ -38,4 +38,27 @@ assert.throws(() => vm.runInNewContext(fs.readFileSync(path.join(root, "scripts/
   process: { platform: "win32", env: {} }, __dirname: path.join(root, "scripts"), console
 }), /development-host-in-use/);
 assert.equal(removed, false, "active owner refusal cannot partially clear its working directory");
+// Existing AOT executables must be rebuilt when the SDK baseline changes, even if source files are unchanged.
+const buildSource = fs.readFileSync(path.join(root, "scripts/native-build.cjs"), "utf8");
+const sdkBaseline = JSON.parse(fs.readFileSync(path.join(root, "global.json"), "utf8")).sdk.version;
+for (const stamp of ["10.0.401", sdkBaseline]) {
+  const calls = []; let recorded;
+  vm.runInNewContext(buildSource, {
+    require(name) {
+      if (name === "node:fs") return {
+        existsSync: () => true, mkdirSync() {}, writeFileSync(file, value) { recorded = value; },
+        readFileSync: file => file.endsWith("global.json") ? JSON.stringify({ sdk: { version: sdkBaseline } }) : stamp
+      };
+      if (name === "node:child_process") return { spawnSync(exe, args) { calls.push(args); return { status: 0 }; } };
+      if (name === "./native-build-safety.cjs") return () => {};
+      if (name === "./core-file-operations-freshness.cjs") return { isFresh: () => true };
+      if (name === "./core-development-host-safety.cjs") return { assertStopped() {} };
+      return require(name);
+    },
+    process: { platform: "win32", execPath: process.execPath, env: {} }, __dirname: path.join(root, "scripts"), console: { log() {} }
+  });
+  for (const script of ["core-configuration-build.cjs", "core-file-operations-build.cjs", "core-capability-payload-build.cjs"])
+    assert.equal(calls.some(args => args.some(arg => String(arg).endsWith(script))), stamp !== sdkBaseline, `SDK change must invalidate ${script}`);
+  assert.equal(recorded, sdkBaseline);
+}
 console.log("Core restore: supported profiles retain identical locks; failed restore and active-owner refusal preserve the working host.");

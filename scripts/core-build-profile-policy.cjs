@@ -2,7 +2,7 @@ const fs = require("node:fs"), path = require("node:path");
 const projects = ["Catalog", "Host", "Reader.Host"];
 module.exports.allowedPackages = new Map([
   ["core/src/Cap7CE.Core.Catalog/Cap7CE.Core.Catalog.csproj", [["Microsoft.Data.Sqlite", "10.0.12"]]],
-  ["core/src/Cap7CE.Core.Reader.Host/Cap7CE.Core.Reader.Host.csproj", [["Microsoft.NET.ILLink.Tasks", "10.0.12"]]]
+  ["core/src/Cap7CE.Core.Reader.Host/Cap7CE.Core.Reader.Host.csproj", [["Microsoft.NET.ILLink.Tasks", "10.0.14"]]]
 ]);
 // Metadata/attribute ordering must not hide an added dependency from the architecture guard.
 module.exports.packages = source => [...source.replace(/<!--[\s\S]*?-->/g, "").matchAll(/<PackageReference\b([^>]*?)\/?\s*>/g)]

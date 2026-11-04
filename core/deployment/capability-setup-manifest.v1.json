@@ -4,10 +4,10 @@
   "capabilityVersion": "1.0.0",
   "runtime": {
     "frameworkName": "Microsoft.NETCore.App",
-    "minimumVersion": "10.0.12",
+    "minimumVersion": "10.0.14",
     "architecture": "win-x64",
-    "installerUrl": "https://builds.dotnet.microsoft.com/dotnet/Runtime/10.0.12/dotnet-runtime-10.0.12-win-x64.exe",
-    "installerSha512": "b937ae539c4ab21f885b033178dadea98018baad777252c76251e760d81c18463b2f802e86b6a67ea066690e9ede2d66a6bc3c3e614e391505e98c4c41121400",
+    "installerUrl": "https://builds.dotnet.microsoft.com/dotnet/Runtime/10.0.14/dotnet-runtime-10.0.14-win-x64.exe",
+    "installerSha512": "6277b0feac2ec312276ec62ccaaec7fb49a22baa0c4157d0418eb4bfc7c443fa90aa06318725c113da1ea19343b5a315749825299a71e34010f4554496cf36e8",
     "presentation": "foreground",
     "installArguments": [
       "/install",

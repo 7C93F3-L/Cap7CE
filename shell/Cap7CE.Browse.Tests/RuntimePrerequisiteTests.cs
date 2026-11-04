@@ -18,9 +18,9 @@ internal static class RuntimePrerequisiteTests
         var rejected=false;try{CoreSetupVolumes.Arguments(true,[]);}catch(InvalidOperationException){rejected=true;}
         Require(rejected,"empty setup scope must never fall back to disconnect fixture mode");
         var policy=CoreRuntimePolicy.Load();
-        Require(policy.MinimumVersion=="10.0.12"&&policy.Arguments.SequenceEqual(new[]{"/install","/norestart"}),"shared foreground runtime policy");
-        Require(policy.Matches(["10.0.12"])&&policy.Matches(["10.0.13"]),"supported runtime patches");
-        Require(!policy.Matches(["9.0.99","10.0.11","11.0.0"]),"different major runtime cannot satisfy .NET 10");
+        Require(policy.MinimumVersion=="10.0.14"&&policy.Arguments.SequenceEqual(new[]{"/install","/norestart"}),"shared foreground runtime policy");
+        Require(policy.Matches(["10.0.14"])&&policy.Matches(["10.0.15"]),"supported runtime patches");
+        Require(!policy.Matches(["9.0.99","10.0.11","10.0.12","10.0.13","11.0.0"]),"older security patches and different major runtimes cannot satisfy the prerequisite");
         var bytes="runtime installer fixture"u8.ToArray();
         var fixture=policy with{Sha512=Convert.ToHexString(SHA512.HashData(bytes))};
         foreach(var scenario in new[]{"present","ready","reboot","undetected","cancelled","digest","http","oversize","truncated"}) {

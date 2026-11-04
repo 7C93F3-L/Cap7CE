@@ -2,6 +2,8 @@
 
 当前源码主线为 Windows x64 / C# / WinUI 3，当前版本为 2.0.1。Electron/Renderer/Preload 源码、React/Vite 和旧构建入口已退役；历史实现与迁移记录可从 Git 历史查看。安装布局和数据所有权延续2.0.0，本轮不新增用户数据迁移。
 
+global.json固定.NET SDK 10.0.403补丁系列，运行时、NativeAOT及链接工具基线为10.0.14。安装前置清单固定官方Windows x64运行时的下载地址和SHA-512，原生设置页与Setup共用该清单；依赖审计保持启用，锁定文件及架构检查同步维护安全补丁版本。native-build记录原生运行组件的SDK基线，基线变化或记录缺失时重建Configuration、FileOperations及产品Setup载荷，避免沿用旧AOT缓存。
+
 删除仍由Core文件操作宿主独占。TrashBatchExecutor校验保护路径和源类型，将互不包含的目标交给WindowsTrashBatch；原生trash_items在单个STA及IFileOperation中排队后一次执行。OperationSink按所选Shell身份及回收完成对象确认逐项成功，拒绝永久删除回退；父目录成功覆盖子项，父目录失败后子项独立执行。成功项无固定等待，失败项最多重试一次并等待250毫秒，明确中止不重试。私有请求及最终结果协议不变。WorkspaceNotice独立文件任务槽持续显示不确定进度，结束或异常时解除，不占用AI或命令状态。
 
 DeletedPathTracker只拥有界面临时删除屏蔽，不参与物理回收或修改Catalog。BrowseSession在刷新/导航查询前后台核对已屏蔽路径是否重新存在，确认恢复后按记录修订号解除屏蔽；仍缺失或无法确认的路径继续过滤，较早核对不能清除较新的删除记录。直接目录和Catalog结果共用同一规则。
