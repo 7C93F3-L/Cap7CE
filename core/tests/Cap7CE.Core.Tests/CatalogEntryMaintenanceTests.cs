@@ -55,7 +55,9 @@ internal static class CatalogEntryMaintenanceTests
         // File-fact first activation must also accept a validated storage-3 Catalog.
         var factRecovery = (await new FileFactRecoveryCheckpoint(path, recovery).CreateBeforeActivationAsync(CancellationToken.None))!;
         TestAssert.True(await new CatalogFileEntryActivation(new(factRecovery)).ReadEnabledAsync(), "fact checkpoint preserves entry storage");
-        await new FileFactDatabase(path).InitializeAsync();
+        var facts = new FileFactDatabase(path); await facts.InitializeAsync();
+        await facts.InvalidateVolumeAsync("fixture");
+        TestAssert.Equal(1L, await facts.ReadRevisionAsync(), "metadata read/write connections are warmed before offline replacement");
         TestAssert.True(await new FileFactRecoveryCheckpoint(path, recovery).CreateBeforeActivationAsync(CancellationToken.None) is null, "fact checkpoint remains idempotent");
         await SqlAsync(path, "UPDATE fixture_marker SET value=42;");
         await TestAssert.ThrowsAsync<InvalidDataException>(() => maintenance.RollbackAsync(factRecovery), "entry snapshot is not a legacy rollback source");
@@ -68,6 +70,7 @@ internal static class CatalogEntryMaintenanceTests
         }
         TestAssert.Equal("42", await SqlAsync(path, "SELECT value FROM fixture_marker;"), "rejected rollback preserves current data");
         var restored = await maintenance.RollbackAsync(before);
+        await TestAssert.ThrowsAsync<CatalogSchemaException>(() => facts.ReadRevisionAsync(), "offline replacement retires cached metadata connections instead of reading the old fact store");
         TestAssert.False(await new CatalogFileEntryActivation(new(path)).ReadEnabledAsync(), "rollback restores the full legacy database");
         TestAssert.Equal("0", await SqlAsync(path, "SELECT value FROM fixture_marker;"), "pre-upgrade data restored");
         var archive = restored.PreservedEntryCatalogPath;

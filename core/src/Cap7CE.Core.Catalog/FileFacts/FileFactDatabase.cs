@@ -7,7 +7,7 @@ public sealed class FileFactDatabase(string databasePath)
 {
     public async Task InitializeAsync(CancellationToken token = default)
     {
-        await using var connection = await OpenAsync(false, token);
+        await using var connection = await OpenAsync(false, token, pooling: false);
         await FileFactSchema.InitializeAsync(connection, token);
     }
 
@@ -202,12 +202,12 @@ public sealed class FileFactDatabase(string databasePath)
             ? new(reader.GetInt64(0), reader.GetInt64(1), reader.GetInt64(2), reader.GetInt64(3)) : null;
     }
 
-    internal async Task<SqliteConnection> OpenAsync(bool readOnly, CancellationToken token)
+    internal async Task<SqliteConnection> OpenAsync(bool readOnly, CancellationToken token, bool pooling = true)
     {
         var connection = new SqliteConnection(new SqliteConnectionStringBuilder
         {
             DataSource = databasePath, Mode = readOnly ? SqliteOpenMode.ReadOnly : SqliteOpenMode.ReadWrite,
-            Pooling = false
+            Cache = SqliteCacheMode.Private, Pooling = pooling
         }.ToString());
         try
         {
@@ -217,7 +217,7 @@ public sealed class FileFactDatabase(string databasePath)
             await command.ExecuteNonQueryAsync(token);
             return connection;
         }
-        catch { await connection.DisposeAsync(); throw; }
+        catch { SqliteConnection.ClearPool(connection); await connection.DisposeAsync(); throw; }
     }
 
     internal static void BindIdentity(SqliteCommand command, CatalogEntryIdentity identity)

@@ -73,6 +73,23 @@ internal static class FileFactScopeScaleTests
             using var sourceDeadline=new CancellationTokenSource(TimeSpan.FromSeconds(2));
             var source=await new FileFactSourceResolver(path).ResolveForLeaseAsync(lease,sourceDeadline.Token);
             TestAssert.True(source is not null&&source.RelativePath.StartsWith("allowed\\",StringComparison.Ordinal),"identity path resolution stays scoped with unrelated matching files");
+            // The opposite shape: a large authorized directory, with its remaining jobs already at the queue head.
+            await using(var connection=new SqliteConnection($"Data Source={path};Pooling=False")) {
+                await connection.OpenAsync();using var command=connection.CreateCommand();
+                command.CommandText="""
+                    DELETE FROM file_fact_jobs;
+                    WITH RECURSIVE files(x) AS(SELECT 200000 UNION ALL SELECT x+1 FROM files WHERE x<209999)
+                    INSERT INTO catalog_nodes_v2 SELECT 'fixture',printf('%016X',x),'0000000000000002',printf('image-%d.png',x),'.png',0,32,1,100,1,1 FROM files;
+                    INSERT INTO file_fact_jobs(volume_id,file_reference,kind,extractor_version,size_bytes,modified_file_time,volume_epoch,content_revision,state)
+                    SELECT volume_id,file_reference,0,2,100,1,0,0,'pending' FROM catalog_nodes_v2 WHERE file_reference BETWEEN '0000000000030D40' AND '0000000000030D7F' ORDER BY file_reference;
+                    """;
+                await command.ExecuteNonQueryAsync();
+            }
+            using var directoryDeadline=new CancellationTokenSource(TimeSpan.FromSeconds(2));
+            for(var index=0;index<64;index++) {
+                var next=(await queue.ClaimAsync(token:directoryDeadline.Token))!;
+                TestAssert.Equal((200000+index).ToString("X16"),next.Job.Identity.FileReference,"successive directory claims retain ordinal order without expanding 10,000 candidates per file");
+            }
         }
         finally { SqliteConnection.ClearAllPools(); Directory.Delete(root, true); }
     }

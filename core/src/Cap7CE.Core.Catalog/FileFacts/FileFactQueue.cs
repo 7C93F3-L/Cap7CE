@@ -108,20 +108,28 @@ public sealed class FileFactQueue(string databasePath, TimeProvider? timeProvide
                 : candidates.Source + " CROSS JOIN file_fact_jobs j ON j.volume_id=n.volume_id AND j.file_reference=n.file_reference";
             var scope = await FileFactEntryPolicy.BindAsync(find, policy, token);
             var selected = FileFactSelection.Bind(find, specification);
-            find.CommandText = $"""
-                {candidates.Prefix}
-                SELECT j.volume_id, j.file_reference, j.kind, j.extractor_version FROM {candidateSource}
-                JOIN catalog_volumes_v2 c ON c.volume_id = n.volume_id
-                WHERE j.state = 'pending' AND j.volume_id = $claimVolume AND n.exists_flag = 1 AND n.is_directory = 0
-                    AND (n.attributes & 0x00441400) = 0
-                    AND n.size_bytes IS NOT NULL AND n.modified_utc_ticks IS NOT NULL
-                    AND c.selected = 1 AND c.state = 'ready' AND {scope} AND ({selected})
-                ORDER BY j.ordinal LIMIT 1;
-                """;
-            using var reader = await find.ExecuteReaderAsync(token);
-            if (await reader.ReadAsync(token)) {
-                job = new(new(reader.GetString(0), reader.GetString(1)), (FileFactKind)reader.GetInt32(2), reader.GetInt32(3));break;
+            // Try only a bounded queue head before expanding the directory again. Large unrelated queues retain the scoped fallback.
+            (string Prefix, string Source)[] sources = candidates.Prefix.Length == 0 ? [("", candidateSource)] : [
+                ("WITH claim_head AS MATERIALIZED (SELECT * FROM file_fact_jobs INDEXED BY file_fact_jobs_pending WHERE state='pending' AND volume_id=$claimVolume ORDER BY ordinal LIMIT 64)",
+                    "claim_head j CROSS JOIN catalog_nodes_v2 n ON n.volume_id=j.volume_id AND n.file_reference=j.file_reference"),
+                (candidates.Prefix, candidateSource)];
+            foreach (var candidate in sources) {
+                find.CommandText = $"""
+                    {candidate.Prefix}
+                    SELECT j.volume_id, j.file_reference, j.kind, j.extractor_version FROM {candidate.Source}
+                    JOIN catalog_volumes_v2 c ON c.volume_id = n.volume_id
+                    WHERE j.state = 'pending' AND j.volume_id = $claimVolume AND n.exists_flag = 1 AND n.is_directory = 0
+                        AND (n.attributes & 0x00441400) = 0
+                        AND n.size_bytes IS NOT NULL AND n.modified_utc_ticks IS NOT NULL
+                        AND c.selected = 1 AND c.state = 'ready' AND {scope} AND ({selected})
+                    ORDER BY j.ordinal LIMIT 1;
+                    """;
+                using var reader = await find.ExecuteReaderAsync(token);
+                if (await reader.ReadAsync(token)) {
+                    job = new(new(reader.GetString(0), reader.GetString(1)), (FileFactKind)reader.GetInt32(2), reader.GetInt32(3));break;
+                }
             }
+            if (job is not null) break;
         }
         if (job is null) { transaction.Commit(); return null; }
         var source = (await FileFactDatabase.CaptureAsync(connection, transaction, job.Identity, token))!;
