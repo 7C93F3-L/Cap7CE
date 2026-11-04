@@ -1,6 +1,6 @@
 # Cap7CE 软件架构
 
-当前源码主线为 Windows x64 / C# / WinUI 3，当前版本为 2.0.1。Electron/Renderer/Preload 源码、React/Vite 和旧构建入口已退役；历史实现与迁移记录可从 Git 历史查看。安装布局和数据所有权延续2.0.0，本轮不新增用户数据迁移。
+当前源码主线为 Windows x64 / C# / WinUI 3，当前版本为 2.0.2。Electron/Renderer/Preload 源码、React/Vite 和旧构建入口已退役；历史实现与迁移记录可从 Git 历史查看。安装布局和数据所有权延续2.0.0，本轮不新增用户数据迁移。
 
 global.json固定.NET SDK 10.0.403补丁系列，运行时、NativeAOT及链接工具基线为10.0.14。安装前置清单固定官方Windows x64运行时的下载地址和SHA-512，原生设置页与Setup共用该清单；依赖审计保持启用，锁定文件及架构检查同步维护安全补丁版本。native-build记录原生运行组件的SDK基线，基线变化或记录缺失时重建Configuration、FileOperations及产品Setup载荷，避免沿用旧AOT缓存。
 
@@ -9,6 +9,8 @@ global.json固定.NET SDK 10.0.403补丁系列，运行时、NativeAOT及链接�
 DeletedPathTracker只拥有界面临时删除屏蔽，不参与物理回收或修改Catalog。BrowseSession在刷新/导航查询前后台核对已屏蔽路径是否重新存在，确认恢复后按记录修订号解除屏蔽；仍缺失或无法确认的路径继续过滤，较早核对不能清除较新的删除记录。直接目录和Catalog结果共用同一规则。
 
 DetailsPane的图片尺寸复用VisualConnection及既有sourceDimensions动作，在160毫秒选择防抖后读取源文件尺寸；格式范围来自现有image-dimensions提取器清单，结果保留EXIF方向校正。界面只更新当前选择及当前字段，取消/切换后的迟到结果不回写；不可读取保持未知，不使用缩略图尺寸或写入Catalog。
+
+详情栏嵌入元数据读取前的路径、文件身份及旧元数据文件存在性检查在后台执行，完成后回到UI线程复核取消及选择修订号，再沿原有服务读取；不改变文件校验或元数据存储所有权。
 
 固定Ctrl+D以results上下文注册toggleFavorite，不进入可编辑快捷键列表；仅单选目录时执行，与右键菜单共用FileCommands.ToggleFavorite及FavoriteService.ToggleAsync，文本输入和弹层阻断继续由既有快捷键路由负责。
 
@@ -117,4 +119,4 @@ KeywordEditDialog仅承载右键关键词编辑会话，复用DetailsKeywordEdit
 
 WorkspaceNotice统一主窗口底部普通提示、查询、AI、索引、元数据和命令确认/执行的展示，使用固定高度及独立全宽进度行。各领域控制器继续拥有任务观察和取消；浮层只拥有提示显示优先级及隐藏计时，提示实际展示且鼠标未悬停时计时，任务遮挡或卸载时停止，移出后重新计时，不改变任务执行。
 
-2.0.1保持当前安装与数据所有者边界，不新增旧版本兼容迁移。发布目录携带LICENSE、NOTICE和THIRD_PARTY_NOTICES；sharp固定为0.35.5，所有运行库仍由锁文件和现有复制脚本生成。介绍文档沿用2.0.0演示截图，素材来源记录在docs/assets/screenshots/ASSET_SOURCES.md。
+2.0.2保持当前安装与数据所有者边界，不新增旧版本兼容迁移。发布目录携带LICENSE、NOTICE和THIRD_PARTY_NOTICES；sharp固定为0.35.5，所有运行库仍由锁文件和现有复制脚本生成。介绍文档沿用2.0.0演示截图，素材来源记录在docs/assets/screenshots/ASSET_SOURCES.md。
