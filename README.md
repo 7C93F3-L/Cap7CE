@@ -2,15 +2,19 @@
 
 ## Cap7CE 2.0.1
 
-面向 Windows 的本地素材浏览、搜索与预览工具。支持原比例网格、文件属性筛选、关键词编辑及可选的本地 AI 关键词生成。
+面向 Windows 的本地图片与素材管理、文件搜索和预览工具。适合浏览图片、设计素材及视频，支持原比例网格、文件属性筛选和关键词管理，可选使用本地 AI 生成图片关键词。
 
-安装后即可浏览目录，建立本地索引后启用搜索与关键词编辑。安装器自动配置搜索服务，建库和元数据提取由用户主动启动。详见[开发、交付与能力边界](shell/README.md)。
+- **浏览素材**：直接打开本地目录，查看缩略图、文件详情与多种格式的预览。
+- **查找文件**：按文件名、路径和关键词搜索，按尺寸、比例、文件大小等属性筛选。
+- **可选本地 AI**：通过本机视觉模型生成图片关键词，素材无需上传到远程识别服务。
 
-当前正式版本为 2.0.1，安装包见 [GitHub Releases](https://github.com/7C93F3-L/Cap7CE/releases/tag/v2.0.1)。
+**[下载 Windows x64 安装器](https://github.com/7C93F3-L/Cap7CE/releases/latest)** · 当前正式版本 2.0.1 · Windows 10 / 11
+
+安装后即可浏览目录；搜索与关键词编辑需要先建立本地索引，属性筛选需要提取相应元数据。AI 功能需另行配置模型与运行时。详见下方使用说明及[开发、交付与能力边界](shell/README.md)。
 
 [中文](#中文) · [English](#english)
 
-> **Cap7CE 2.0.1** — Local asset browsing, search and preview for Windows, with optional local AI keyword generation. Download the official installer from [GitHub Releases](https://github.com/7C93F3-L/Cap7CE/releases/tag/v2.0.1).
+> **Cap7CE** — A local image viewer, asset manager and file search tool for Windows, with optional local AI image tagging. Browse folders, preview files and search by filename or keywords. [Download for Windows](https://github.com/7C93F3-L/Cap7CE/releases/latest).
 
 ![Cap7CE normal mode in dark theme](docs/assets/screenshots/normal-dark.png)
 
