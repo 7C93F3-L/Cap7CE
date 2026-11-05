@@ -72,7 +72,7 @@ internal sealed class PreviewWindow : Window
         try{await services.Preferences.UpdateAsync(prefs=>prefs with{PreviewAlwaysOnTop=value});}
         catch(Exception error){if(!closed){ApplyAppearance();status.Visibility=Visibility.Visible;L.Message(status,TextBlock.TextProperty,UiMessage.Key("ui.preview.pinFailed",new Dictionary<string,object?>{{"error",FailureText.From(error)}}));}}
     }
-    private void ReleaseMedia(){var previous=media;media=null;previous?.Dispose();}
+    private void ReleaseMedia(){var previous=media;media=null;previous?.Dispose();if(content.Content is ModelPreviewView model)model.Dispose();}
     public void Show(AssetItem item,IReadOnlyList<AssetItem> source,uint? spacePressedAt=null)
     {
         followTimer.Stop();UnobserveItems();items=source;index=FindIndex(item);if(index<0){items=[item];index=0;}
@@ -127,6 +127,11 @@ internal sealed class PreviewWindow : Window
                     await audio.LoadAsync(file,item,services,token);
                 } else content.Content=media.Element;
                 return;
+            }
+            if(kind=="threeD") {
+                geometry.Apply(900,640,24,110);status.Visibility=Visibility.Collapsed;
+                var model=new ModelPreviewView(error=>{if(!closed&&!token.IsCancellationRequested){status.Visibility=Visibility.Visible;L.Message(status,TextBlock.TextProperty,FailureText.From(error));}});
+                content.Content=model;await model.LoadAsync(item,token);return;
             }
             if(kind=="text")
             {
@@ -183,6 +188,7 @@ internal sealed class PreviewWindow : Window
         catch(Exception error){if(!token.IsCancellationRequested){
             NativeDiagnostics.VisualFailure(error);
             await ShowFileInfoAsync(item,token,sourceValidated);
+            if(kind=="threeD"&&!token.IsCancellationRequested){status.Visibility=Visibility.Visible;L.Message(status,TextBlock.TextProperty,FailureText.From(error));}
         }}
     }
     private async Task ShowFileInfoAsync(AssetItem item,CancellationToken token,bool readThumbnail=true)

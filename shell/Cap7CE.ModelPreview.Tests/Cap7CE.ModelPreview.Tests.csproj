@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net10.0-windows</TargetFramework></PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../Cap7CE.WinUI/Models/ModelPreviewPolicy.cs;../Cap7CE.WinUI/Services/ModelPreviewResources.cs;../Cap7CE.WinUI/Services/FileAccessGuard.cs;../Cap7CE.WinUI/Localization/UiFailure.cs;../Cap7CE.WinUI/Localization/UiMessage.cs;../Cap7CE.WinUI/Localization/LanguageSession.cs;../Cap7CE.WinUI/Localization/LanguageCatalog.cs" Link="%(Filename)%(Extension)" />
+    <ProjectReference Include="../../core/src/Cap7CE.Core.Protocol/Cap7CE.Core.Protocol.csproj" />
+  </ItemGroup>
+</Project>

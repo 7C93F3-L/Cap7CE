@@ -3999,5 +3999,25 @@
   "ui.installer.search.completed": {
     "zh-CN": "搜索服务配置完成。",
     "en-US": "Search service configuration complete."
+  },
+  "ui.preview.modelReset": {
+    "zh-CN": "复位模型视角",
+    "en-US": "Reset model view"
+  },
+  "ui.preview.modelGray": {
+    "zh-CN": "切换灰模查看",
+    "en-US": "Toggle gray model view"
+  },
+  "ui.preview.modelFailed": {
+    "zh-CN": "此模型暂时无法预览，可在默认应用中打开。",
+    "en-US": "This model could not be previewed. Open it in the default app."
+  },
+  "ui.preview.modelTooLarge": {
+    "zh-CN": "此模型超过64 MiB预览上限，请在默认应用中打开。",
+    "en-US": "This model exceeds the 64 MiB preview limit. Open it in the default app."
+  },
+  "ui.preview.modelResources": {
+    "zh-CN": "此模型的配套资源超过预览上限，请在默认应用中打开。",
+    "en-US": "This model exceeds the preview resource limit. Open it in the default app."
   }
 }

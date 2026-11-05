@@ -34,10 +34,11 @@
     "build:node": "tsc -p tsconfig.json",
     "test:source": "node scripts/native-source-check.cjs && npm run test:architecture && node scripts/winui-shell-boundary-check.cjs",
     "test:layout": "dotnet run --project shell/Cap7CE.Layout.Tests/Cap7CE.Layout.Tests.csproj -c Release",
+    "test:model-preview": "dotnet run --project shell/Cap7CE.ModelPreview.Tests/Cap7CE.ModelPreview.Tests.csproj -c Release && node tests/model-preview.integration.cjs",
     "test:browse": "dotnet run --project shell/Cap7CE.Browse.Tests/Cap7CE.Browse.Tests.csproj -c Release",
     "test:core": "npm run test:core-restore-profiles && dotnet run --project core/tests/Cap7CE.Core.Tests/Cap7CE.Core.Tests.csproj -c Release",
     "test:runtime": "node tests/animation-fact.integration.cjs && node tests/archive-metadata-reader.integration.cjs && node tests/image-metadata-inspector.integration.cjs && node tests/video-metadata-frames.integration.cjs && node tests/llama-runtime-idle.integration.cjs && node tests/three-d-known-properties.integration.cjs && node tests/metadata-extractor-manifest.integration.cjs && node tests/core-directory-sort.integration.cjs && node tests/core-model-settings.integration.cjs && node tests/pdf-thumbnail-native.integration.cjs && node tests/exr-native.integration.cjs && node tests/core-visual-execution-lifetime.integration.cjs && node tests/metadata-runtime.integration.cjs && node tests/native-providers.integration.cjs && node tests/native-update.integration.cjs && node tests/resource-catalog.integration.cjs",
-    "test": "npm run test:source && npm run test:layout && npm run test:browse && npm run test:core && npm run test:runtime",
+    "test": "npm run test:source && npm run test:layout && npm run test:browse && npm run test:model-preview && npm run test:core && npm run test:runtime",
     "test:architecture": "node scripts/core-architecture-suite.cjs",
     "test:core-restore-profiles": "node tests/core-restore-profiles.integration.cjs",
     "test:core-setup-native": "node scripts/core-setup-native-smoke.cjs",
@@ -65,8 +66,11 @@
     "word-extractor": "^1.0.4"
   },
   "devDependencies": {
+    "@babylonjs/core": "9.33.3",
+    "@babylonjs/loaders": "9.33.3",
     "@types/node": "^24.13.3",
     "@types/word-extractor": "^1.0.2",
+    "babylonjs-gltf2interface": "9.33.3",
     "cross-env": "^7.0.3",
     "esbuild": "0.28.1",
     "typescript": "^5.7.2"

@@ -49,6 +49,12 @@ module.exports = (root, output) => {
     components.push({ ecosystem: 'npm', name, version: metadata.version, license: metadata.license ?? metadata.licenses,
       notices: `artifacts/metadata-worker/v1/${fs.existsSync(path.join(worker, 'licenses', name)) ? 'licenses' : 'node_modules'}/${name}` });
   }
+  for (const name of ['@babylonjs/core', '@babylonjs/loaders']) {
+    const version = lock.packages[`node_modules/${name}`].version;
+    const notices = `shell/artifacts/winui/Assets/ModelPreview/licenses/${name}`;
+    if (!fs.existsSync(path.join(output, notices, 'license.md'))) throw new Error(`Missing model preview license: ${name}`);
+    components.push({ ecosystem: 'npm', name, version, license: 'Apache-2.0', notices });
+  }
   fs.writeFileSync(path.join(target, 'components.json'), JSON.stringify({ product: 'Cap7CE', version: require('../package.json').version,
     scope: 'WinUI NuGet/runtime and independent Node packages; Core and native helper notices remain beside their payloads', components }, null, 2) + '\n');
   console.log(`Runtime notices published: ${components.length} locked dependency records.`);

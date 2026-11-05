@@ -1,5 +1,5 @@
 export type FileFormatCategory = "visual" | "text" | "document" | "data" | "archive" | "audio" | "video" | "font" | "threeD" | "project" | "model";
-export type FilePreviewKind = "image" | "fileInfo" | "text" | "audio" | "video" | "pdf" | "office" | "archive" | "font" | "epub" | "mobi";
+export type FilePreviewKind = "image" | "fileInfo" | "text" | "audio" | "video" | "pdf" | "office" | "archive" | "font" | "epub" | "mobi" | "threeD";
 export type NaturalFileKind =
   | "image"
   | "vector"
@@ -146,7 +146,7 @@ const contentPreviewKinds = new Map<string, FilePreviewKind>([
   ["7z", "archive"], ["rar", "archive"], ["zip", "archive"],
   ["otf", "font"], ["ttf", "font"],
   ["epub", "epub"],
-  ["mobi", "mobi"],
+  ["mobi", "mobi"], ["obj", "threeD"], ["glb", "threeD"], ["gltf", "threeD"],
   ["flac", "audio"], ["m4a", "audio"], ["mp3", "audio"], ["ogg", "audio"], ["wav", "audio"],
   ["ape", "audio"],
   ["mkv", "video"], ["mp4", "video"], ["mov", "video"], ["webm", "video"]

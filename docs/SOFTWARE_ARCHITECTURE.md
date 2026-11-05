@@ -1,5 +1,7 @@
 # Cap7CE 软件架构
 
+GLB/glTF、OBJ基础预览由Controls/ModelPreview中的独立WebView2控件承载，使用锁定版本Babylon.js离线脚本；仅该可信页面启用脚本，不开放HostObject、外部导航、下载或权限。modelLoader负责解析与OBJ内存灰模回退，modelScene负责相机、灯光及材质切换；不接入Catalog、Node任务或缩略图缓存。ModelPreviewResources唯一拥有显示快照读取，复用FileAccessGuard身份/链接检查，只允许模型及同目录子树内白名单配套文件；主文件和单资源各限64 MiB、累计256 MiB、128次请求、两路读取。控件启动限20秒，关闭、切换、取消和渲染进程失败均释放WebView及响应内存，读取完成立即关闭源文件句柄。构建只分发约4 MiB脚本与许可证，不分发Sandbox或完整npm库；model-preview-architecture-check及ModelPreview测试守护模块、资源范围与生命周期边界。
+
 当前源码主线为 Windows x64 / C# / WinUI 3，当前版本为 2.0.2。Electron/Renderer/Preload 源码、React/Vite 和旧构建入口已退役；历史实现与迁移记录可从 Git 历史查看。安装布局和数据所有权延续2.0.0，本轮不新增用户数据迁移。
 
 global.json固定.NET SDK 10.0.403补丁系列，运行时、NativeAOT及链接工具基线为10.0.14。安装前置清单固定官方Windows x64运行时的下载地址和SHA-512，原生设置页与Setup共用该清单；依赖审计保持启用，锁定文件及架构检查同步维护安全补丁版本。native-build记录原生运行组件的SDK基线，基线变化或记录缺失时重建Configuration、FileOperations及产品Setup载荷，避免沿用旧AOT缓存。

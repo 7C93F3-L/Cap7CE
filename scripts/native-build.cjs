@@ -32,6 +32,7 @@ require('./core-development-host-safety.cjs').assertStopped(coreOutput);
 run('dotnet', ['publish', 'core/src/Cap7CE.Core.Host/Cap7CE.Core.Host.csproj', '-c', 'Release', '-r', 'win-x64',
   '--self-contained', 'false', '-p:P38ProductProfile=true', '-o', coreOutput]);
 node('winui-resources.cjs');
+node('model-preview-build.cjs');
 run('dotnet', ['publish', 'shell/Cap7CE.QueryHost/Cap7CE.QueryHost.csproj', '-c', 'Release', '--self-contained', 'false', '-o', 'shell/artifacts/query']);
 run('dotnet', ['build', 'shell/Cap7CE.WinUI/Cap7CE.WinUI.csproj', '-c', 'Release', '-p:Platform=x64', '-o', 'shell/artifacts/winui']);
 node('winui-shell-boundary-check.cjs');
