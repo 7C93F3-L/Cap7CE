@@ -158,11 +158,11 @@ Require(CatalogNameLabel.Format("abcdefghijk.png",10,false,NameWidth)=="abcdef�
 Require(CatalogNameLabel.Format("😀😀😀😀😀😀😀😀😀😀",6,false,NameWidth)=="😀😀😀…😀😀","Middle omission preserves Unicode scalar boundaries");
 Require(CatalogNameLabel.Format("long.png",0,true,NameWidth)=="","Zero-width labels do not overflow");
 string MenuIds(int count,bool home,bool folder)=>string.Join(",",ResultMenuRules.Create(count,home,folder).Select(action=>action.Id));
-Require(MenuIds(1,true,true)=="preview,open,reveal,copyPaths,favorite,autoKeywords,metadata","Home single directory menu matches mainline order");
-Require(MenuIds(2,true,true)=="preview,open,reveal,copyPaths","Home multi-selection omits single-directory actions");
-Require(MenuIds(1,false,true)=="preview,open,reveal,copyPaths,rename,delete,favorite,editKeywords,autoKeywords,metadata","Directory result menu matches mainline order");
-Require(MenuIds(1,false,false)=="preview,open,reveal,copyPaths,rename,delete,editKeywords,autoKeywords","File menu omits directory actions");
-Require(MenuIds(2,false,true)=="preview,open,reveal,copyPaths,rename,delete,editKeywords,autoKeywords","Multi-selection menu omits single-directory actions");
+Require(MenuIds(1,true,true)=="preview,open,reveal,copyPaths,copyFiles,favorite,autoKeywords,metadata","Home single directory menu matches mainline order");
+Require(MenuIds(2,true,true)=="preview,open,reveal,copyPaths,copyFiles","Home multi-selection omits single-directory actions");
+Require(MenuIds(1,false,true)=="preview,open,reveal,copyPaths,copyFiles,cutFiles,rename,delete,favorite,editKeywords,autoKeywords,metadata","Directory result menu matches mainline order");
+Require(MenuIds(1,false,false)=="preview,open,reveal,copyPaths,copyFiles,cutFiles,rename,delete,editKeywords,autoKeywords","File menu omits directory actions");
+Require(MenuIds(2,false,true)=="preview,open,reveal,copyPaths,copyFiles,cutFiles,rename,delete,editKeywords,autoKeywords","Multi-selection menu omits single-directory actions");
 Require(ResultMenuRules.Create(1,false,true).Single(action=>action.NewGroup).Id=="editKeywords"&&ResultMenuRules.Create(0,false,false).Count==0,"Menu groups and empty selection stay valid");
 var path=WorkspacePathRules.Crumbs(@"C:\Design Assets\中文","My PC");
 Require(path.Count==4&&path[1].Path==@"C:\"&&path[^1].Path==@"C:\Design Assets\中文","Breadcrumbs preserve drive root, spaces and Unicode");

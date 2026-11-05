@@ -78,10 +78,16 @@ internal sealed class FileCommands(ShellServices services, Func<XamlRoot> xamlRo
         var info = new ProcessStartInfo("explorer.exe") { UseShellExecute = true };
         info.ArgumentList.Add(Path.GetFullPath(path)); Process.Start(info);
     }
-    public static async Task CopyFilesAsync(IReadOnlyList<AssetItem> items)
+    public static Task CopyFilesAsync(IReadOnlyList<AssetItem> items)=>ClipboardFilesAsync(items,false);
+    public Task CutFilesAsync(IReadOnlyList<AssetItem> items)
     {
-        var files = await StorageItemsAsync(items); var data = new DataPackage { RequestedOperation = DataPackageOperation.Copy };
-        data.SetStorageItems(files, true); Clipboard.SetContent(data);
+        if(!CanDelete(items))throw new UiFailure("ui.error.fileSelection");
+        return ClipboardFilesAsync(items,true);
+    }
+    private static async Task ClipboardFilesAsync(IReadOnlyList<AssetItem> items,bool cut)
+    {
+        var files = await StorageItemsAsync(items); var data = new DataPackage { RequestedOperation = cut?DataPackageOperation.Move:DataPackageOperation.Copy };
+        data.SetStorageItems(files, !cut); Clipboard.SetContent(data);
     }
     public static async Task<IReadOnlyList<IStorageItem>> StorageItemsAsync(IReadOnlyList<AssetItem> items)
     {

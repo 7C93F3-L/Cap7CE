@@ -19,6 +19,8 @@ internal static class ResultContextMenu
                 "preview"=>L.MenuItem("menu.preview",()=>commands.Run(()=>{commands.Preview(first);return Task.CompletedTask;}),"\uE8A7"),
                 "open"=>L.MenuItem("menu.open",()=>commands.Run(()=>{commands.Open(first);return Task.CompletedTask;}),"\uE8A5"),
                 "reveal"=>L.MenuItem("menu.reveal",()=>commands.Run(()=>{commands.Reveal(first);return Task.CompletedTask;}),"\uE838"),
+                "copyFiles"=>L.MenuItem("menu.copy",()=>commands.Run(()=>FileCommands.CopyFilesAsync(items)),"\uE8C8"),
+                "cutFiles"=>L.MenuItem("menu.cut",()=>commands.Run(()=>commands.CutFilesAsync(items)),"\uE8C6"),
                 "copyPaths"=>L.MenuItem("menu.copyPath",()=>commands.Run(()=>{FileCommands.CopyPaths(items);return Task.CompletedTask;}),"\uE8C8"),
                 "rename"=>L.MenuItem("menu.rename",()=>commands.Rename(items),"\uE8AC"),
                 "delete"=>L.MenuItem("menu.delete",()=>commands.Run(()=>commands.DeleteAsync(items)),"\uE74D"),
@@ -29,6 +31,7 @@ internal static class ResultContextMenu
             };
             if(action.Id=="rename"){item.IsEnabled=commands.CanRename(items);L.Bind(item,ToolTipService.ToolTipProperty,item.IsEnabled?"ui.rename.hint":"ui.rename.selectionHint");}
             if(action.Id=="delete")item.IsEnabled=commands.CanDelete(items);
+            if(action.Id=="cutFiles")item.IsEnabled=commands.CanDelete(items);
             if(action.Id=="autoKeywords"){
                 item.Icon=AiActionIcon.Attach(item);
                 var reason=commands.KeywordsUnavailable(items,automatic:true);

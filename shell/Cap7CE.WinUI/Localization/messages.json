@@ -963,6 +963,9 @@
     "zh-CN": "打开路径",
     "en-US": "Open file location"
   },
+  "menu.copy":{"zh-CN":"复制","en-US":"Copy"},
+  "menu.cut":{"zh-CN":"剪切","en-US":"Cut"},
+  "ui.shortcuts.action.cutFiles":{"zh-CN":"剪切选中文件","en-US":"Cut selected files"},
   "menu.copyPath": {
     "zh-CN": "复制路径",
     "en-US": "Copy path"

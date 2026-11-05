@@ -25,6 +25,7 @@ internal sealed class WindowShortcutService:IDisposable
         actions["renameSelected"]=()=>Selected(commands.Rename);
         actions["deleteSelected"]=()=>Selected(items=>{if(items.All(item=>item.Entry.FileReference is not null))commands.Run(()=>commands.DeleteAsync(items));});
         actions["selectAll"]=results.SelectAll;actions["copyFiles"]=()=>Selected(items=>commands.Run(()=>FileCommands.CopyFilesAsync(items)));
+        actions["cutFiles"]=()=>Selected(items=>commands.Run(()=>commands.CutFilesAsync(items)));
         actions["copyPaths"]=()=>Selected(FileCommands.CopyPaths);actions["revealFile"]=()=>Selected(items=>commands.Reveal(items[0]));
         actions["aiKeywords"]=()=>Selected(commands.AutoKeywords);
         actions["toggleFavorite"]=()=>Selected(commands.ToggleFavorite);
