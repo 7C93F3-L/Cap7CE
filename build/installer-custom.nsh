@@ -30,7 +30,8 @@ LangString cap7ceSearchSetupAccount 2052 "安装器与当前桌面账户不同�
   DetailPrint "$(cap7ceSearchSetupProgress)"
   cap7ce_search_setup_retry:
     ClearErrors
-    ExecWait '"$INSTDIR\app\${PRODUCT_FILENAME}.exe" --install-search-service' $0
+    nsExec::ExecToLog '"$INSTDIR\app\${PRODUCT_FILENAME}.exe" --install-search-service --language $LANGUAGE'
+    Pop $0
     ${if} ${Errors}
       StrCpy $0 "error"
     ${endif}

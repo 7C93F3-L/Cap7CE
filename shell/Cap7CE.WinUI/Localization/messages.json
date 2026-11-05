@@ -3971,5 +3971,33 @@
   "ui.error.operationFailed": {
     "zh-CN": "操作未完成，请重试；仍失败时，请查看诊断信息。",
     "en-US": "The operation did not finish. Retry; if it still fails, check diagnostics."
+  },
+  "ui.installer.search.checkRuntime": {
+    "zh-CN": "正在检查 .NET 运行时…",
+    "en-US": "Checking .NET runtime..."
+  },
+  "ui.installer.search.downloading": {
+    "zh-CN": "正在下载 .NET 运行时，请稍候…",
+    "en-US": "Downloading .NET runtime, please wait..."
+  },
+  "ui.installer.search.downloadPercent": {
+    "zh-CN": "正在下载 .NET 运行时：{percent}%",
+    "en-US": "Downloading .NET runtime: {percent}%"
+  },
+  "ui.installer.search.verifying": {
+    "zh-CN": "下载完成，正在校验…",
+    "en-US": "Download complete. Verifying..."
+  },
+  "ui.installer.search.installRuntime": {
+    "zh-CN": "请完成弹出的 .NET 安装。期间请勿强制关闭窗口。",
+    "en-US": "Complete the .NET setup window. Do not force-close the windows."
+  },
+  "ui.installer.search.configuring": {
+    "zh-CN": "正在配置搜索服务，请稍候…",
+    "en-US": "Configuring search service, please wait..."
+  },
+  "ui.installer.search.completed": {
+    "zh-CN": "搜索服务配置完成。",
+    "en-US": "Search service configuration complete."
   }
 }

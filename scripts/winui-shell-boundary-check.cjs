@@ -37,10 +37,14 @@ assert(session.includes('allowedOperations is null || allowedOperations.Contains
 const project = read('shell/Cap7CE.WinUI/Cap7CE.WinUI.csproj');
 const identitySource=read('shell/Cap7CE.WinUI/Services/ApplicationIdentity.cs');
 const setupSource=read('shell/Cap7CE.WinUI/Services/NativeCoreSetup.cs');
+assert(read('build/installer-custom.nsh').includes('nsExec::ExecToLog')
+  &&read('shell/Cap7CE.WinUI/Services/InstallerSearchSetup.cs').includes('Encoding.Unicode')
+  &&read('shell/Cap7CE.WinUI/Services/CoreRuntimeInstaller.cs').includes('if(percent>reported)'),
+  'installer runtime progress must use the existing Unicode output pipe with bounded real-percent updates');
 assert(setupSource.includes('CoreSetupVolumes.Read()')&&setupSource.includes('CoreSetupVolumes.Arguments(repair,volumes)')
   &&read('shell/Cap7CE.WinUI/Services/CoreSetupVolumes.cs').includes('"--volumes"'),
   'native service setup must pass fixed NTFS volumes instead of selecting the disconnect fixture');
-assert(setupSource.indexOf('await CoreRuntimePrerequisite.EnsureAsync()')<setupSource.indexOf('await beforeSetup()')
+assert(setupSource.indexOf('await CoreRuntimePrerequisite.EnsureAsync(progress)')<setupSource.indexOf('await beforeSetup()')
   && setupSource.indexOf('await beforeSetup()')<setupSource.indexOf('Process.Start(info)'),
   'runtime prerequisites must complete before disconnecting Core and launching capability setup');
 assert(project.includes('capability-setup-manifest.v1.json')

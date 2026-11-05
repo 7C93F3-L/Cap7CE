@@ -46,7 +46,11 @@ SectionEnd
     assert.equal(result.status,code,'installer must preserve the setup result');
     assert.equal(fs.existsSync(path.join(fixture,'completed.txt')),code===0,'setup failure must block normal completion');
     assert(fs.readFileSync(path.join(fixture,'arguments.txt'),'utf8').includes('--install-search-service'),'service setup is mandatory');
+    assert(/--language (1033|2052)/.test(fs.readFileSync(path.join(fixture,'arguments.txt'),'utf8')),'installer language must reach the progress output');
   }
+  const progress=spawnSync(process.execPath,[path.join(__dirname,'native-installer-progress-smoke.cjs')],
+    {encoding:'utf8',windowsHide:true,timeout:90000});
+  assert.equal(progress.status,0,progress.stdout+progress.stderr);process.stdout.write(progress.stdout);
   console.log('NSIS install fixtures passed: mandatory service setup, success, failure, restart and account mismatch. No product state changed.');
 }finally{
   assert.equal(path.dirname(root),path.resolve(os.tmpdir()));assert(path.basename(root).startsWith('cap7ce-install-lifecycle-'));

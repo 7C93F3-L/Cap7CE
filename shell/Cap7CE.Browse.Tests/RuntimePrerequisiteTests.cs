@@ -44,15 +44,17 @@ internal static class RuntimePrerequisiteTests
                 if(scenario=="ready")installed=true;
                 return Task.FromResult(scenario=="reboot"?3010:scenario=="cancelled"?1602:0);
             });
-            var result=await owner.EnsureAsync();
+            var progress=new List<CoreRuntimeProgress>();var result=await owner.EnsureAsync(progress:progress.Add);
             var expected=scenario is "present" or "ready"?CoreRuntimeResult.Ready:
                 scenario is "reboot" or "undetected"?CoreRuntimeResult.RestartRequired:CoreRuntimeResult.Failed;
             Require(result==expected,"runtime result: "+scenario);
             Require(downloads==(scenario=="present"?0:1),"present runtime must not download");
             Require(launches==(scenario is "ready" or "reboot" or "undetected" or "cancelled"?1:0),"invalid downloads must never launch");
+            Require(progress.Any(p=>p.Stage==CoreRuntimeStage.Installing)==(launches>0),"invalid downloads cannot claim to start installation");
             if(path is not null)Require(!Directory.Exists(Path.GetDirectoryName(path)),"temporary installer must be removed");
         }
         Console.WriteLine("Runtime prerequisite regression passed: detection, bounded download, digest, foreground install, cancellation, restart and cleanup. Fixtures only.");
+        await RuntimeDownloadProgressTests.RunAsync();
     }
     private sealed class Handler(Func<HttpRequestMessage,HttpResponseMessage> respond):HttpMessageHandler
     {

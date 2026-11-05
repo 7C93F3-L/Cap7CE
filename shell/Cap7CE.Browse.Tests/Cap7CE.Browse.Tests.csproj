@@ -5,7 +5,7 @@
     <Compile Include="../Cap7CE.WinUI/Services/NativeContentPaths.cs" Link="NativeContentPaths.cs" />
     <Compile Include="../Cap7CE.WinUI/Models/IndexOnboardingPolicy.cs;../Cap7CE.WinUI/Services/IndexBuildActions.cs" Link="%(Filename)%(Extension)" />
     <Compile Include="../Cap7CE.WinUI/Services/CoreSetupVolumes.cs" Link="CoreSetupVolumes.cs" />
-    <Compile Include="../Cap7CE.WinUI/Services/CoreRuntimePolicy.cs;../Cap7CE.WinUI/Services/CoreRuntimeInstaller.cs" Link="%(Filename)%(Extension)" />
+    <Compile Include="../Cap7CE.WinUI/Services/CoreRuntimePolicy.cs;../Cap7CE.WinUI/Services/CoreRuntimeInstaller.cs;../Cap7CE.WinUI/Services/CoreRuntimeProgress.cs;../Cap7CE.WinUI/Services/InstallerSearchProgress.cs" Link="%(Filename)%(Extension)" />
     <EmbeddedResource Include="../../core/deployment/capability-setup-manifest.v1.json" LogicalName="Cap7CE.CoreRuntimePolicy.json" />
     <Compile Include="../Cap7CE.WinUI/Models/ShortcutCatalog.cs;../Cap7CE.WinUI/Models/ShortcutGesture.cs" Link="%(Filename)%(Extension)" />
     <Compile Include="../Cap7CE.WinUI/Controllers/PreviewSelectionController.cs" Link="PreviewSelectionController.cs" />

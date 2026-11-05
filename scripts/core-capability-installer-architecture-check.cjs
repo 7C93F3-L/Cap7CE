@@ -32,7 +32,8 @@ if (!(capabilityNsis.indexOf('Call RequireStopped') < capabilityNsis.indexOf('RM
 const packageJson = JSON.parse(read("package.json"));
 const installerSmoke = read("scripts/native-installer-smoke.cjs");
 const installHook=installerNsis.split('!macro customInstall')[1]?.split('!macroend')[0]??"";
-requireAnchor(installHook, 'ExecWait', "synchronous mandatory search setup before installation completes");
+requireAnchor(installHook, 'nsExec::ExecToLog', "synchronous mandatory search setup with live installer details");
+requireAnchor(installHook, 'Pop $0', "captured setup exit code before completion");
 requireAnchor(installHook, '--install-search-service', "default service configuration for installs and updates");
 requireAnchor(installHook, 'SetErrorLevel 3010', "restart-required installation result");
 requireAnchor(installHook, 'Abort', "installation failure when search setup fails");

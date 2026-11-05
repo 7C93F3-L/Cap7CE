@@ -6,12 +6,12 @@ namespace Cap7CE.WinUI.Services;
 
 internal static class CoreRuntimePrerequisite
 {
-    public static async Task EnsureAsync()
+    public static async Task EnsureAsync(Action<CoreRuntimeProgress>? progress=null)
     {
         var policy=CoreRuntimePolicy.Load();
         using var client=new HttpClient();client.DefaultRequestHeaders.UserAgent.ParseAdd("Cap7CE/CoreCapability");
         var installer=new CoreRuntimeInstaller(policy,policy.IsInstalled,client,RunForegroundAsync,error=>NativeDiagnostics.CoreFailure(error.ToString()));
-        var result=await installer.EnsureAsync();
+        var result=await installer.EnsureAsync(progress:progress);
         if(result!=CoreRuntimeResult.Ready)throw new UiFailure(result==CoreRuntimeResult.RestartRequired
             ?"ui.error.runtimeRestartRequired":"ui.error.runtimeInstallFailed");
     }
