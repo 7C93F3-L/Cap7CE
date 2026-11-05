@@ -45,15 +45,16 @@ public sealed partial class CatalogV2Database
         var beforePaths=impact is null?null:await CatalogChangePaths.ReadAsync(connection,transaction,batch,token);
         if (!entryRetry) batch = await DirectoryEntries.CatalogJournalEntryParents.DeferAsync(connection, transaction, batch, token);
         batch = batch with { Nodes = await DirectoryEntries.CatalogFileEntryPendingPublication.MergeInvalidationsAsync(connection, transaction, batch, token) };
-        var pathsChanged = (maintenance || volume.State == CatalogV2VolumeState.CatchingUp)
-            && await CatalogDirectoryPathChanges.RequiresRebuildAsync(connection, transaction, batch.Nodes, token);
+        IReadOnlyList<CatalogEntryIdentity> pathChanges = maintenance || volume.State == CatalogV2VolumeState.CatchingUp
+            ? await CatalogDirectoryPathChanges.ReadAsync(connection, transaction, batch.Nodes, token) : [];
         await FileFacts.FileFactCatalogInvalidation.ApplyNodesAsync(connection, transaction, batch.Nodes, token);
         await UpsertNodesAsync(connection, transaction, "catalog_nodes_v2", batch.Nodes, token);
         await DirectoryEntries.CatalogFileEntryPublication.ApplyAsync(connection, transaction, batch, token);
         await DirectoryEntries.CatalogFileEntryPendingPublication.ApplyAsync(connection, transaction, batch, token);
         if (maintenance || volume.State == CatalogV2VolumeState.CatchingUp)
             await FileFacts.FileFactChangeLog.RecordAsync(connection, transaction, batch.Nodes, token);
-        if (pathsChanged)
+        if (pathChanges.Count > 0 && (pathChanges.Count != 1
+            || !await TryUpdateLeafDirectoryPathAsync(connection, transaction, pathChanges[0], token)))
         {
             await RebuildDirectoryPathsAsync(connection, transaction, batch.VolumeId, token);
         }

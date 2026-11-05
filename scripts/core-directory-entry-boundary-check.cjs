@@ -85,6 +85,8 @@ module.exports = (root, sourceFiles, failures) => {
     "core/src/Cap7CE.Core.Host/DirectoryEntries/CatalogDirectoryEntryRetryOwner.cs": 50,
     "core/src/Cap7CE.Core.Host/DirectoryEntries/CatalogDirectoryEntryRetryPublication.cs": 40,
     "core/src/Cap7CE.Core.Catalog/Transactions/CatalogBatchPublication.cs": 90,
+    "core/src/Cap7CE.Core.Catalog/Transactions/CatalogLeafDirectoryPaths.cs": 55,
+    "core/src/Cap7CE.Core.Catalog/CatalogDirectoryPathChanges.cs": 45,
     "core/src/Cap7CE.Core.Catalog/FileFacts/FileFactEntryPolicy.cs": 45,
     "core/src/Cap7CE.Core.Catalog/FileFacts/FileFactEntryDiscoverySql.cs": 20,
     "core/src/Cap7CE.Core.Catalog/FileFacts/FileFactEntryJobHints.cs": 55,
