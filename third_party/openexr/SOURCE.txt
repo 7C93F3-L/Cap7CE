@@ -1,0 +1,16 @@
+OpenEXR 3.5.2: https://github.com/AcademySoftwareFoundation/openexr/tree/v3.5.2
+Official source distribution: https://pypi.org/project/OpenEXR/3.5.2/#files
+Imath 3.2.3: https://github.com/AcademySoftwareFoundation/Imath/tree/v3.2.3
+
+Cap7CE statically links the C++ OpenEXR reader into its isolated native visual helper.
+Python bindings, Python, tests and command-line tools are not shipped.
+Exact source archive URLs and SHA-256 digests are locked in sources.json.
+Build sources and intermediate files stay under ignored native/artifacts/openexr.
+
+OpenEXR's source archive includes libdeflate 1.26 (MIT), OpenJPH 0.32.0
+(BSD-2-Clause), and zstd 1.5.7 (distributed under its BSD license option).
+OpenEXR and Imath use BSD-3-Clause. Complete upstream license texts are retained
+beside this file and copied to native/artifacts/core-visuals/v1/licenses/openexr.
+
+tests/support/exr-fixtures.json contains synthetic 2x2 constant-color images
+generated with OpenEXR 3.5.2; no customer or user image data is included.

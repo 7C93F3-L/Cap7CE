@@ -6,6 +6,8 @@ This file is a human-readable inventory for Cap7CE 2.0.0. The installer includes
 
 ## Primary runtime components
 
+EXR thumbnails and static previews use OpenEXR 3.5.2 and Imath 3.2.3 (BSD-3-Clause), statically linked into the isolated native visual helper. The OpenEXR source includes libdeflate 1.26 (MIT), OpenJPH 0.32.0 (BSD-2-Clause), and zstd 1.5.7 (BSD license option). Source archive URLs, SHA-256 digests and complete upstream license texts are retained in `third_party/openexr` and distributed under `native/artifacts/core-visuals/v1/licenses/openexr`. Python bindings and tools are not distributed.
+
 The AI action's Sparkle Regular/Filled vector geometry comes from Microsoft's [Fluent UI System Icons](https://github.com/microsoft/fluentui-system-icons), under the MIT License, copyright (c) 2020 Microsoft Corporation. The complete license is retained in `third_party/fluentui-system-icons/LICENSE` and copied to the WinUI output as `Assets/fluentui-system-icons-LICENSE.txt`.
 
 | Component | License |

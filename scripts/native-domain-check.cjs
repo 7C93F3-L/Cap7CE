@@ -1,9 +1,14 @@
 const assert = require('node:assert/strict');
 module.exports = read => {
   assert(read('native/Cap7CE.Core.Visuals/pdf_thumbnail.cpp').trimEnd().split(/\r?\n/).length <= 45, 'PDF native decoder size boundary');
+  for (const name of ['exr_source', 'exr_render'])
+    assert(read(`native/Cap7CE.Core.Visuals/${name}.cpp`).trimEnd().split(/\r?\n/).length <= 95, `${name}: native EXR size boundary`);
   const anchors = {
+    'native/Cap7CE.Core.Visuals/exr_source.cpp': ['maximumPixels = 16000000', '512LL * 1024 * 1024', 'file.parts() > 16', 'channels > 128', 'Composite.Combined.', 'Slice::Make'],
+    'native/Cap7CE.Core.Visuals/exr_render.cpp': ['0.0031308f', 'value / alpha', '16000000', '40 * 1024 * 1024'],
+    'native/Cap7CE.Core.Visuals/main.cpp': ['--pdf-thumbnail', '--exr-thumbnail'],
     'native/Cap7CE.Core.Visuals/pdf_thumbnail.cpp': ['PdfDocument::LoadFromFileAsync', 'document.GetPage(0)', '16000000', '40 * 1024 * 1024'],
-    'core/node/visualRendering/shell/coreShellThumbnail.ts': ['--pdf-thumbnail', 'child.kill()', 'timeoutMs = 15000'],
+    'core/node/visualRendering/shell/coreShellThumbnail.ts': ['--${mode}-thumbnail', 'child.kill()', 'timeoutMs = 15000'],
     'core/node/visualCache/store.ts': ['createVisualCachePublications()', 'publicationOwner', 'createHmac("sha256", secret)', 'verifyEntry(entry)', 'maximumConcurrentCacheStatReads = 2'],
     'core/node/visualCache/publication.ts': ['visualCacheEpoch'],
     'core/node/visualRendering/renderSource.ts': ['sharp.concurrency(2)', 'memory: 64', 'files: 20', 'items: 100', 'maxWidth: 1536', 'jpegQuality: 90', 'maxWidth: 2560', 'withoutEnlargement: true', 'visualScratchDirectory()'],

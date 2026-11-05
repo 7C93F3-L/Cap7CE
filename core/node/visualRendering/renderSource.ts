@@ -1,6 +1,7 @@
 import path from "node:path";
 import sharp, { type Sharp } from "sharp";
 import { readCdrFlattenedPreview } from "../fileFacts/domain/cdrRenderService";
+import { nativeDocumentSourceRenderers } from "./shell/nativeDocumentRenderers";
 import { renderPdfFirstPage } from "./decoders/pdfRenderService";
 import { renderPsdFlattenedPreview } from "./decoders/psdRenderService";
 import {
@@ -62,9 +63,7 @@ const documentSourceRenderers: Record<
   string,
   (sourcePath: string, strategy: VisualRenderStrategy) => Promise<Buffer>
 > = {
-  ".pdf": (sourcePath, strategy) => (
-    requestCoreShellThumbnail(sourcePath, Math.max(strategy.maxWidth, strategy.maxHeight), visualNativeExecutable(), 15000, "pdf")
-  ),
+  ...nativeDocumentSourceRenderers,
   ".psd": (sourcePath) => (
     renderPsdFlattenedPreview(sourcePath)
   ),

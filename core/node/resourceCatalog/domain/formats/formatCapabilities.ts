@@ -37,7 +37,7 @@ export interface FileFormatCapability {
 }
 
 const visualFormatGroups: ReadonlyArray<readonly [readonly string[], readonly NaturalFileKind[]]> = [
-  [["jpg", "jpeg", "png", "webp", "avif", "bmp", "tif", "tiff", "gif"], ["image"]],
+  [["jpg", "jpeg", "png", "webp", "avif", "bmp", "tif", "tiff", "gif", "exr"], ["image"]],
   [["svg"], ["vector"]],
   [["pdf"], ["document"]],
   [["psd"], ["designSource", "photoshopSource"]],
@@ -61,7 +61,7 @@ const nonVisualFormatGroups: ReadonlyArray<readonly [FileFormatCategory, readonl
 ];
 
 const browseOnlyFormatGroups: ReadonlyArray<readonly [FileFormatCategory, readonly string[]]> = [
-  ["visual", ["heic", "heif", "jfif", "psb", "tga", "exr", "hdr", "dng", "cr2", "cr3", "nef", "arw", "raf", "orf", "rw2"]],
+  ["visual", ["heic", "heif", "jfif", "psb", "tga", "hdr", "dng", "cr2", "cr3", "nef", "arw", "raf", "orf", "rw2"]],
   ["video", ["wmv", "mpg", "mpeg", "mts", "m2ts", "mxf", "flv", "rmvb", "3gp", "swf"]],
   ["audio", ["wma", "opus", "aif", "aiff", "ape"]],
   ["document", ["odt", "ods", "odp", "wps", "et", "dps", "one", "xps", "oxps"]],
@@ -109,7 +109,7 @@ const getNaturalSearchKinds = (category: FileFormatCategory, extension: string):
 const compactViewHiddenExtensions = new Set([
   "html", "ini", "css", "js", "py", "json", "xml", "yaml", "yml",
   "gz", "tar", "iso", "woff", "woff2",
-  "psb", "tga", "exr", "hdr", "dng", "cr2", "cr3", "nef", "arw", "raf", "orf", "rw2",
+  "psb", "tga", "hdr", "dng", "cr2", "cr3", "nef", "arw", "raf", "orf", "rw2",
   "wmv", "mpg", "mpeg", "mts", "m2ts", "mxf", "flv", "rmvb", "3gp", "swf",
   "wma", "opus", "aif", "aiff", "ape",
   "odt", "ods", "odp", "wps", "et", "dps", "one", "xps", "oxps",
@@ -167,7 +167,7 @@ const visualCapabilities = visualFormatGroups.flatMap(([extensions, naturalSearc
       canShellPreview: false,
       previewKind: dottedExtension === ".pdf" ? "pdf" : "image",
       canDirectPreview: directPreviewExtensions.has(dottedExtension),
-      canAIIndex: true,
+      canAIIndex: extension !== "exr",
       naturalSearchKinds
     };
   })

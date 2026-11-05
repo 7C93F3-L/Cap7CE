@@ -69,7 +69,7 @@
   "core/node/visualRendering/directPreview.ts": 90,
   "core/node/visualRendering/owner.ts": 45,
   "core/node/visualRendering/preparation.ts": 75,
-  "core/node/visualRendering/renderSource.ts": 232,
+  "core/node/visualRendering/renderSource.ts": 231,
   "core/node/visualRendering/resources.ts": 11,
   "core/node/visualRendering/worker.ts": 37,
   "core/node/visualRendering/workerSlot.ts": 85,
@@ -202,5 +202,6 @@
   "core/shared/textPreviewTypes.d.ts": 6,
   "core/shared/types.ts": 78,
   "core/shared/visualCacheTypes.d.ts": 61,
-  "core/shared/visualRenderTypes.d.ts": 16
+  "core/shared/visualRenderTypes.d.ts": 16,
+  "core/node/visualRendering/shell/nativeDocumentRenderers.ts": 15
 }

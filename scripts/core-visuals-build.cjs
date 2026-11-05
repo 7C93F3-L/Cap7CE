@@ -8,6 +8,7 @@ const vars = spawnSync(process.env.ComSpec ?? "cmd.exe", ["/d", "/s", "/c", `""$
 if (vars.status !== 0) throw new Error("Core visual compiler environment initialization failed.");
 const environment = Object.fromEntries(vars.stdout.split(/\r?\n/).filter(line => /^[^=]+=/.test(line)).map(line => [line.slice(0, line.indexOf("=")), line.slice(line.indexOf("=") + 1)]));
 require("./core-visuals-safety.cjs").assertStopped(output);
+environment.VSLANG = '1033';
 fs.mkdirSync(output, { recursive: true });
 const compiler = path.join(environment.VCToolsInstallDir, "bin/Hostx64/x64/cl.exe");
 const version = require('../package.json').version.split('.').map(Number);
@@ -16,14 +17,24 @@ const resource=path.join(output,'resources.res');
 fs.writeFileSync(path.join(output,'resource-version.h'),`#define CAP_VERSION_TEXT "${version.join('.')}"\n`);
 const resourceResult=spawnSync('rc.exe',['/nologo','/I',path.join(root,'build'),'/I',output,...['MAJOR','MINOR','PATCH'].map((part,index)=>`/dCAP_VERSION_${part}=${version[index]}`),'/fo',resource,path.join(root,'native/Cap7CE.Core.Visuals/resources.rc')],{cwd:output,stdio:'inherit',env:environment,windowsHide:true});
 if(resourceResult.error||resourceResult.status!==0)throw resourceResult.error||new Error('Core visual resource compilation failed.');
-const result = spawnSync(compiler, ["/nologo", "/std:c++20", "/EHsc", "/MT", "/O2", "/W4", "/WX", "/utf-8", "/DUNICODE", "/D_UNICODE", "/DNOMINMAX", "/D_WIN32_WINNT=0x0A00",
-  ...["main.cpp", "job_runner.cpp", "job_control.cpp", "scratch.cpp", "thumbnail.cpp", "icon_pixels.cpp", "pdf_thumbnail.cpp"].map(file => path.join(root, "native/Cap7CE.Core.Visuals", file)),
-  `/Fo${output}${path.sep}`, `/Fe${path.join(output, "Cap7CE.Core.Visuals.exe")}`, "/link", "windowsapp.lib", "ole32.lib", "shell32.lib", "windowscodecs.lib", "uuid.lib", "gdi32.lib", "user32.lib",
-  resource, "/MANIFEST:EMBED", "/MANIFESTUAC:level='asInvoker' uiAccess='false'"], { cwd: output, stdio: "inherit", env: environment, windowsHide: true });
-if (result.error) throw result.error;
-if (result.status !== 0) throw new Error("Core visual adapter compilation failed.");
+const dependencies = require('./core-visuals-dependencies.cjs')(root, output);
+const cmakeRoot = path.join(locate.stdout.trim(), 'Common7/IDE/CommonExtensions/Microsoft/CMake');
+const cmake = path.join(cmakeRoot, 'CMake/bin/cmake.exe'), ninja = path.join(cmakeRoot, 'Ninja/ninja.exe');
+const buildDirectory = path.join(root, 'native/artifacts/core-visuals/build');
+for (const args of [
+  ['-S', path.join(root, 'native/Cap7CE.Core.Visuals'), '-B', buildDirectory, '-G', 'Ninja',
+    `-DCMAKE_MAKE_PROGRAM=${ninja}`, `-DCMAKE_CXX_COMPILER=${compiler}`, '-DCMAKE_BUILD_TYPE=Release',
+    `-DCAP_OPENEXR_SOURCE=${dependencies.openexr}`, `-DCAP_IMATH_SOURCE=${dependencies.imath}`,
+    `-DCAP_RESOURCE=${resource}`, `-DCAP_OUTPUT=${output}`],
+  ['--build', buildDirectory, '--target', 'Cap7CE.Core.Visuals', '--parallel', '4']
+]) {
+  const result = spawnSync(cmake, args.map(value => value.replaceAll('\\', '/')), { cwd: root, stdio: 'inherit', env: environment, windowsHide: true });
+  if (result.error || result.status !== 0) throw result.error || new Error('Core visual adapter compilation failed.');
+}
 const executable=path.join(output,'Cap7CE.Core.Visuals.exe');
 const metadataCheck=spawnSync('powershell.exe',['-NoProfile','-NonInteractive','-Command',
   "$info=[Diagnostics.FileVersionInfo]::GetVersionInfo($env:CAP_VISUAL_EXE); if($info.FileDescription -ne 'Cap7CE Background Worker' -or $info.ProductName -ne 'Cap7CE' -or $info.FileVersion -ne $env:CAP_VISUAL_VERSION){exit 1}"],
   {windowsHide:true,env:{...environment,CAP_VISUAL_EXE:executable,CAP_VISUAL_VERSION:version.join('.')}});
 if(metadataCheck.error||metadataCheck.status!==0)throw metadataCheck.error||new Error('Core visual executable metadata validation failed.');
+
+require('./core-visuals-freshness.cjs').record(root);

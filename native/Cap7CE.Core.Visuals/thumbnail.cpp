@@ -1,6 +1,7 @@
 #include "platform.h"
 #include "icon_pixels.h"
 #include "pdf_thumbnail.h"
+#include "exr_render.h"
 #include <shobjidl.h>
 #include <thumbcache.h>
 #include <wincodec.h>
@@ -69,7 +70,7 @@ HRESULT EncodeThumbnail(const std::wstring& source, UINT edge, std::vector<unsig
   png.assign(data, data + static_cast<size_t>(stat.cbSize.QuadPart)); GlobalUnlock(memory); return S_OK;
 }
 }
-int Thumbnail(DWORD parentPid, bool pdf) {
+int Thumbnail(DWORD parentPid, ThumbnailKind kind) {
   Handle parent(OpenProcess(SYNCHRONIZE, FALSE, parentPid));
   if (!parent.value || WaitForSingleObject(parent.value, 0) != WAIT_TIMEOUT) return 3;
   HANDLE observed = nullptr;
@@ -86,7 +87,8 @@ int Thumbnail(DWORD parentPid, bool pdf) {
     if (header[0] != 1 || header[1] < 1 || header[1] > 4096 || header[2] == 0 || header[2] > 32767 || length != 12 + header[2] * 2) return 2;
     std::wstring source(header[2], L'\0'); memcpy(source.data(), request.data() + 12, header[2] * 2);
     if (std::find(source.begin(), source.end(), L'\0') != source.end()) return 2;
-    std::vector<unsigned char> png; const auto status = pdf ? EncodePdfThumbnail(source, header[1], png) : EncodeThumbnail(source, header[1], png);
+    std::vector<unsigned char> png; const auto status = kind == ThumbnailKind::Exr ? EncodeExrThumbnail(source, header[1], png)
+      : kind == ThumbnailKind::Pdf ? EncodePdfThumbnail(source, header[1], png) : EncodeThumbnail(source, header[1], png);
     uint32_t response[] = { 1, static_cast<uint32_t>(status), static_cast<uint32_t>(png.size()) };
     length = static_cast<DWORD>(sizeof(response) + png.size());
     if (!Transfer(output, &length, sizeof(length), true) || !Transfer(output, response, sizeof(response), true)) return 3;

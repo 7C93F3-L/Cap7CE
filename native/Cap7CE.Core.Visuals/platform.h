@@ -11,7 +11,8 @@ class Handle {
   Handle(const Handle&) = delete;
   Handle& operator=(const Handle&) = delete;
 };
-int Thumbnail(DWORD parent, bool pdf = false);
+enum class ThumbnailKind { Shell, Pdf, Exr };
+int Thumbnail(DWORD parent, ThumbnailKind kind = ThumbnailKind::Shell);
 int RunNode(DWORD parent, const std::wstring& node, const std::wstring& worker, const std::wstring& root, const std::wstring& nonce);
 std::wstring StopEventName(DWORD process, const std::wstring& nonce);
 int RequestStop(DWORD process, const std::wstring& nonce);
