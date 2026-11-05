@@ -1,6 +1,9 @@
 const assert = require('node:assert/strict');
 module.exports = read => {
+  assert(read('native/Cap7CE.Core.Visuals/pdf_thumbnail.cpp').trimEnd().split(/\r?\n/).length <= 45, 'PDF native decoder size boundary');
   const anchors = {
+    'native/Cap7CE.Core.Visuals/pdf_thumbnail.cpp': ['PdfDocument::LoadFromFileAsync', 'document.GetPage(0)', '16000000', '40 * 1024 * 1024'],
+    'core/node/visualRendering/shell/coreShellThumbnail.ts': ['--pdf-thumbnail', 'child.kill()', 'timeoutMs = 15000'],
     'core/node/visualCache/store.ts': ['createVisualCachePublications()', 'publicationOwner', 'createHmac("sha256", secret)', 'verifyEntry(entry)', 'maximumConcurrentCacheStatReads = 2'],
     'core/node/visualCache/publication.ts': ['visualCacheEpoch'],
     'core/node/visualRendering/renderSource.ts': ['sharp.concurrency(2)', 'memory: 64', 'files: 20', 'items: 100', 'maxWidth: 1536', 'jpegQuality: 90', 'maxWidth: 2560', 'withoutEnlargement: true', 'visualScratchDirectory()'],

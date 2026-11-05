@@ -16,6 +16,8 @@ DetailsPane的图片尺寸复用VisualConnection及既有sourceDimensions动作�
 
 ResultContextMenu通过ResultMenuRules映射菜单动作到ShortcutCatalog，使用当前偏好中通过校验的绑定设置原生KeyboardAcceleratorTextOverride；标注不另行注册按键，弹层阻断和执行归属不变。metadata维护快捷键退役，历史同名绑定不注册也不参与冲突检查；目录右键提取继续调用既有StartMetadataAsync。
 
+PDF缩略图由既有Core视觉执行链路调用隔离原生Visuals进程的--pdf-thumbnail模式，使用Windows.Data.Pdf渲染首页，与原生翻页预览采用相同系统引擎；不调用Shell缩略图处理器，也不整份读入Node内存。请求沿用有界帧、15秒超时、父进程退出回收及像素/输出字节限制；缓存发布仍归visualCache所有，Illustrator的PDF兼容文件渲染不变。
+
 ## 运行边界
 
 文件操作期间ResultsView可暂停卡片请求并保留已完成的缓存图像；恢复时仅复用绑定身份未变的图像，正常隐藏/回收仍释放，不保留源文件句柄。删除在UI线程快照选择并显示确认对话框，批量FileAccessGuard检查在后台完成，回收站仍归原Core文件操作宿主所有。

@@ -63,7 +63,7 @@ const documentSourceRenderers: Record<
   (sourcePath: string, strategy: VisualRenderStrategy) => Promise<Buffer>
 > = {
   ".pdf": (sourcePath, strategy) => (
-    renderPdfFirstPage(sourcePath, strategy.maxWidth, strategy.maxHeight)
+    requestCoreShellThumbnail(sourcePath, Math.max(strategy.maxWidth, strategy.maxHeight), visualNativeExecutable(), 15000, "pdf")
   ),
   ".psd": (sourcePath) => (
     renderPsdFlattenedPreview(sourcePath)

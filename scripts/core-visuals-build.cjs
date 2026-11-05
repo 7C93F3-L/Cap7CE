@@ -17,8 +17,8 @@ fs.writeFileSync(path.join(output,'resource-version.h'),`#define CAP_VERSION_TEX
 const resourceResult=spawnSync('rc.exe',['/nologo','/I',path.join(root,'build'),'/I',output,...['MAJOR','MINOR','PATCH'].map((part,index)=>`/dCAP_VERSION_${part}=${version[index]}`),'/fo',resource,path.join(root,'native/Cap7CE.Core.Visuals/resources.rc')],{cwd:output,stdio:'inherit',env:environment,windowsHide:true});
 if(resourceResult.error||resourceResult.status!==0)throw resourceResult.error||new Error('Core visual resource compilation failed.');
 const result = spawnSync(compiler, ["/nologo", "/std:c++20", "/EHsc", "/MT", "/O2", "/W4", "/WX", "/utf-8", "/DUNICODE", "/D_UNICODE", "/DNOMINMAX", "/D_WIN32_WINNT=0x0A00",
-  ...["main.cpp", "job_runner.cpp", "job_control.cpp", "scratch.cpp", "thumbnail.cpp", "icon_pixels.cpp"].map(file => path.join(root, "native/Cap7CE.Core.Visuals", file)),
-  `/Fo${output}${path.sep}`, `/Fe${path.join(output, "Cap7CE.Core.Visuals.exe")}`, "/link", "ole32.lib", "shell32.lib", "windowscodecs.lib", "uuid.lib", "gdi32.lib", "user32.lib",
+  ...["main.cpp", "job_runner.cpp", "job_control.cpp", "scratch.cpp", "thumbnail.cpp", "icon_pixels.cpp", "pdf_thumbnail.cpp"].map(file => path.join(root, "native/Cap7CE.Core.Visuals", file)),
+  `/Fo${output}${path.sep}`, `/Fe${path.join(output, "Cap7CE.Core.Visuals.exe")}`, "/link", "windowsapp.lib", "ole32.lib", "shell32.lib", "windowscodecs.lib", "uuid.lib", "gdi32.lib", "user32.lib",
   resource, "/MANIFEST:EMBED", "/MANIFESTUAC:level='asInvoker' uiAccess='false'"], { cwd: output, stdio: "inherit", env: environment, windowsHide: true });
 if (result.error) throw result.error;
 if (result.status !== 0) throw new Error("Core visual adapter compilation failed.");

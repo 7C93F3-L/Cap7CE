@@ -3,14 +3,14 @@ import path from "node:path";
 import { coreVisualExecutable } from "./resources";
 import { VisualCacheFrameReader, maximumCacheImageBytes } from "../../visualCache/contracts/visualCacheFrames";
 
-export const requestCoreShellThumbnail = (source: string, edge: number, executable = coreVisualExecutable(), timeoutMs = 15000): Promise<Buffer> => {
+export const requestCoreShellThumbnail = (source: string, edge: number, executable = coreVisualExecutable(), timeoutMs = 15000, mode: "shell" | "pdf" = "shell"): Promise<Buffer> => {
   if (typeof source !== "string" || source.length > 32767 || source.includes("\0")) return Promise.reject(new Error("core-thumbnail-invalid-request"));
   const sourcePath = path.resolve(source);
   if (!Number.isInteger(edge) || edge < 1 || edge > 4096 || !sourcePath || sourcePath.length > 32767 || sourcePath.includes("\0"))
     return Promise.reject(new Error("core-thumbnail-invalid-request"));
   const encoded = Buffer.from(sourcePath, "utf16le");
   return new Promise((resolve, reject) => {
-    const child = spawn(executable, ["--thumbnail", "--parent-pid", String(process.pid)], { windowsHide: true, shell: false, stdio: ["pipe", "pipe", "pipe"] });
+    const child = spawn(executable, [mode === "pdf" ? "--pdf-thumbnail" : "--thumbnail", "--parent-pid", String(process.pid)], { windowsHide: true, shell: false, stdio: ["pipe", "pipe", "pipe"] });
     let image: Buffer | undefined, failure: Error | undefined, finished = false;
     const stop = (error: Error) => { failure ??= error; child.kill(); };
     const reader = new VisualCacheFrameReader(bytes => {
