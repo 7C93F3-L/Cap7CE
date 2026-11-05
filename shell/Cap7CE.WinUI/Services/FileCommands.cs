@@ -13,7 +13,7 @@ namespace Cap7CE.WinUI.Services;
 internal sealed class FileCommands(ShellServices services, Func<XamlRoot> xamlRoot, Action<UiMessage> notice,nint window=0)
 {
     private readonly SemaphoreSlim operation = new(1);
-    public event Action<AssetItem>? PreviewRequested;
+    public event Action<AssetItem,uint?>? PreviewRequested;
     public event Action<string>? NavigateRequested;
     public event Action? BeforeMutation;
     public event Action? AfterMutation;
@@ -35,7 +35,7 @@ internal sealed class FileCommands(ShellServices services, Func<XamlRoot> xamlRo
     }
     public void Run(Func<Task> action) => Execute(action);
     private async void Execute(Func<Task> action) { try { await action(); } catch (Exception error) { notice(FailureText.From(error)); } }
-    public void Preview(AssetItem item) { FileAccessGuard.Validate(item); PreviewRequested?.Invoke(item); }
+    public void Preview(AssetItem item,uint? spacePressedAt=null) { FileAccessGuard.Validate(item); PreviewRequested?.Invoke(item,spacePressedAt); }
     public void Open(AssetItem item)
     {
         FileAccessGuard.Validate(item);

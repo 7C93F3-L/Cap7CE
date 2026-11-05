@@ -53,7 +53,7 @@ internal sealed class PreviewWindow : Window
         });
         Activated+=(_,_)=>surface.Focus(FocusState.Programmatic);
         surface.KeyDown+=(_,e)=>{if(e.OriginalSource is TextBox)return;if(e.Key==VirtualKey.Escape){e.Handled=true;if(!e.KeyStatus.WasKeyDown)Close();}};
-        spaceKey=new(this,()=>{if(!closed)Close();},delta=>{if(!closed)Move(delta);});Closed+=(_,_)=>spaceKey.Dispose();
+        spaceKey=new(this,owner,()=>{if(!closed)Close();},delta=>{if(!closed)Move(delta);});Closed+=(_,_)=>spaceKey.Dispose();
         Closed+=(_,_)=>{closed=true;followTimer.Stop();UnobserveItems();reading.Cancel();ReleaseMedia();_=CloseSessionAsync();};
         // Install the titlebar/content root before Show can force the first layout.
         ApplyAppearance();
@@ -73,11 +73,11 @@ internal sealed class PreviewWindow : Window
         catch(Exception error){if(!closed){ApplyAppearance();status.Visibility=Visibility.Visible;L.Message(status,TextBlock.TextProperty,UiMessage.Key("ui.preview.pinFailed",new Dictionary<string,object?>{{"error",FailureText.From(error)}}));}}
     }
     private void ReleaseMedia(){var previous=media;media=null;previous?.Dispose();}
-    public void Show(AssetItem item,IReadOnlyList<AssetItem> source)
+    public void Show(AssetItem item,IReadOnlyList<AssetItem> source,uint? spacePressedAt=null)
     {
         followTimer.Stop();UnobserveItems();items=source;index=FindIndex(item);if(index<0){items=[item];index=0;}
         if(items is System.Collections.Specialized.INotifyCollectionChanged observable)observable.CollectionChanged+=ItemsChanged;
-        geometry.BeginOpen();Activate();Load(item);
+        spaceKey.BeginOpen(spacePressedAt);geometry.BeginOpen();Activate();Load(item);
     }
     private int FindIndex(AssetItem item){for(var i=0;i<items.Count;i++)if(string.Equals(items[i].FullPath,item.FullPath,StringComparison.OrdinalIgnoreCase))return i;return -1;}
     private int NextIndex(int delta){for(var i=index+delta;i>=0&&i<items.Count;i+=delta)if(!items[i].Entry.IsDirectory)return i;return -1;}

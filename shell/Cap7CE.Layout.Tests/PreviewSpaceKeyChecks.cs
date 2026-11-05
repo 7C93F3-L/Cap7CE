@@ -21,6 +21,31 @@ internal static class PreviewSpaceKeyChecks
             Require(PreviewSpaceKeyPolicy.NavigationAction(0x100,key,true,true,true)==0,"Modified arrows stay with controls");
         }
         Require(PreviewSpaceKeyPolicy.NavigationAction(0x100,0x28,true,true,false)==0,"Vertical scrolling stays with controls");
+        var gesture=new PreviewSpaceGesture();
+        int Release(uint time,bool preview=true,bool opener=false,bool removed=true,uint message=0x101)
+            =>gesture.Action(message,0x20,0,time,preview,opener,removed);
+        gesture.Begin(1000);
+        Require(Release(1349)==1&&!gesture.Opening,"Short opening press preserves the preview");
+        Require(gesture.Action(0x100,0x20,0,1500,true,false,true)==2,"A second fresh press still closes a latched preview");
+        gesture.Begin(1000);
+        Require(gesture.Action(0x100,0x20,(nint)(1L<<30),1350,true,false,true)==1&&gesture.Opening,"Long press repeats must not close early");
+        Require(Release(1350)==2&&!gesture.Opening,"Release at the hold threshold closes exactly once");
+        Require(Release(1400)==1,"A duplicate release cannot close a new preview");
+        gesture.Begin(1000);
+        Require(Release(2000,false,true)==2,"Opening key-up queued to the original window closes the held preview");
+        gesture.Begin(1000);
+        Require(Release(2000,false,false)==0&&gesture.Opening,"Other windows cannot complete the opening stroke");
+        Require(Release(2000,true,false,false)==0&&gesture.Opening,"A queue peek cannot complete the opening stroke");
+        gesture.Cancel();
+        Require(Release(2200)==1,"Focus loss cancels temporary mode without affecting later Space releases");
+        gesture.Begin(null);
+        Require(Release(2000)==1&&Release(2100,false,true)==0,"Mouse-opened previews ignore the opener release");
+        gesture.Begin(uint.MaxValue-100);
+        Require(Release(249,message:0x105)==2,"System key-up and wrapping input timestamps retain the threshold");
+        gesture.Begin(1000);
+        Require(Release(1100)==1,"Delayed file loading must use key-up time, not the processing time");
+        gesture.Begin(1000);
+        Require(gesture.Action(0x102,0x20,0,1600,true,false,true)==1&&gesture.Opening,"Space character input cannot activate focused controls");
         Console.WriteLine("Preview Space checks passed (fresh/repeat, key-up/character, other windows, queue peeks).");
     }
 }

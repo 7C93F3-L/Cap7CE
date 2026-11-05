@@ -20,6 +20,8 @@ PDF缩略图由既有Core视觉执行链路调用隔离原生Visuals进程的--p
 
 ## 运行边界
 
+空格预览的打开来源及Win32按键时间由固定快捷键经FileCommands传递，鼠标调用不携带按键时间。PreviewSpaceGesture只拥有单次打开手势的350毫秒判定；PreviewSpaceKey沿用UI线程的消息过滤，在预览窗口及打开它的窗口之间接续原始空格连发/松开，按消息时间而非加载完成时间决定关闭。其他窗口不拦截，预览失活时取消临时状态，关闭时解除消息钩子及事件；预览窗口仍负责取消读取和释放媒体，不增加全局键盘钩子、缓存状态或窗口模式。
+
 EXR缩略图和静态预览复用Core视觉执行、原生Visuals的--exr-thumbnail单次进程及visualCache发布链路。官方OpenEXR 3.5.2和Imath 3.2.3静态链接，源码归档及SHA-256锁定在third_party/openexr/sources.json；构建使用VS附带CMake/Ninja，不分发Python。原生读取域仅选普通RGB/RGBA或Composite.Combined等合成通道，支持scanline/tiled平面图，转换域负责预乘透明度还原、线性到sRGB及有界PNG输出；不展开Deep数据，不提供通道/曝光/序列界面，不扩展AI索引。读取限制为512 MiB文件、16个part、每part最多128通道及1600万源像素；输出沿用15秒超时、两路视觉执行和父进程退出回收。Visuals构建按原生源码、依赖清单和许可证指纹更新，防止旧辅助程序缺少新解码入口；许可证随辅助程序分发。
 
 文件操作期间ResultsView可暂停卡片请求并保留已完成的缓存图像；恢复时仅复用绑定身份未变的图像，正常隐藏/回收仍释放，不保留源文件句柄。删除在UI线程快照选择并显示确认对话框，批量FileAccessGuard检查在后台完成，回收站仍归原Core文件操作宿主所有。

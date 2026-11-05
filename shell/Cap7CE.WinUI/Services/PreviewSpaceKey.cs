@@ -5,22 +5,27 @@ using Microsoft.UI.Xaml;
 
 namespace Cap7CE.WinUI.Services;
 
-// Thread-local queue filter: only this preview's HWND tree and owned popups.
+// Thread-local filter: preview HWNDs, plus the opener during the opening Space stroke.
 // Filtering before dispatch also covers native media controls and WebView2 input HWNDs.
 internal sealed class PreviewSpaceKey : IDisposable
 {
     private readonly nint window;
+    private readonly nint openerWindow;
+    private readonly Window owner;
+    private readonly PreviewSpaceGesture gesture=new();
     private readonly Hook callback;
     private nint hook;
     private bool closing;
-    public PreviewSpaceKey(Window owner,Action close,Action<int> navigate)
+    public PreviewSpaceKey(Window owner,Window opener,Action close,Action<int> navigate)
     {
+        this.owner=owner;
         window=WinRT.Interop.WindowNative.GetWindowHandle(owner);
+        openerWindow=WinRT.Interop.WindowNative.GetWindowHandle(opener);
         callback=(code,remove,pointer)=>{
             if(code>=0&&pointer!=0) {
                 var message=Marshal.PtrToStructure<Message>(pointer);
-                var action=PreviewSpaceKeyPolicy.Action(message.Id,message.Key,message.Flags,
-                    message.Key==0x20&&Owns(message.Window),remove==1);
+                var action=gesture.Action(message.Id,message.Key,message.Flags,message.Time,
+                    message.Key==0x20&&Owns(message.Window),gesture.Opening&&Owns(message.Window,openerWindow),remove==1);
                 var navigation=PreviewSpaceKeyPolicy.NavigationAction(message.Id,message.Key,
                     message.Key is 0x25 or 0x27&&Owns(message.Window),remove==1,
                     (GetKeyState(0x10)&0x8000)!=0||(GetKeyState(0x11)&0x8000)!=0||(GetKeyState(0x12)&0x8000)!=0);
@@ -34,14 +39,20 @@ internal sealed class PreviewSpaceKey : IDisposable
         };
         hook=SetWindowsHookExW(3,callback,0,GetCurrentThreadId());
         if(hook==0)throw new Win32Exception(Marshal.GetLastWin32Error());
+        owner.Activated+=Activated;
     }
-    private bool Owns(nint target)
+    public static uint OpeningTime()=>unchecked((uint)GetMessageTime());
+    public void BeginOpen(uint? time)=>gesture.Begin(time);
+    private void Activated(object sender,WindowActivatedEventArgs args)
+    {if(args.WindowActivationState==WindowActivationState.Deactivated)gesture.Cancel();}
+    private bool Owns(nint target,nint scope=0)
     {
+        if(scope==0)scope=window;
         var root=GetAncestor(target,2);
-        for(var i=0;root!=0&&i<8;i++,root=GetWindow(root,4))if(root==window)return true;
+        for(var i=0;root!=0&&i<8;i++,root=GetWindow(root,4))if(root==scope)return true;
         return false;
     }
-    public void Dispose(){if(hook==0)return;UnhookWindowsHookEx(hook);hook=0;}
+    public void Dispose(){owner.Activated-=Activated;gesture.Cancel();if(hook==0)return;UnhookWindowsHookEx(hook);hook=0;}
     private delegate nint Hook(int code,nuint remove,nint message);
     [StructLayout(LayoutKind.Sequential)] private struct Message
     {public nint Window;public uint Id;public nuint Key;public nint Flags;public uint Time;public int X,Y;public uint Private;}
@@ -52,4 +63,5 @@ internal sealed class PreviewSpaceKey : IDisposable
     [DllImport("user32.dll")] private static extern nint GetWindow(nint window,uint command);
     [DllImport("user32.dll")] private static extern short GetKeyState(int key);
     [DllImport("kernel32.dll")] private static extern uint GetCurrentThreadId();
+    [DllImport("user32.dll")] private static extern int GetMessageTime();
 }

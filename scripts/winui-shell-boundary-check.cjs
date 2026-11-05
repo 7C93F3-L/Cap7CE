@@ -194,6 +194,10 @@ assert(!/HttpClient|Process.Start|Sqlite|BitmapImage/.test(autoKeywordProcessor)
 assert(read('shell/Cap7CE.WinUI/Services/AutoKeywordWriter.cs').includes('attempt<3') && read('shell/Cap7CE.WinUI/Services/AutoKeywordTargets.cs').includes('100000'), 'AI keyword writes and target collection must be bounded');
 const previewSpaceKey = read('shell/Cap7CE.WinUI/Services/PreviewSpaceKey.cs');
 assert(previewSpaceKey.includes('GetCurrentThreadId()') && previewSpaceKey.includes('Owns(message.Window)') && previewSpaceKey.includes('UnhookWindowsHookEx(hook)'), 'preview Space interception must be thread/window scoped and released');
+assert(previewSpaceKey.includes('SetWindowsHookExW(3,') && previewSpaceKey.includes('Owns(message.Window,openerWindow)')
+  && previewSpaceKey.includes('message.Time') && previewSpaceKey.includes('WindowActivationState.Deactivated')
+  && read('shell/Cap7CE.WinUI/Models/PreviewSpaceGesture.cs').includes('unchecked(time-down)'),
+  'held Space must use input timestamps across preview/opener focus handoff and cancel on deactivation without a global hook');
 assert(read('shell/Cap7CE.WinUI/Services/VisualConnection.cs').includes('!preview && format?.CanThumbnail != true'), 'grid must retain Shell fallback for formats without native image thumbnails');
 const fontPreview = read('shell/Cap7CE.WinUI/Controls/FontPreviewView.cs');
 assert(fontPreview.includes('64*1024*1024') && !/AddFont|Install|CoreNodeHost|RequestAsync/.test(fontPreview), 'font preview must stay bounded and cannot install fonts or create another provider');

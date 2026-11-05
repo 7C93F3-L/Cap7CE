@@ -178,12 +178,12 @@ public sealed partial class MainWindow : Window
         }
         catch(Exception error){Notice(FailureText.From(error));}
     }
-    private void ShowPreview(Models.AssetItem item)
+    private void ShowPreview(Models.AssetItem item,uint? spacePressedAt)
     {
         if(preview is null){preview=new(services,this);preview.CurrentChanged+=previewLink.PreviewChanged;preview.Closed+=(_,_)=>{previewLink.Detach();preview=null;QueueCatalogRefresh();edgeCollapse.Wake();};}
         IReadOnlyList<Models.AssetItem> source=active?.Items??[item];
         if(active is not null)previewLink.Open(active,source,item);
-        preview.Show(item,source);
+        preview.Show(item,source,spacePressedAt);
     }
     private void OpenSettings()
     {
