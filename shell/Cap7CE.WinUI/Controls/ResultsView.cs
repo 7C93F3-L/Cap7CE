@@ -65,6 +65,11 @@ internal sealed class ResultsView : UserControl
             view.SelectionChanged += (_, _) => {if(!binding)SelectionChanged?.Invoke(Selection);};
             view.DoubleTapped += OnItemDoubleTapped; view.RightTapped += Context;
             view.DragItemsStarting += OnItemsDragStarting;
+            view.ContainerContentChanging+=(_,e)=>{
+                if(e.ItemContainer is not {} container)return;
+                container.DragStarting-=OnContainerDragStarting;
+                if(!e.InRecycleQueue)container.DragStarting+=OnContainerDragStarting;
+            };
             view.DragItemsStarting+=(_,e)=>{if(!e.Cancel)ResultDrag.SetActive(view,true);};
             view.DragItemsCompleted+=(_,_)=>ResultDrag.SetActive(view,false);
             view.Unloaded+=(_,_)=>ResultDrag.SetActive(view,false);root.Children.Add(view);
@@ -147,7 +152,13 @@ internal sealed class ResultsView : UserControl
     }
     private void OnItemsDragStarting(object sender, DragItemsStartingEventArgs e)
     {
-        ResultDrag.Prepare(e.Data,e.Items.OfType<AssetItem>().ToArray(),()=>e.Cancel=true);
+        var items=e.Items.OfType<AssetItem>().ToArray();
+        ResultDrag.Prepare(e.Data,items,()=>e.Cancel=true);
+    }
+    private void OnContainerDragStarting(UIElement sender,DragStartingEventArgs e)
+    {
+        e.AllowedOperations=ResultDrag.AllowedOperations(commands?.CanDelete(Selection)==true);
+        e.Data.RequestedOperation=DataPackageOperation.Copy;
     }
     private static IEnumerable<AssetTile> Tiles(DependencyObject parent)
     {
