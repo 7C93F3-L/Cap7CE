@@ -5,7 +5,7 @@ internal static class ModelPreviewPolicy
     public const long MaximumFileBytes=64*1024*1024,MaximumTotalBytes=256*1024*1024;
     public const int MaximumRequests=128;
     public const string Origin="https://cap7ce-model.invalid/";
-    public static bool Supports(string extension)=>extension.ToLowerInvariant() is ".glb" or ".gltf" or ".obj";
+    public static bool Supports(string extension)=>extension.ToLowerInvariant() is ".glb" or ".gltf" or ".obj" or ".stl" or ".fbx";
     public static string SourceUri(string source)=>Origin+"source/"+Uri.EscapeDataString(Path.GetFileName(source));
     public static string Resolve(string source,string uri)
     {

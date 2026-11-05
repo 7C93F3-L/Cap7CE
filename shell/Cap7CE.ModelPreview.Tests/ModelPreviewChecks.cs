@@ -15,6 +15,14 @@ internal static class ModelPreviewChecks
         var folder=Path.Combine(Path.GetTempPath(),"cap7ce-model-check-"+Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(folder);
         try {
+            foreach(var extension in new[]{".stl",".fbx"}) {
+                var sample=Path.Combine(folder,"模型 #1"+extension);await File.WriteAllTextAsync(sample,"snapshot");
+                var model=new AssetItem(new BasicSearchItem("model",Path.GetFileName(sample),Path.GetFileName(sample),extension,false),sample);
+                Require(ModelPreviewPolicy.Supports(extension.ToUpperInvariant()),"case-insensitive model format");
+                using var reader=new ModelPreviewResources(model,CancellationToken.None);
+                Require((await reader.ReadAsync(reader.SourceUri)).SequenceEqual("snapshot"u8.ToArray()),"new model format snapshot");
+            }
+            Require(!ModelPreviewPolicy.Supports(".step"),"CAD importer remains outside this preview scope");
             var path=Path.Combine(folder,"模型 #1.obj");await File.WriteAllTextAsync(path,"v 0 0 0\nv 1 0 0\nv 0 1 0\nf 1 2 3");
             var item=new AssetItem(new BasicSearchItem("model","模型 #1.obj","模型 #1.obj",".obj",false),path);
             using var resources=new ModelPreviewResources(item,CancellationToken.None);

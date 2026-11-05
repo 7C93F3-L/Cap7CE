@@ -2,6 +2,8 @@ import { SceneLoader } from "@babylonjs/core/Loading/sceneLoader.js";
 import { OBJFileLoader } from "@babylonjs/loaders/OBJ/objFileLoader.js";
 import "@babylonjs/loaders/glTF/index.js";
 import "@babylonjs/loaders/OBJ/index.js";
+import "@babylonjs/loaders/STL/index.js";
+import "@babylonjs/loaders/FBX/index.js";
 
 export function geometryOnly(text) {
     return text.replace(/^(?:vn\s|vt\s|mtllib\s|usemtl\s).*(?:\r?\n|$)/gm, "")
@@ -9,7 +11,7 @@ export function geometryOnly(text) {
 }
 
 export async function loadModel(scene, source, extension) {
-    if (![".glb", ".gltf", ".obj"].includes(extension)) throw new Error("model-format");
+    if (![".glb", ".gltf", ".obj", ".stl", ".fbx"].includes(extension)) throw new Error("model-format");
     const base = source.slice(0, source.lastIndexOf("/") + 1), name = source.slice(base.length);
     try {
         await SceneLoader.ImportMeshAsync(null, base, name, scene, undefined, extension);
