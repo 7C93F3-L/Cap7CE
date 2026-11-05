@@ -51,7 +51,7 @@ for (const stamp of ["10.0.401", sdkBaseline]) {
       };
       if (name === "node:child_process") return { spawnSync(exe, args) { calls.push(args); return { status: 0 }; } };
       if (name === "./native-build-safety.cjs") return () => {};
-      if (name === "./core-file-operations-freshness.cjs") return { isFresh: () => true };
+      if (["./core-file-operations-freshness.cjs", "./core-visuals-freshness.cjs"].includes(name)) return { isFresh: () => true };
       if (name === "./core-development-host-safety.cjs") return { assertStopped() {} };
       return require(name);
     },
