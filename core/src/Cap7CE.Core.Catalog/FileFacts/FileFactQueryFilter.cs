@@ -140,7 +140,10 @@ internal static class FileFactQuerySql
 
     private static void AppendScalarPredicate(StringBuilder sql, SqliteCommand command, FileFactQueryFilter filter)
     {
-        sql.Append(" AND ff.kind = $factKind AND ff.extractor_version = $factExtractor AND ff.state = 0 ");
+        // Version 3 only adds search evidence; version 2 visual scalars/metrics remain compatible.
+        sql.Append(filter.ExtractorVersion == 3 && filter.Kind is FileFactKind.ImageDimensions or FileFactKind.Video
+            ? " AND ff.kind = $factKind AND ff.extractor_version IN (2, $factExtractor) AND ff.state = 0 "
+            : " AND ff.kind = $factKind AND ff.extractor_version = $factExtractor AND ff.state = 0 ");
         if (filter.Kind == FileFactKind.ImageDimensions) sql.Append(" AND ff.width IS NOT NULL ");
         command.Parameters.AddWithValue("$factKind", (int)filter.Kind);
         command.Parameters.AddWithValue("$factExtractor", filter.ExtractorVersion);
