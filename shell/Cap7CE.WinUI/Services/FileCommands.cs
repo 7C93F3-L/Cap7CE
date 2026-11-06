@@ -40,7 +40,11 @@ internal sealed class FileCommands(ShellServices services, Func<XamlRoot> xamlRo
     {
         FileAccessGuard.Validate(item);
         if (item.Entry.IsDirectory) NavigateRequested?.Invoke(item.FullPath);
-        else Process.Start(new ProcessStartInfo(item.FullPath) { UseShellExecute = true });
+        else {
+            var start=new ProcessStartInfo(item.FullPath){UseShellExecute=true};
+            if(Path.GetExtension(item.FullPath).ToLowerInvariant() is ".bat" or ".cmd")start.WorkingDirectory=Path.GetDirectoryName(item.FullPath)!;
+            Process.Start(start);
+        }
     }
     public void Reveal(AssetItem item)
     {
