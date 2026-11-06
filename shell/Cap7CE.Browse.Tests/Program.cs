@@ -21,7 +21,7 @@ using(var browse=new BrowseSession(direct)) {
 }
 var indexed=Setup();
 using(var browse=new BrowseSession(indexed)) {
-    Require(await browse.NavigateAsync("E:\\"),"indexed disk opens recursively");
+    Require(await browse.OpenLocationAsync("E:\\",true),"indexed disk opens recursively");
     Require(indexed.Visuals.Reads.Count==0&&!browse.FilesystemBrowsing&&browse.UsesCatalogResults,"indexed disk never enumerates its filesystem");
     var request=(SearchStartRequest)indexed.Core!.Requests.Single(r=>r.Operation==CoreOperations.SearchStart).Body;
     Require(request.Query==""&&request.Scope is {Kind:"directory-descendants",VolumeId:"v"}&&request.EntryType=="file","empty recursive browse uses scoped Catalog search");
@@ -32,7 +32,7 @@ using(var browse=new BrowseSession(indexed)) {
 var unindexed=Setup();unindexed.Core!.Queryable=false;
 var background=Setup();
 using(var browse=new BrowseSession(background)) {
-    Require(await browse.NavigateAsync("E:\\"),"initial result opens before background refresh");
+    Require(await browse.OpenLocationAsync("E:\\",true),"initial result opens before background refresh");
     var items=browse.Items;background.Core!.Resolving=new();
     var refresh=browse.NavigateAsync("E:\\",false,true);
     Require(browse.Busy&&!browse.ForegroundBusy&&ReferenceEquals(items,browse.Items)&&browse.Items.HasMoreItems,"background refresh retains results, partial-count meaning and foreground loading state");
@@ -44,17 +44,17 @@ using(var browse=new BrowseSession(background)) {
     background.Core.Resolving.SetResult();Require(await manual,"manual refresh completes");
 }
 using(var browse=new BrowseSession(unindexed)) {
-    Require(await browse.NavigateAsync("E:\\new-folder"),"unindexed directory still opens");
+    Require(await browse.OpenLocationAsync("E:\\new-folder",true),"unindexed directory still opens");
     Require(unindexed.Visuals.Reads is [(_,true)]&&browse.FilesystemBrowsing&&!browse.UsesCatalogResults,"unindexed recursive browse retains filesystem fallback");
     Require(!unindexed.Core.Requests.Any(r=>r.Operation==CoreOperations.SearchStart),"unresolved scope never starts a broad Catalog query");
 }
 var startup=Setup();startup.Core=null;startup.Connecting=()=>{startup.Core=new();return Task.CompletedTask;};
 using(var browse=new BrowseSession(startup)) {
-    Require(await browse.NavigateAsync("E:\\")&&startup.Connections==1&&startup.Visuals.Reads.Count==0,"recursive browse waits for the existing connection action instead of racing into a disk scan");
+    Require(await browse.OpenLocationAsync("E:\\",true)&&startup.Connections==1&&startup.Visuals.Reads.Count==0,"recursive browse waits for the existing connection action instead of racing into a disk scan");
 }
 var offline=Setup();offline.Core=null;offline.Connecting=()=>throw new IOException("unavailable");
 using(var browse=new BrowseSession(offline)) {
-    Require(await browse.NavigateAsync("E:\\small-folder")&&offline.Visuals.Reads.Count==1,"unavailable Core retains plain filesystem access");
+    Require(await browse.OpenLocationAsync("E:\\small-folder",true)&&offline.Visuals.Reads.Count==1,"unavailable Core retains plain filesystem access");
 }
 var search=Setup();search.Core!.Queryable=false;
 using(var browse=new BrowseSession(search){Query="needle"}) {
@@ -62,7 +62,7 @@ using(var browse=new BrowseSession(search){Query="needle"}) {
 }
 var interrupted=Setup();interrupted.Core!.Resolving=new();
 using(var browse=new BrowseSession(interrupted)) {
-    var old=browse.NavigateAsync("E:\\");
+    var old=browse.OpenLocationAsync("E:\\",true);
     Require(await browse.NavigateAsync(""),"home can replace an outstanding recursive request");
     Require(!await old&&browse.PathValue==""&&interrupted.Visuals.Reads.Count==0,"cancelled scope resolution cannot rescan a disk or overwrite newer navigation");
 }
@@ -106,11 +106,12 @@ using(var browse=new BrowseSession(samePath)) {
 }
 Console.WriteLine("BrowseSession routing checks passed: direct/recursive, indexed/unindexed, startup/offline, count-free paging, search scope and navigation cancellation.");
 var single=Setup();
+single.Visuals.Items=[new(new("file","file.txt","file.txt",".txt",false,"v"),"F:\\file.txt")];
 using(var browse=new BrowseSession(single)) {
     var closedPreviews=0;
     var preview=new PreviewSelectionController<Cap7CE.WinUI.Models.AssetItem>(item=>item.FullPath,item=>!item.Entry.IsDirectory,_=>{},_=>{},()=>closedPreviews++);
     browse.NavigationStarting+=preserve=>preview.NavigationStarting(browse,preserve);
-    Require(await browse.OpenLocationAsync("E:\\",false),"single-page initial directory opens");
+    Require(await browse.OpenLocationAsync("E:\\",true),"single-page initial directory opens");
     preview.Open(browse,browse.Items,browse.Items[0]);
     Require(await browse.NavigateAsync(browse.PathValue,false,true)&&closedPreviews==0,"retained Catalog refresh keeps the single-page preview attached");
     browse.Query="needle";browse.Filter=new(){Count=1};browse.Random=true;
@@ -126,7 +127,7 @@ foreach(var recursive in new[]{false,true}) {
     recovered.Visuals.Items=[new(new("file","file.txt","file.txt",".txt",false,"v"),"E:\\file.txt")];
     recovered.DeletedPaths=new(_=>exists);
     using var browse=new BrowseSession(recovered);
-    Require(await browse.NavigateAsync("E:\\"),"recovery fixture opens");
+    Require(await browse.OpenLocationAsync("E:\\",recursive),"recovery fixture opens");
     var path=browse.Items[0].FullPath;recovered.DeletedPaths.Add(path);browse.RemoveDeleted();
     Require(browse.Items.Count==0,"successful deletion removes current item");
     Require(await browse.NavigateAsync("E:\\")&&browse.Items.Count==0,"absent deleted item stays suppressed on refresh");
@@ -139,7 +140,23 @@ Console.WriteLine("Single-page navigation regression passed: entry reset, previe
 var delayedPreferences=Setup(false);
 using(var browse=new BrowseSession(delayedPreferences)){
     delayedPreferences.Preferences.Current=delayedPreferences.Preferences.Current with{ComputerWorkspace=new(){Recursive=true,Sort="name-descending"}};
-    Require(await browse.OpenLocationAsync("E:\\",false)&&browse.Recursive&&browse.Sort=="name-descending","a session created before preference loading must use loaded options on initial navigation");
+    Require(await browse.OpenLocationAsync("E:\\",false)&&!browse.Recursive&&browse.Sort=="name-descending","loaded appearance applies while legacy Computer recursion stays disabled");
 }
 Require(Cap7CE.WinUI.Localization.FailureText.ScopeKey("needsRebuild",true)=="ui.error.scopeRebuildRandom","random unavailable status exposes the existing recovery action");
 Require(Cap7CE.WinUI.Localization.FailureText.ScopeKey("building",true)=="ui.error.scopeBuildingRandom","random build status preserves the explicit indexing state");
+
+var temporaryComputer=Setup(true);
+using(var browse=new BrowseSession(temporaryComputer)) {
+    Require(!browse.Recursive,"new Computer session ignores legacy persisted recursion");
+    Require(await browse.OpenLocationAsync("E:\\",false)&&!browse.Recursive&&browse.FilesystemBrowsing,"Computer initially browses only the current layer");
+    browse.Recursive=true;
+    Require(await browse.NavigateAsync(browse.PathValue,false)&&browse.Recursive&&!browse.FilesystemBrowsing,"temporary recursive toggle survives its own reload");
+    Require(await browse.NavigateAsync(browse.PathValue,false,true)&&browse.Recursive,"same-directory background refresh retains temporary recursion");
+    Require(await browse.NavigateAsync("E:\\nested")&&!browse.Recursive&&browse.FilesystemBrowsing,"changing Computer directory turns recursion off");
+    await browse.BackAsync();Require(!browse.Recursive,"back navigation never restores temporary recursion");
+    browse.Recursive=true;
+    Require(await browse.OpenLocationAsync(browse.PathValue,false)&&!browse.Recursive,"reentering Computer at the same path resets temporary recursion");
+    Require(await browse.OpenLocationAsync("E:\\",true)&&browse.Recursive,"Favorites retain their persistent recursive option");
+    Require(await browse.NavigateAsync("F:\\")&&browse.Recursive,"Favorites recursive behavior survives directory navigation");
+}
+Console.WriteLine("Computer recursion is temporary per directory; same-location refresh and Favorites preferences are preserved.");

@@ -15,10 +15,13 @@ public sealed record WorkspaceOptions
     public static WorkspaceOptions FavoritesDefault=>new(){SquareTiles=false,Recursive=true,Sort="modified-descending"};
     internal static bool SearchByDefault(WorkspacePreferenceScope scope)=>scope==WorkspacePreferenceScope.Favorites;
     internal static WorkspaceOptions Read(ShellPreferences prefs,WorkspacePreferenceScope scope)
-        =>Normalize(scope==WorkspacePreferenceScope.Favorites?prefs.FavoriteWorkspace:prefs.ComputerWorkspace,
+    {
+        var value=Normalize(scope==WorkspacePreferenceScope.Favorites?prefs.FavoriteWorkspace:prefs.ComputerWorkspace,
             scope==WorkspacePreferenceScope.Favorites?FavoritesDefault:ComputerDefault);
+        return scope==WorkspacePreferenceScope.Computer?value with{Recursive=false}:value;
+    }
     internal static ShellPreferences Write(ShellPreferences prefs,WorkspacePreferenceScope scope,WorkspaceOptions value)
-        =>scope==WorkspacePreferenceScope.Favorites?prefs with{FavoriteWorkspace=Normalize(value,FavoritesDefault)}:prefs with{ComputerWorkspace=Normalize(value,ComputerDefault)};
+        =>scope==WorkspacePreferenceScope.Favorites?prefs with{FavoriteWorkspace=Normalize(value,FavoritesDefault)}:prefs with{ComputerWorkspace=Normalize(value,ComputerDefault) with{Recursive=false}};
     internal static ShellPreferences Project(ShellPreferences prefs,WorkspacePreferenceScope scope)
     {
         var value=Read(prefs,scope);

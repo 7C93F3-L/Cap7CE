@@ -17,6 +17,9 @@ internal static class WorkspacePreferenceChecks
         Require(!WorkspaceOptions.SearchByDefault(computer)&&WorkspaceOptions.SearchByDefault(favorites),"entry resets breadcrumb/search according to scope, not previous editor state");
         var changed=WorkspaceOptions.Write(original,computer,pc with{View="list",TileSize=240,Sort="name-descending",ShowHidden=true,Recursive=true});
         changed=WorkspaceOptions.Write(changed,favorites,fav with{View="grid",SquareTiles=true,TileSize=128,Sort="modified-ascending",Recursive=false});
+        Require(!changed.ComputerWorkspace!.Recursive,"Computer recursion is never written into preferences");
+        var legacy=changed with{ComputerWorkspace=changed.ComputerWorkspace with{Recursive=true}};
+        Require(!WorkspaceOptions.Read(legacy,computer).Recursive,"old persisted Computer recursion is ignored");
         var restored=JsonSerializer.Deserialize<ShellPreferences>(JsonSerializer.Serialize(changed,json),json)!;
         Require(WorkspaceOptions.Read(restored,computer)==WorkspaceOptions.Read(changed,computer),"Computer config round trip retains all toolbar fields");
         Require(WorkspaceOptions.Read(restored,favorites)==WorkspaceOptions.Read(changed,favorites),"shared favorite config round trip retains all toolbar fields");

@@ -10,7 +10,7 @@ internal sealed class BrowseSession(ShellServices services) : IDisposable
     public string PathValue { get; private set; } = "";
     public string Query { get; set; } = "";
     public BrowseFilter Filter { get; set; } = new();
-    public bool Recursive { get; set; } = WorkspaceOptions.Read(services.Preferences.Current,WorkspacePreferenceScope.Computer).Recursive;
+    public bool Recursive { get; set; }
     public bool ShowHidden { get; set; } = WorkspaceOptions.Read(services.Preferences.Current,WorkspacePreferenceScope.Computer).ShowHidden;
     public string Sort { get; set; } = WorkspaceOptions.Read(services.Preferences.Current,WorkspacePreferenceScope.Computer).Sort;
     public WorkspacePreferenceScope PreferenceScope {get;private set;}
@@ -42,13 +42,14 @@ internal sealed class BrowseSession(ShellServices services) : IDisposable
     private void EnterScope(WorkspacePreferenceScope scope,string entryPath)
     {
         pendingOrigin??=CurrentLocation;PreferenceScope=scope;EntryPath=entryPath;AddressRevision++;
-        Random=false;Query="";Filter=new();SyncWorkspaceOptions();
+        Random=false;Query="";Filter=new();if(scope==WorkspacePreferenceScope.Computer)Recursive=false;SyncWorkspaceOptions();
     }
     public bool SyncWorkspaceOptions()
     {
         var value=WorkspaceOptions.Read(services.Preferences.Current,PreferenceScope);
-        var changed=Recursive!=value.Recursive||ShowHidden!=value.ShowHidden||Sort!=value.Sort;
-        Recursive=value.Recursive;ShowHidden=value.ShowHidden;Sort=value.Sort;return changed;
+        var recursive=PreferenceScope==WorkspacePreferenceScope.Computer?Recursive:value.Recursive;
+        var changed=Recursive!=recursive||ShowHidden!=value.ShowHidden||Sort!=value.Sort;
+        Recursive=recursive;ShowHidden=value.ShowHidden;Sort=value.Sort;return changed;
     }
     public bool CanBack => back.Count > 0;
     public bool CanForward => forward.Count > 0;
@@ -67,7 +68,9 @@ internal sealed class BrowseSession(ShellServices services) : IDisposable
     public async Task<bool> NavigateAsync(string path, bool remember = true,bool preserveSelection=false)
     {
         NavigationStarting?.Invoke(preserveSelection);
-        var origin=pendingOrigin??CurrentLocation;pendingOrigin=null;SyncWorkspaceOptions();
+        var origin=pendingOrigin??CurrentLocation;pendingOrigin=null;
+        if(PreferenceScope==WorkspacePreferenceScope.Computer&&!string.Equals(path.Trim().TrimEnd('\\','/'),PathValue.TrimEnd('\\','/'),StringComparison.OrdinalIgnoreCase))Recursive=false;
+        SyncWorkspaceOptions();
         PreserveSelection=preserveSelection;
         Invalidated=false;var version = ++generation;if(!preserveSelection)Items.HasMoreItems = false;
         query.Cancel(); query.Dispose(); query = new(); var token = query.Token;
