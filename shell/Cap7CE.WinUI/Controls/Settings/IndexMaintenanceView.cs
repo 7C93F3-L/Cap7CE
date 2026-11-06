@@ -1,3 +1,7 @@
+using System.Collections.ObjectModel;
+using Windows.ApplicationModel.DataTransfer;
+using Windows.System;
+using Microsoft.UI.Xaml.Media;
 using Cap7CE.Core.Protocol;
 using Cap7CE.WinUI.Localization;
 using L=Cap7CE.WinUI.Localization.LanguageUi;
@@ -10,7 +14,9 @@ namespace Cap7CE.WinUI.Controls;
 internal sealed class IndexMaintenanceView : UserControl
 {
     private readonly ShellServices services;
-    private readonly StackPanel volumes=Ui.Column();
+    private readonly ListView volumes=new(){SelectionMode=ListViewSelectionMode.None,CanDragItems=true,CanReorderItems=true,AllowDrop=true};
+    private readonly ObservableCollection<Grid> volumeRows=[];
+    private Grid[]? draggingRows;
     private readonly ContentControl volumeHost=new(){HorizontalContentAlignment=HorizontalAlignment.Stretch};
     private readonly TextBlock status=L.Text("ui.index.reading",true);
     private readonly TextBlock feedbackText=Ui.Text("",true);
@@ -25,7 +31,7 @@ internal sealed class IndexMaintenanceView : UserControl
     private readonly Controllers.VisibleTaskMonitor monitor=new();
     private readonly Dictionary<string,bool> selection=[];
     private readonly List<string> order=[];
-    private IEnumerable<CheckBox> Choices=>volumes.Children.OfType<Grid>().Select(row=>row.Children.OfType<CheckBox>().Single());
+    private IEnumerable<CheckBox> Choices=>volumeRows.Select(row=>row.Children.OfType<CheckBox>().Single());
     public UIElement Options {get;}
     public void StopMonitoring()=>monitor.Dispose();
     public IndexMaintenanceView(ShellServices services)
@@ -34,7 +40,33 @@ internal sealed class IndexMaintenanceView : UserControl
         order.AddRange(services.Preferences.Current.IndexVolumeOrder);
         foreach(var entry in services.Preferences.Current.IndexVolumeSelection)selection[entry.Key]=entry.Value;
         volumeHost.Content=volumes;
-        volumes.Spacing=4;
+        volumes.ItemsSource=volumeRows;
+        var itemStyle=new Style(typeof(ListViewItem)){BasedOn=(Style)Application.Current.Resources["DefaultListViewItemStyle"]};
+        itemStyle.Setters.Add(new Setter(HorizontalContentAlignmentProperty,HorizontalAlignment.Stretch));
+        itemStyle.Setters.Add(new Setter(PaddingProperty,new Thickness(0)));
+        volumes.ItemContainerStyle=itemStyle;
+        ScrollViewer.SetVerticalScrollBarVisibility(volumes,ScrollBarVisibility.Disabled);
+        ScrollViewer.SetHorizontalScrollBarVisibility(volumes,ScrollBarVisibility.Disabled);
+        volumes.DragItemsStarting+=(_,e)=>{
+            if(!volumeHost.IsEnabled||e.Items.Count!=1){e.Cancel=true;return;}
+            draggingRows=volumeRows.ToArray();e.Data.RequestedOperation=DataPackageOperation.Move;
+        };
+        volumes.DragOver+=(_,e)=>{if(draggingRows is null){e.AcceptedOperation=DataPackageOperation.None;e.Handled=true;}};
+        volumes.DragItemsCompleted+=(_,e)=>{
+            var before=draggingRows;draggingRows=null;if(before is null)return;
+            if(e.DropResult!=DataPackageOperation.Move){RestoreRows(before);return;}
+            Run(()=>SaveOrderAsync(before));
+        };
+        volumes.KeyDown+=(_,e)=>{
+            var alt=Microsoft.UI.Input.InputKeyboardSource.GetKeyStateForCurrentThread(VirtualKey.Menu).HasFlag(Windows.UI.Core.CoreVirtualKeyStates.Down);
+            if(!alt||draggingRows is not null||!volumeHost.IsEnabled||e.Key is not (VirtualKey.Up or VirtualKey.Down))return;
+            var source=e.OriginalSource as DependencyObject;
+            while(source is not null&&!(source is Grid candidate&&volumeRows.Contains(candidate)))source=VisualTreeHelper.GetParent(source);
+            if(source is not Grid row)return;
+            var from=volumeRows.IndexOf(row);var to=from+(e.Key==VirtualKey.Up?-1:1);
+            if(to<0||to>=volumeRows.Count)return;
+            e.Handled=true;var before=volumeRows.ToArray();volumeRows.Move(from,to);Run(()=>SaveOrderAsync(before));
+        };
         volumeHost.Margin=new(0,8,0,12);
         status.TextWrapping=TextWrapping.NoWrap;status.TextTrimming=TextTrimming.CharacterEllipsis;status.MaxLines=1;
         feedback.Spacing=6;feedback.Visibility=Visibility.Collapsed;feedback.Children.Add(feedbackText);feedback.Children.Add(progress);
@@ -95,11 +127,11 @@ internal sealed class IndexMaintenanceView : UserControl
         var snapshot=await Core.RequestAsync<CatalogStatusResponse>(CoreOperations.CatalogStatus,new{},token);
         token.ThrowIfCancellationRequested();
         tasks=snapshot.Tasks.ToArray();
-        if(updateVolumes)
+        if(updateVolumes&&draggingRows is null)
         {
             foreach(var choice in Choices)selection[(string)choice.Tag]=choice.IsChecked==true;
             foreach(var item in snapshot.Volumes)if(!order.Contains(item.VolumeId))order.Add(item.VolumeId);
-            volumes.Children.Clear();volumeText.Clear();
+            volumeRows.Clear();volumeText.Clear();
             var items=snapshot.Volumes.OrderBy(item=>order.IndexOf(item.VolumeId)).ToArray();
             foreach(var item in items)
             {
@@ -129,12 +161,8 @@ internal sealed class IndexMaintenanceView : UserControl
                     await services.Preferences.SaveAsync(services.Preferences.Current with{IndexVolumeSelection=new(selection)});
                 });
                 row.Children.Add(choice);
-                var up=Ui.Button("",()=>Move(row,-1));var down=Ui.Button("",()=>Move(row,1));
-                up.Content=new FontIcon{Glyph="\uE74A",FontSize=16};down.Content=new FontIcon{Glyph="\uE74B",FontSize=16};
-                up.Width=down.Width=32;up.Height=down.Height=32;up.Padding=down.Padding=new(0);
-                L.Label(up,"ui.index.earlier");L.Label(down,"ui.index.later");
-                up.IsEnabled=item!=items[0];down.IsEnabled=item!=items[^1];
-                var controls=Ui.Row(up,down);controls.VerticalAlignment=VerticalAlignment.Center;
+                var controls=new FontIcon{Glyph="\uE700",FontSize=14,Width=32,VerticalAlignment=VerticalAlignment.Center};
+                L.Label(controls,"ui.sidebar.reorder");
                 Grid.SetColumn(controls,3);row.Children.Add(controls);
                 row.SizeChanged+=(_,_)=>{
                     var narrow=row.ActualWidth<640;
@@ -146,7 +174,7 @@ internal sealed class IndexMaintenanceView : UserControl
                     capacity.Margin=narrow?new(28,0,0,0):new(0);
                     Grid.SetRow(information,narrow?1:0);Grid.SetColumn(information,narrow?1:2);Grid.SetColumnSpan(information,narrow?3:1);
                 };
-                volumes.Children.Add(row);
+                volumeRows.Add(row);
             }
         }
         foreach(var volume in snapshot.Volumes)if(volumeText.TryGetValue(volume.VolumeId,out var text)){
@@ -191,14 +219,16 @@ internal sealed class IndexMaintenanceView : UserControl
         }
         await ReadAsync();
     }
-    private void Move(Grid row,int delta)=>Run(async()=>
+    private void RestoreRows(Grid[] rows)
+    {if(volumeRows.SequenceEqual(rows))return;volumeRows.Clear();foreach(var row in rows)volumeRows.Add(row);}
+    private async Task SaveOrderAsync(Grid[] before)
     {
-        var from=volumes.Children.IndexOf(row);var to=from+delta;
-        if(to<0||to>=volumes.Children.Count)return;
-        var next=volumes.Children.OfType<Grid>().Select(r=>(string)r.Tag).ToList();
-        (next[from],next[to])=(next[to],next[from]);
-        await services.Preferences.SaveAsync(services.Preferences.Current with{IndexVolumeOrder=next.ToArray()});
+        var next=volumeRows.Select(row=>(string)row.Tag).ToArray();
+        var previous=before.Select(row=>(string)row.Tag).ToArray();
+        if(next.SequenceEqual(previous))return;
+        if(next.Length!=previous.Length||next.Distinct().Count()!=next.Length||!next.ToHashSet().SetEquals(previous)){RestoreRows(before);return;}
+        try{await services.Preferences.UpdateAsync(value=>value with{IndexVolumeOrder=next});}
+        catch{RestoreRows(before);throw;}
         order.Clear();order.AddRange(next);
-        await ReadAsync();
-    });
+    }
 }

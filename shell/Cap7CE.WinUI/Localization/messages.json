@@ -2546,14 +2546,6 @@
     "zh-CN": "{fileSystem} · {state}",
     "en-US": "{fileSystem} · {state}"
   },
-  "ui.index.earlier": {
-    "zh-CN": "提前索引",
-    "en-US": "Index earlier"
-  },
-  "ui.index.later": {
-    "zh-CN": "延后索引",
-    "en-US": "Index later"
-  },
   "ui.index.taskStatus": {
     "zh-CN": "{kind}：{state}",
     "en-US": "{kind}: {state}"
