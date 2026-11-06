@@ -9,7 +9,8 @@ internal static class NativeFileEntryTests
     public static async Task RunAsync()
     {
         if (!OperatingSystem.IsWindows()) return;
-        var root = Path.Combine(Path.GetTempPath(), "Cap7CE-entry-native-" + Guid.NewGuid().ToString("N"));
+        // Some redirected TEMP directories reject FindFirstFileNameW with ERROR_NOT_SUPPORTED.
+        var root = Path.Combine(AppContext.BaseDirectory, "Cap7CE-entry-native-" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(root);
         try {
             var first = Path.Combine(root, "first"); var second = Path.Combine(root, "第二个目录");

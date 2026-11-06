@@ -20,7 +20,7 @@ internal static class ReaderHardLinkMetadataTests
         }
         await TestAssert.ThrowsAsync<InvalidDataException>(()=>Task.FromResult(ReaderHardLinkBuffer.Decode(one,2)),"incomplete native link count rejected");
         if(!OperatingSystem.IsWindows())return;
-        var root=Path.Combine(Path.GetTempPath(),"Cap7CE-reader-links-"+Guid.NewGuid().ToString("N"));
+        var root=Path.Combine(AppContext.BaseDirectory,"Cap7CE-reader-links-"+Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(root);
         try {
             var source=Path.Combine(root,"source.txt");var alias=Path.Combine(root,"另一个名字.txt");

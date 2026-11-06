@@ -9,6 +9,7 @@ using Cap7CE.Core.Reader.Host;
 using Cap7CE.Core.Setup;
 using Cap7CE.Core.Tests;
 
+if (args is ["--native-hard-link-tests"]) { await NativeFileEntryTests.RunAsync();await NativeFileEntryCatalogTests.RunAsync();await ReaderHardLinkMetadataTests.RunAsync();Console.WriteLine("Native hard-link tests passed.");return 0; }
 if (args is ["--embedded-search-tests"]) { await CatalogEmbeddedSearchTests.RunAsync();await CatalogTextCandidateTests.RunAsync();await FileFactCatalogIntegrationTests.RunAsync();await FileFactExtractionBrokerTests.RunAsync(); return 0; }
 if (args is ["--catalog-health-tests"]) { await CatalogHealthTests.RunAsync(); return 0; }
 if (args is ["--catalog-throughput-probe"]) { await CatalogSnapshotDeltaTests.ProbeAsync(); return 0; }

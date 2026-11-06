@@ -17,7 +17,7 @@ internal static class NativeFileEntryCatalogTests
     {
         if (!OperatingSystem.IsWindows()) return;
         using var fixture = new TemporaryCatalogFixture();
-        var root = Path.Combine(Path.GetTempPath(), "Cap7CE-entry-flow-" + Guid.NewGuid().ToString("N"));
+        var root = Path.Combine(AppContext.BaseDirectory, "Cap7CE-entry-flow-" + Guid.NewGuid().ToString("N"));
         var first = Path.Combine(root, "one"); var second = Path.Combine(root, "two");
         Directory.CreateDirectory(first); Directory.CreateDirectory(second);
         try {
