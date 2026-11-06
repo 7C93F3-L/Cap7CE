@@ -18,7 +18,7 @@ internal static class ResultMenuRules
     internal static IReadOnlyList<ResultMenuAction> Create(int count,bool home,bool directory)
     {
         if(count==0)return [];
-        List<ResultMenuAction> actions=[new("preview"),new("open"),new("reveal"),new("copyPaths"),new("copyFiles")];
+        List<ResultMenuAction> actions=[new("preview"),new("open"),new("reveal"),new("copyPaths"),new("copyFiles",true)];
         if(!home)actions.Add(new("cutFiles"));
         if(!home){actions.Add(new("rename"));actions.Add(new("delete"));}
         if(count==1&&directory)actions.Add(new("favorite"));
