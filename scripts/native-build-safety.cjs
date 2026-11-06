@@ -3,7 +3,7 @@ module.exports = root => {
   const command = [
     "$ErrorActionPreference='Stop'",
     "$prefix=[IO.Path]::GetFullPath($env:CAP_NATIVE_ROOT).TrimEnd('\\')+'\\'",
-    "$owners=@(Get-CimInstance Win32_Process -Filter \"Name='Cap7CE.WinUI.exe'\")",
+    "$owners=@(Get-CimInstance Win32_Process -Filter \"Name='Cap7CE.WinUI.exe'\" | Where-Object {try {$live=[Diagnostics.Process]::GetProcessById($_.ProcessId);try {-not $live.HasExited} finally {$live.Dispose()}} catch [ArgumentException] {$false}})",
     "if(@($owners|Where-Object {-not $_.ExecutablePath}).Count -gt 0){exit 3}",
     "if(@($owners|Where-Object {$_.ExecutablePath.StartsWith($prefix,[StringComparison]::OrdinalIgnoreCase)}).Count -gt 0){exit 2}"
   ].join('\n');
