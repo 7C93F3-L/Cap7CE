@@ -31,7 +31,13 @@ initializeCanvas(createCanvas,(w,h)=>new ImageData(w,h));
    await assert.rejects(client.request('psd.render',['changed-'+extension,file,0]),/source-changed/);
   }
   const single=path.join(root,'single.psd');await fs.writeFile(single,writePsdBuffer({width:1,height:1,imageData:{width:1,height:1,data:new Uint8ClampedArray([0,0,0,255])}}));
-  await assert.rejects(client.request('psd.open',['single',single]),/no-artboards/);
+  const one=await client.request('psd.open',['single',single]);assert.equal(one.pages.length,1);
+  const onePage=await client.request('psd.render',['single',single,0]);assert.equal((await sharp(Buffer.from(onePage.base64,'base64')).metadata()).width,1);
+  const tall=path.join(root,'tall.psb'),tallPixels=new Uint8ClampedArray(160*2000*4);tallPixels.fill(255);
+  await fs.writeFile(tall,writePsdBuffer({width:160,height:2000,imageData:{width:160,height:2000,data:tallPixels},children:[{name:'tall',artboard:{rect:{left:0,top:0,right:160,bottom:2000}}}]},{psb:true}));
+  assert.equal((await client.request('psd.open',['tall',tall])).pages.length,1);
+  const tallPage=await client.request('psd.render',['tall',tall,0]),tallInfo=await sharp(Buffer.from(tallPage.base64,'base64')).metadata();
+  assert.equal(tallInfo.width,160);assert.equal(tallInfo.height,2000,'long previews preserve readable pixels beyond the old 1600px longest-edge cap');
   const truncated=path.join(root,'truncated.psd');await fs.writeFile(truncated,Buffer.from('8BPS'));
   await assert.rejects(client.request('psd.open',['truncated',truncated]));
   await assert.rejects(client.request('psd.open',['relative','relative.psd']));

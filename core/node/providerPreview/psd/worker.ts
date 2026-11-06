@@ -20,9 +20,10 @@ async function start() {
       if (rendering || !Number.isSafeInteger(message.id) || !Number.isSafeInteger(message.page) || !pages[message.page]) throw Error("psd-preview-page");
       rendering = true; await assertPsdSource(file, stamp);
       const { left, top, width: pageWidth, height: pageHeight } = pages[message.page];
+      const ratio = Math.min(1, 1600 / pageWidth, 16000 / pageHeight, Math.sqrt(16_000_000 / (pageWidth * pageHeight)));
       const png = await sharp(pixels, { raw: { width, height, channels: 4 } }).extract({ left, top, width: pageWidth, height: pageHeight })
-        .resize({ width: 1600, height: 1600, fit: "inside", withoutEnlargement: true }).png().toBuffer();
-      if (png.length > 12 * 1024 * 1024) throw Error("psd-preview-output-limit");
+        .resize(Math.max(1, Math.floor(pageWidth * ratio)), Math.max(1, Math.floor(pageHeight * ratio))).png().toBuffer();
+      if (png.length > 24 * 1024 * 1024) throw Error("psd-preview-output-limit");
       await assertPsdSource(file, stamp); parentPort!.postMessage({ id: message.id, type: "page", png });
     } catch (error) { parentPort!.postMessage({ id: message.id, type: "error", error: String(error) }); }
     finally { rendering = false; }

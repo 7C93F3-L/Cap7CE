@@ -15,6 +15,7 @@ internal sealed class PsdPreviewView : Grid
     private readonly string session;
     private readonly ImagePreviewView viewer;
     private readonly Button previous,next;
+    private readonly FrameworkElement pageTools;
     private readonly TextBlock count=Ui.Text("",true);
     private readonly Action<double,double> resized;
     private readonly Action<UiMessage> failed;
@@ -29,7 +30,8 @@ internal sealed class PsdPreviewView : Grid
         this.provider=provider;this.session=session;this.resized=resized;this.failed=failed;
         previous=L.Tool("\uE76B","ui.preview.previousPage",()=>Move(-1));next=L.Tool("\uE76C","ui.preview.nextPage",()=>Move(1));
         count.VerticalAlignment=VerticalAlignment.Center;
-        viewer=new(openExternal,Ui.Row(previous,count,next),WheelPage);Children.Add(viewer);
+        pageTools=Ui.Row(previous,count,next);pageTools.Visibility=Visibility.Collapsed;
+        viewer=new(openExternal,pageTools,WheelPage);Children.Add(viewer);
         Unloaded+=(_,_)=>{cancellation.Dispose();_=CloseAsync();};
     }
     public async Task<bool> TryLoadAsync(AssetItem source,CancellationToken cancellationToken)
@@ -40,7 +42,8 @@ internal sealed class PsdPreviewView : Grid
             var reply=await provider.RequestAsync("psd.open",[session,source.FullPath],token);
             token.ThrowIfCancellationRequested();
             pages=reply.GetProperty("pages").EnumerateArray().Select(p=>(p.GetProperty("width").GetInt32(),p.GetProperty("height").GetInt32())).ToArray();
-            if(pages.Length is <2 or >128)throw new IOException("psd-preview-response");
+            if(pages.Length is <1 or >128)throw new IOException("psd-preview-response");
+            pageTools.Visibility=pages.Length>1?Visibility.Visible:Visibility.Collapsed;viewer.WheelAction=pages.Length>1?WheelPage:null;
             await RenderAsync();return true;
         }catch(OperationCanceledException){throw;}
         catch(Exception error){NativeDiagnostics.VisualFailure(error);await CloseAsync();return false;}
@@ -67,7 +70,7 @@ internal sealed class PsdPreviewView : Grid
         try {
             await Task.Run(()=>FileAccessGuard.Validate(item!),token);
             var reply=await provider.RequestAsync("psd.render",[session,item!.FullPath,page],token);token.ThrowIfCancellationRequested();
-            var encoded=reply.GetProperty("base64").GetString()!;if(encoded.Length>16*1024*1024)throw new IOException("psd-preview-output-limit");
+            var encoded=reply.GetProperty("base64").GetString()!;if(encoded.Length>32*1024*1024)throw new IOException("psd-preview-output-limit");
             using var input=new MemoryStream(Convert.FromBase64String(encoded));var bitmap=new BitmapImage();
             await bitmap.SetSourceAsync(input.AsRandomAccessStream()).AsTask(token);token.ThrowIfCancellationRequested();
             viewer.SetBitmap(bitmap);count.Text=$"{page+1} / {pages.Length}";resized(pages[page].Width,pages[page].Height);

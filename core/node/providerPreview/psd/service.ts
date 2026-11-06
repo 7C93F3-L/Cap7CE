@@ -38,11 +38,11 @@ export function createPsdPreviewService(directory: string) {
       const pending = session.pending; if (!pending || session.stopped || message?.id !== pending.id) return;
       session.pending = undefined; clearTimeout(pending.timer);
       if (message.type === "error") { pending.reject(Error(String(message.error).slice(0, 512))); void stop(session); }
-      else if (pending.id === 0 && message.type === "ready" && Array.isArray(message.pages) && message.pages.length >= 2 && message.pages.length <= 128
+      else if (pending.id === 0 && message.type === "ready" && Array.isArray(message.pages) && message.pages.length >= 1 && message.pages.length <= 128
         && message.pages.every((p: { name: unknown; width: number; height: number }) => p && typeof p.name === "string" && p.name.length <= 128
           && Number.isSafeInteger(p.width) && p.width > 0 && Number.isSafeInteger(p.height) && p.height > 0)) {
         session.count = message.pages.length; pending.resolve({ pages: message.pages });
-      } else if (pending.id > 0 && message.type === "page" && message.png instanceof Uint8Array && message.png.length <= 12 * 1024 * 1024
+      } else if (pending.id > 0 && message.type === "page" && message.png instanceof Uint8Array && message.png.length <= 24 * 1024 * 1024
         && Buffer.from(message.png.subarray(0, 8)).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]))) {
         pending.resolve({ base64: Buffer.from(message.png).toString("base64") });
       } else { pending.reject(Error("psd-preview-response")); void stop(session); }

@@ -12,9 +12,12 @@ export async function readPsdLayout(reader: PsdCursor) {
     || width > 300000 || height > 300000 || width * height > 50_000_000) throw Error("psd-preview-format");
   reader.skip(await reader.u32()); reader.skip(await reader.u32());
   const layerBytes = await reader.length(large), composite = reader.position + layerBytes;
-  if (!layerBytes || composite >= reader.size) throw Error("psd-preview-no-artboards");
+  if (composite >= reader.size) throw Error("psd-preview-layer-section");
+  const whole = { name: "", left: 0, top: 0, width, height };
+  if (!layerBytes) return { header, width, height, large, composite, pages: [whole] };
   const infoBytes = await reader.length(large), infoEnd = reader.position + infoBytes;
-  if (infoEnd > composite || infoBytes < 2) throw Error("psd-preview-layer-section");
+  if (infoEnd > composite || infoBytes === 1) throw Error("psd-preview-layer-section");
+  if (!infoBytes) return { header, width, height, large, composite, pages: [whole] };
   const count = Math.abs((await reader.read(2)).readInt16BE());
   if (count > 10000) throw Error("psd-preview-layer-limit");
   const pages: PsdArtboard[] = [];
@@ -54,6 +57,6 @@ export async function readPsdLayout(reader: PsdCursor) {
     reader.seek(end);
     if (bounds) { pages.push({ ...bounds, name: name.slice(0, 128) }); if (pages.length > 128) throw Error("psd-preview-artboard-limit"); }
   }
-  if (pages.length < 2) throw Error("psd-preview-no-artboards");
+  if (!pages.length) pages.push(whole);
   return { header, width, height, large, composite, pages };
 }
