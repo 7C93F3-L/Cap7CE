@@ -185,6 +185,14 @@ internal static class ReaderProtocolTests
         TestAssert.Equal(128UL, pageV2.Records.Single().SizeBytes, "CR/2 file size");
         TestAssert.Equal(900L, pageV2.Records.Single().CreationFileTimeUtc, "CR/2 creation time");
 
+        var usnRequest = ReaderPayloadCodec.DecodeMftReadPageRequest(ReaderPayloadCodec.EncodeMftReadPageRequest(new(snapshotId, 0, 20, true)));
+        TestAssert.True(usnRequest.IncludeFileUsn, "snapshot USN extension is explicitly requested");
+        var usnPage = pageV2 with { Records = [pageV2.Records[0] with { LastUsn = 42 }, pageV2.Records[0] with { LastUsn = null }] };
+        var usnRoundtrip = ReaderPayloadCodec.DecodeMftReadPageResponseV2(ReaderPayloadCodec.EncodeMftReadPageResponseV2(usnPage, true), true);
+        TestAssert.Equal(42L, usnRoundtrip.Records[0].LastUsn, "negotiated per-file USN roundtrip");
+        TestAssert.True(usnRoundtrip.Records[1].LastUsn is null, "unavailable USN remains unavailable");
+        TestAssert.True(ReaderPayloadCodec.DecodeMftReadPageResponseV2(ReaderPayloadCodec.EncodeMftReadPageResponseV2(usnPage)).Records[0].LastUsn is null, "legacy wire format stays unchanged");
+
         var journalRequest = ReaderPayloadCodec.DecodeJournalReadBatchRequest(
             ReaderPayloadCodec.EncodeJournalReadBatchRequest(new ReaderJournalReadBatchRequest(
                 volumeId, 23, 100, 20)));

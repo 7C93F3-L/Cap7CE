@@ -53,6 +53,7 @@ internal sealed partial class ReaderV2CatalogSession : ICatalogReaderSession
     private ulong requestId = 1;
     public bool SupportsJournalChangeWait { get; private set; }
     public bool SupportsFileEntryNames { get; private set; }
+    private bool supportsSnapshotFileUsn;
     public bool SupportsAuthenticatedSessions { get; private set; }
 
     private ReaderV2CatalogSession(ReaderPipeConnection connection) => this.connection = connection;
@@ -81,6 +82,7 @@ internal sealed partial class ReaderV2CatalogSession : ICatalogReaderSession
         }
         session.SupportsJournalChangeWait = hello.Capabilities.HasFlag(ReaderCapabilities.JournalChangeWait);
         session.SupportsFileEntryNames = hello.Capabilities.HasFlag(ReaderCapabilities.FileEntryNames);
+        session.supportsSnapshotFileUsn = hello.Capabilities.HasFlag(ReaderCapabilities.SnapshotFileUsn);
         session.SupportsAuthenticatedSessions = hello.Capabilities.HasFlag(ReaderCapabilities.AuthenticatedSessions);
         if (requireAuthenticatedSession && !session.SupportsAuthenticatedSessions)
             throw new ReaderRepairRequiredException("reader-authenticated-session-unavailable");
@@ -145,14 +147,14 @@ internal sealed partial class ReaderV2CatalogSession : ICatalogReaderSession
     {
         var response = await ExchangeAsync(
             ReaderOperation.MftReadPage,
-            ReaderPayloadCodec.EncodeMftReadPageRequest(new ReaderMftReadPageRequest(snapshotId, cursor, limit)),
+            ReaderPayloadCodec.EncodeMftReadPageRequest(new ReaderMftReadPageRequest(snapshotId, cursor, limit, supportsSnapshotFileUsn)),
             token);
         if (response.Header.Status != ReaderStatus.Success
             || response.Header.Flags is not (ReaderFrameFlags.MoreData or ReaderFrameFlags.EndOfStream))
         {
             throw new ReaderProtocolException("unexpected-cr2-snapshot-page");
         }
-        var value = ReaderPayloadCodec.DecodeMftReadPageResponseV2(response.Payload.Span);
+        var value = ReaderPayloadCodec.DecodeMftReadPageResponseV2(response.Payload.Span, supportsSnapshotFileUsn);
         return new CatalogReaderSnapshotPage(value.NextCursor, value.EndOfStream, value.Records);
     }
 

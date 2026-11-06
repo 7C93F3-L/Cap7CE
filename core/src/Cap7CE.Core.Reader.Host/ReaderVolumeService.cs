@@ -65,7 +65,7 @@ internal static class ReaderVolumeService
                     ReaderProtocol.MaximumRecordsPerPage,
                     ReaderCapabilities.SnapshotPaging | ReaderCapabilities.JournalPaging
                     | (helloFrame.Header.MajorVersion == ReaderProtocol.CurrentMajorVersion
-                        ? ReaderCapabilities.MultiVolume | ReaderCapabilities.BasicFacts | ReaderCapabilities.JournalChangeWait | ReaderCapabilities.FileEntryNames | ReaderCapabilities.AuthenticatedSessions
+                        ? ReaderCapabilities.MultiVolume | ReaderCapabilities.BasicFacts | ReaderCapabilities.SnapshotFileUsn | ReaderCapabilities.JournalChangeWait | ReaderCapabilities.FileEntryNames | ReaderCapabilities.AuthenticatedSessions
                         : ReaderCapabilities.None))),
                 ReaderFrameFlags.None,
                 deadline.Token);
@@ -172,7 +172,7 @@ internal static class ReaderVolumeService
                         {
                             var resultV2 = snapshot.ReadPageV2(page.Cursor, page.MaximumRecords, deadline.Token);
                             await WriteSuccessAsync(pipe, request,
-                                ReaderPayloadCodec.EncodeMftReadPageResponseV2(resultV2),
+                                ReaderPayloadCodec.EncodeMftReadPageResponseV2(resultV2, page.IncludeFileUsn),
                                 resultV2.EndOfStream ? ReaderFrameFlags.EndOfStream : ReaderFrameFlags.MoreData,
                                 deadline.Token);
                         }

@@ -227,6 +227,7 @@ public static partial class ReaderPayloadCodec
         writer.WriteId(value.SnapshotId);
         writer.WriteUInt64(value.Cursor);
         writer.WriteUInt32(value.MaximumRecords);
+        if (value.IncludeFileUsn) writer.WriteUInt32(1);
         return writer.Finish();
     }
 
@@ -234,6 +235,7 @@ public static partial class ReaderPayloadCodec
     {
         var reader = new PayloadReader(payload);
         var value = new ReaderMftReadPageRequest(reader.ReadId(), reader.ReadUInt64(), reader.ReadUInt32());
+        if (payload.Length == 32) { if (reader.ReadUInt32() != 1) throw Failure("invalid-file-usn-request"); value = value with { IncludeFileUsn = true }; }
         reader.RequireComplete();
         RequireId(value.SnapshotId, "snapshot-id");
         ValidateRequestedRecords(value.MaximumRecords);
@@ -286,7 +288,7 @@ public static partial class ReaderPayloadCodec
         return new(nextCursor, endFlag == 1, records);
     }
 
-    public static byte[] EncodeMftReadPageResponseV2(ReaderMftReadPageResponseV2 value)
+    public static byte[] EncodeMftReadPageResponseV2(ReaderMftReadPageResponseV2 value, bool includeFileUsn = false)
     {
         if (value.Records.Count > ReaderProtocol.MaximumRecordsPerPage) throw Failure("too-many-records");
         var writer = new PayloadWriter();
@@ -307,11 +309,12 @@ public static partial class ReaderPayloadCodec
             writer.WriteUInt32(record.IsDirectory ? 1u : 0u);
             writer.WriteText(record.Name, ReaderProtocol.MaximumRecordNameBytes, "record-name");
             writer.WriteText(record.Extension, ReaderProtocol.MaximumExtensionBytes, "record-extension");
+            if (includeFileUsn) writer.WriteInt64(record.LastUsn ?? -1);
         }
         return writer.Finish();
     }
 
-    public static ReaderMftReadPageResponseV2 DecodeMftReadPageResponseV2(ReadOnlySpan<byte> payload)
+    public static ReaderMftReadPageResponseV2 DecodeMftReadPageResponseV2(ReadOnlySpan<byte> payload, bool includeFileUsn = false)
     {
         var reader = new PayloadReader(payload);
         var nextCursor = reader.ReadUInt64();
@@ -338,7 +341,7 @@ public static partial class ReaderPayloadCodec
                 (facts & 1) != 0 ? size : null,
                 (facts & 2) != 0 ? created : null,
                 (facts & 4) != 0 ? modified : null,
-                attributes, directory, name, extension));
+                attributes, directory, name, extension, includeFileUsn ? ReadFileUsn(ref reader) : null));
         }
         reader.RequireComplete();
         return new ReaderMftReadPageResponseV2(nextCursor, endFlag == 1, records);
@@ -607,6 +610,9 @@ public static partial class ReaderPayloadCodec
             return buffer.WrittenSpan.ToArray();
         }
     }
+
+    private static long? ReadFileUsn(ref PayloadReader reader)
+    { var usn = reader.ReadInt64(); if (usn < -1) throw Failure("invalid-file-usn"); return usn < 0 ? null : usn; }
 
     private ref struct PayloadReader(ReadOnlySpan<byte> payload)
     {

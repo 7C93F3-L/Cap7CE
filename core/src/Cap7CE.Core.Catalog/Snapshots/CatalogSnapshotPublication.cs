@@ -8,7 +8,7 @@ public sealed partial class CatalogV2Database
         string volumeId,
         string snapshotPath,
         long recordCount,
-        CancellationToken token, bool captureFileEntries, long expectedVolumeRevision)
+        CancellationToken token, bool captureFileEntries, long expectedVolumeRevision, FileFacts.CatalogFactRecovery? factRecovery = null)
     {
         RequireText(volumeId, 64, nameof(volumeId));
         RequireNonNegative(recordCount, nameof(recordCount));
@@ -19,6 +19,7 @@ public sealed partial class CatalogV2Database
             attach.Parameters.AddWithValue("$path", snapshotPath);
             await attach.ExecuteNonQueryAsync(token);
         }
+        if (factRecovery is not null) await factRecovery.AttachAsync(connection, token);
         try
         {
             using var transaction = connection.BeginTransaction();
@@ -30,7 +31,7 @@ public sealed partial class CatalogV2Database
                 throw new CatalogStateTransitionException("Catalog snapshot can publish only while building.");
             }
             if (volume.CatalogRevision != expectedVolumeRevision) throw new CatalogConcurrencyException("Snapshot build owner changed.");
-
+            if (factRecovery is not null) await factRecovery.RestoreAsync(connection, transaction, volume, token);
             using (var publish = connection.CreateCommand())
             {
                 publish.Transaction = transaction;
@@ -74,7 +75,6 @@ public sealed partial class CatalogV2Database
                 publish.Parameters.AddWithValue("$volume", volumeId);
                 await publish.ExecuteNonQueryAsync(token);
             }
-
             if (captureFileEntries) await DirectoryEntries.CatalogFileEntryStaging.PublishAsync(connection, transaction, volumeId, token);
             var revision = NextRevision(await ReadRevisionAsync(connection, transaction, token));
             using (var update = connection.CreateCommand())
@@ -99,11 +99,11 @@ public sealed partial class CatalogV2Database
         }
         finally
         {
+            if (factRecovery is not null) { using var recoveryDetach = connection.CreateCommand(); recoveryDetach.CommandText = "DETACH DATABASE fact_recovery;"; await recoveryDetach.ExecuteNonQueryAsync(CancellationToken.None); }
             using var detach = connection.CreateCommand();
             detach.CommandText = "DETACH DATABASE snapshot_build;";
             await detach.ExecuteNonQueryAsync(CancellationToken.None);
         }
         return (await ReadVolumeAsync(volumeId, token))!;
     }
-
 }

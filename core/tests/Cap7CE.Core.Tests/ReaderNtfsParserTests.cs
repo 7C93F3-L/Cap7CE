@@ -21,6 +21,7 @@ internal static class ReaderNtfsParserTests
         BinaryPrimitives.WriteUInt64LittleEndian(buffer.AsSpan(0, 8), 99);
         WriteV2Record(buffer.AsSpan(8), length, 41, 5, 123, 0x20, name);
         var record = ReaderNtfsVolume.ParseMftForTest(buffer).Single();
+        TestAssert.Equal(123L, record.LastUsn, "mft parser preserves per-file USN");
         TestAssert.Equal(41UL, record.FileReference, "mft parser id");
         TestAssert.Equal(5UL, record.ParentFileReference, "mft parser parent");
         TestAssert.Equal("sample.png", record.Name, "mft parser name");

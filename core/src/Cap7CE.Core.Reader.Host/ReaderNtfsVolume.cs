@@ -455,7 +455,7 @@ internal sealed partial class ReaderNtfsVolume : IDisposable
                     facts?.Attributes ?? record.Attributes,
                     record.IsDirectory,
                     record.Name,
-                    record.Extension);
+                    record.Extension, record.LastUsn);
             }).ToArray();
             return new ReaderMftReadPageResponseV2(page.NextCursor, page.EndOfStream, records);
         }
@@ -526,7 +526,8 @@ internal sealed partial class ReaderNtfsVolume : IDisposable
             var extension = (attributes & FileAttributeDirectory) == 0 ? Path.GetExtension(name) : string.Empty;
             if (Encoding.UTF8.GetByteCount(extension) > ReaderProtocol.MaximumExtensionBytes) extension = string.Empty;
             records.Enqueue(new ReaderMftRecord(
-                id, parent, 0, 0, attributes, (attributes & FileAttributeDirectory) != 0, name, extension));
+                id, parent, 0, 0, attributes, (attributes & FileAttributeDirectory) != 0, name, extension,
+                BinaryPrimitives.ReadInt64LittleEndian(buffer.Slice(offset + 24, 8))));
             offset += checked((int)length);
         }
     }

@@ -1,5 +1,7 @@
 # Cap7CE 软件架构
 
+日志过期恢复由CatalogFactRecovery唯一拥有临时SQLite证据及清理：仅同一journal的checkpoint-expired自动恢复、且此前Ready/Offline/CatchingUp时，按旧盘代次、内容修订、大小及时间捕获当时有效的事实与嵌入搜索投影。临时库沿现有snapshot-GUID命名与启动清理，不迁移主库、不保留目录提取授权；失败、中断和显式重建沿原失效路径。Reader通过SnapshotFileUsn能力协商，在明确请求的CR/2快照页附带MFT逐文件USN；旧请求及响应字节布局不变，旧Reader返回未知，禁止以大小/时间代替USN。快照发布事务在原节点替换前，核验同一journal、连续的两次盘代次失效、旧事实版本/源修订、文件身份/创建时间/格式及新大小/时间，并要求0<文件USN<旧checkpoint；仅这些事实进入新代次，同时恢复对应搜索投影。源文件不被解析或写入，未通过的事实继续失效；不跨中断复活旧证据。CatalogFactRecoveryTests及fact-recovery-architecture-check守护范围、降级、取消、色彩、搜索证据及协议兼容。
+
 PSD/PSB画板预览由providerPreview/psd独立领域负责：cursor只做有界定位读取，layout解析画板记录，source唯一拥有只读文件句柄并在读取结束关闭，worker复用锁定ag-psd的描述符与合成解码及sharp裁剪，service唯一持有单个工作线程/预览会话并复用provider lifecycle。只将按位置读取的已保存合成画面装入最小内存容器，跳过图层像素；解码后立即释放压缩输入，只保留当前会话一份RGBA，不发布缩略图或持久缓存。支持8位RGB、3/4通道、Raw/RLE合成画面，限8 GiB源文件、5000万合成像素、128 MiB合成数据、8 MiB元数据、1万图层和128画板；画板必须位于合成画面内。源身份/dev/ino、大小、mtime/ctime在打开与每次翻页前后校验，格式异常/源变更不发布页图。单页输出宽度最多1600、高度最多16000、总计最多1600万像素且不放大原图，PNG最多24 MiB（Base64最多32 MiB，保留64 MiB私有帧余量）；打开15秒、翻页10秒超时，取消、切换、关闭、release及父进程退出均通过唯一拥有者终止线程。Core共享契约在psdPreviewTypes；WinUI的PsdPreviewView只承担翻页及图片展示，PreviewWindow只组合并在失败时回退既有视觉/FileInfo链路。读取器统一支持单画板、多画板及无显式画板的合成画面；单画板隐藏翻页控件并使用图片滚轮缩放，多画板保留翻页回调。初始适应全图与窗口尺寸策略不变，不增加按文件名或体积分类的长图特例。PSB仅扩展预览，不开放索引/AI/缩略图能力；旧PSD缩略图及首画板策略保持原样。psd-preview-architecture-check与独立运行库集成测试守护这些边界。
 
 ImagePreviewView在图片显示层处理鼠标滚轮，默认复用底部缩放逻辑；PdfPreviewView通过可选滚轮回调拥有文档翻页，累积标准滚轮刻度、渲染期间忽略重复请求，并复用既有Move的页码边界与取消校验。PDF及转换文档不通过滚轮缩放，底部缩放与翻页按钮保持可用，首尾不切换文件；不增加全局设置或输入钩子。

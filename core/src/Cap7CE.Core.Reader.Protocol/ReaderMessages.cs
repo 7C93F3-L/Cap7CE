@@ -16,7 +16,8 @@ public enum ReaderCapabilities : uint
     BasicFacts = 16,
     JournalChangeWait = 32,
     FileEntryNames = 64,
-    AuthenticatedSessions = 128
+    AuthenticatedSessions = 128,
+    SnapshotFileUsn = 256
 }
 
 public sealed record ReaderHelloRequest(byte[] Nonce, uint ClientProcessId);
@@ -76,7 +77,7 @@ public sealed record ReaderMftOpenSnapshotResponse(
 public sealed record ReaderMftReadPageRequest(
     ReaderOpaqueId SnapshotId,
     ulong Cursor,
-    uint MaximumRecords);
+    uint MaximumRecords, bool IncludeFileUsn = false);
 
 public sealed record ReaderMftRecord(
     ulong FileReference,
@@ -86,7 +87,7 @@ public sealed record ReaderMftRecord(
     uint Attributes,
     bool IsDirectory,
     string Name,
-    string Extension);
+    string Extension, long? LastUsn = null);
 
 public sealed record ReaderMftRecordV2(
     ulong FileReference,
@@ -97,7 +98,7 @@ public sealed record ReaderMftRecordV2(
     uint Attributes,
     bool IsDirectory,
     string Name,
-    string Extension);
+    string Extension, long? LastUsn = null);
 
 public sealed record ReaderMftReadPageResponseV2(
     ulong NextCursor,

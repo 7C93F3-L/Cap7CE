@@ -116,6 +116,10 @@ public sealed class CatalogSynchronizationService
         var reason = catalogVolume.State == CatalogV2VolumeState.Building ? "interrupted-build"
             : CatalogPreparationDiagnostics.RebuildReason(catalogVolume, inspection)
                 ?? (forceRebuild ? "explicit-rebuild" : "marked-for-rebuild");
+        await using var factRecovery = !forceRebuild && reason == "checkpoint-expired"
+            && catalogVolume.CheckpointUsn >= inspection.LowestValidUsn
+            && catalogVolume.JournalId == inspection.JournalId.ToString("X16")
+            ? await Cap7CE.Core.Catalog.FileFacts.CatalogFactRecovery.CaptureAsync(catalog, catalogVolume, token) : null;
         if (forceRebuild && catalogVolume.State is not (CatalogV2VolumeState.Disabled or CatalogV2VolumeState.NeedsRebuild))
         {
             catalogVolume = await catalog.MarkNeedsRebuildAsync(catalogVolume.VolumeId, token);
@@ -129,7 +133,7 @@ public sealed class CatalogSynchronizationService
             return await BuildSnapshotAsync(
                 reader, readerVolume, catalogVolume, inspection,
                 catalogVolume.State == CatalogV2VolumeState.NeedsRebuild,
-                activity, reason, token);
+                activity, reason, token, factRecovery);
         }
 
         if (catalogVolume.State != CatalogV2VolumeState.CatchingUp)
@@ -143,7 +147,7 @@ public sealed class CatalogSynchronizationService
         }
         if (catalogVolume.State == CatalogV2VolumeState.NeedsRebuild)
         {
-            return await BuildSnapshotAsync(reader, readerVolume, catalogVolume, inspection, true, activity, reason, token);
+            return await BuildSnapshotAsync(reader, readerVolume, catalogVolume, inspection, true, activity, reason, token, factRecovery);
         }
 
         try
@@ -199,7 +203,7 @@ public sealed class CatalogSynchronizationService
         CatalogV2VolumeSnapshot volume,
         CatalogReaderInspection inspection,
         bool rebuild,
-        CatalogPreparationDiagnostics.Activity? activity, string reason, CancellationToken token)
+        CatalogPreparationDiagnostics.Activity? activity, string reason, CancellationToken token, Cap7CE.Core.Catalog.FileFacts.CatalogFactRecovery? factRecovery = null)
     {
         var totalWatch = System.Diagnostics.Stopwatch.StartNew();
         var readerReadMilliseconds = 0d;var entryReadMilliseconds=0d;
@@ -223,6 +227,7 @@ public sealed class CatalogSynchronizationService
                 snapshot.RecordCount == 0 ? (long?)null : checked((long)snapshot.RecordCount),
                 rebuild,
                 token, captureFileEntries);
+            build.FactRecovery = factRecovery;
             activity?.Stage("snapshot-read-and-stage");
             var scanned = 0L;
             var total = snapshot.RecordCount == 0 ? (long?)null : checked((long)snapshot.RecordCount);
@@ -245,6 +250,8 @@ public sealed class CatalogSynchronizationService
                 }
                 if (page.Records.Count > 0)
                 {
+                    if (factRecovery is not null) await factRecovery.AppendAsync(page.Records.Select(record =>
+                        (CatalogV2Database.EncodeFileReference(record.FileReference), record.LastUsn)).ToArray(), token);
                     var nodes = page.Records.Select(record => ToCatalogNode(volume.VolumeId, record)).ToArray();
                     if (captureFileEntries) {
                         readerWatch.Restart();var entries=await new CatalogDirectoryEntryCapture(reader, readerVolume, true).CaptureSnapshotAsync(nodes, token);
@@ -263,6 +270,13 @@ public sealed class CatalogSynchronizationService
             readerWatch.Stop();
             readerReadMilliseconds += readerWatch.Elapsed.TotalMilliseconds;
             snapshotClosed = true;
+            if (factRecovery is not null)
+            {
+                var currentJournal = await reader.InspectAsync(readerVolume, token);
+                if (currentJournal.JournalId != snapshot.JournalId || snapshot.JournalStartingUsn < currentJournal.FirstUsn
+                    || snapshot.JournalStartingUsn < currentJournal.LowestValidUsn || snapshot.JournalStartingUsn > currentJournal.NextUsn)
+                    throw new CatalogReaderDiscontinuityException();
+            }
             activity?.Stage("directory-paths-and-publish");
             progress?.Report(volume.VolumeId, volume.DisplayName, "publishing", scanned);
             result = await build.PublishAsync(token);
