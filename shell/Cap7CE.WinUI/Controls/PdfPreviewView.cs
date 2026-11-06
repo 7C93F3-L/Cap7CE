@@ -21,12 +21,13 @@ internal sealed class PdfPreviewView : Grid
     private CancellationToken token;
     private uint page;
     private bool rendering;
+    private int wheelDelta;
     public PdfPreviewView(Action openExternal,Action<double,double> resized,Action<UiMessage> failed)
     {
         this.resized=resized;this.failed=failed;
         previous=L.Tool("\uE76B","ui.preview.previousPage",()=>Move(-1));next=L.Tool("\uE76C","ui.preview.nextPage",()=>Move(1));
         count.VerticalAlignment=VerticalAlignment.Center;
-        viewer=new(openExternal,Ui.Row(previous,count,next));Children.Add(viewer);
+        viewer=new(openExternal,Ui.Row(previous,count,next),WheelPage);Children.Add(viewer);
     }
     public async Task LoadAsync(string path,CancellationToken cancellation)
     {
@@ -43,6 +44,13 @@ internal sealed class PdfPreviewView : Grid
         try{await RenderAsync();}
         catch(OperationCanceledException){}
         catch(Exception error){page=old;UpdateButtons();failed(FailureText.From(error));}
+    }
+    private void WheelPage(int delta)
+    {
+        if(rendering||document is null||token.IsCancellationRequested){wheelDelta=0;return;}
+        if(Math.Sign(delta)!=Math.Sign(wheelDelta))wheelDelta=0;
+        wheelDelta+=delta;if(Math.Abs(wheelDelta)<120)return;
+        var direction=-Math.Sign(wheelDelta);wheelDelta=0;Move(direction);
     }
     private void UpdateButtons()
     {previous.IsEnabled=!rendering&&page>0;next.IsEnabled=!rendering&&document is not null&&page+1<document.PageCount;}
