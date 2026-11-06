@@ -1,5 +1,5 @@
 export type FileFormatCategory = "visual" | "text" | "document" | "data" | "archive" | "audio" | "video" | "font" | "threeD" | "project" | "model";
-export type FilePreviewKind = "image" | "fileInfo" | "text" | "audio" | "video" | "pdf" | "office" | "archive" | "font" | "epub" | "mobi" | "threeD";
+export type FilePreviewKind = "image" | "fileInfo" | "text" | "audio" | "video" | "pdf" | "office" | "archive" | "font" | "epub" | "mobi" | "threeD" | "psd";
 export type NaturalFileKind =
   | "image"
   | "vector"
@@ -145,7 +145,7 @@ const contentPreviewKinds = new Map<string, FilePreviewKind>([
   ["xls", "office"], ["xlsx", "office"], ["ppt", "office"], ["pptx", "office"],
   ["7z", "archive"], ["rar", "archive"], ["zip", "archive"],
   ["otf", "font"], ["ttf", "font"],
-  ["epub", "epub"],
+  ["epub", "epub"], ["psb", "psd"],
   ["mobi", "mobi"], ["obj", "threeD"], ["glb", "threeD"], ["gltf", "threeD"], ["stl", "threeD"], ["fbx", "threeD"],
   ["flac", "audio"], ["m4a", "audio"], ["mp3", "audio"], ["ogg", "audio"], ["wav", "audio"],
   ["ape", "audio"],
@@ -165,7 +165,7 @@ const visualCapabilities = visualFormatGroups.flatMap(([extensions, naturalSearc
       canSearch: true,
       canThumbnail: true,
       canShellPreview: false,
-      previewKind: dottedExtension === ".pdf" ? "pdf" : "image",
+      previewKind: dottedExtension === ".pdf" ? "pdf" : extension === "psd" ? "psd" : "image",
       canDirectPreview: directPreviewExtensions.has(dottedExtension),
       canAIIndex: extension !== "exr",
       naturalSearchKinds

@@ -128,6 +128,14 @@ internal sealed class PreviewWindow : Window
                 } else content.Content=media.Element;
                 return;
             }
+            if(kind=="psd") {
+                var boards=new PsdPreviewView(services.Providers,sessionId,()=>OpenExternal(true),
+                    (w,h)=>{if(!closed&&!token.IsCancellationRequested)geometry.Apply(w,h);},
+                    message=>{if(!closed&&!token.IsCancellationRequested){status.Visibility=Visibility.Visible;L.Message(status,TextBlock.TextProperty,message);}});
+                content.Content=boards;
+                if(await boards.TryLoadAsync(item,token)){status.Visibility=Visibility.Collapsed;return;}
+                token.ThrowIfCancellationRequested();content.Content=null;
+            }
             if(kind=="threeD") {
                 geometry.Apply(900,640,24,110);status.Visibility=Visibility.Collapsed;
                 var model=new ModelPreviewView(error=>{if(!closed&&!token.IsCancellationRequested){status.Visibility=Visibility.Visible;L.Message(status,TextBlock.TextProperty,FailureText.From(error));}});
@@ -209,7 +217,7 @@ internal sealed class PreviewWindow : Window
         try
         {
             if(old=="text")await services.Providers.RequestAsync("text.cancel",[id]);
-            else if(old is "font" or "epub" or "mobi" or "archive")await services.Providers.RequestAsync(old+".close",[id]);
+            else if(old is "font" or "epub" or "mobi" or "archive" or "psd")await services.Providers.RequestAsync(old+".close",[id]);
             if(old=="office")await services.Office.RequestAsync("office.close",[id]);
         }catch{}
     }

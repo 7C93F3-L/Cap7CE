@@ -1,5 +1,5 @@
 import path from "node:path";
-import * as font from "./font";
+import * as font from "./font"; import { createPsdPreviewService } from "./psd/service";
 import * as epub from "./epub";
 import * as mobi from "./mobi";
 import * as archive from "./archive";
@@ -7,17 +7,17 @@ import * as pdf from "./pdf";
 import { releasePreviewWorkers } from "./lifecycle";
 import { createTextPreviewOwner } from "../textPreview/owner";
 export function createProviderPreviewService(directory: string) {
-  const textPreview = createTextPreviewOwner(directory);
+  const textPreview = createTextPreviewOwner(directory), psd = createPsdPreviewService(directory);
   let closed = false, releasing: Promise<void> | undefined; const pending = new Set<Promise<unknown>>();
   const invalid = (): never => { throw Error("core-preview-invalid-request"); };
   const text = (value: unknown, file = false) => typeof value === "string" && value.length > 0 && value.length <= 32767 && !value.includes("\0") && (!file || path.isAbsolute(value)) ? value : invalid();
-  const closeSessions = (all = false) => { font.closeFontPreviewSession(); epub.closeEpubPreviewSession(); mobi.closeMobiPreviewSession(); archive.closeArchivePreviewSession(); if (all) pdf.closePdfPreviewSession(); else pdf.releasePdfPreviewSourceHandles(); };
+  const closeSessions = (all = false) => { void psd.close(); font.closeFontPreviewSession(); epub.closeEpubPreviewSession(); mobi.closeMobiPreviewSession(); archive.closeArchivePreviewSession(); if (all) pdf.closePdfPreviewSession(); else pdf.releasePdfPreviewSourceHandles(); };
   const release = () => releasing ??= (async () => { closeSessions(); await Promise.all([releasePreviewWorkers(), textPreview.release()]); await Promise.allSettled([...pending]); await releasePreviewWorkers(); })().finally(() => { releasing = undefined; });
   const execute = async (method: string, args: unknown[]): Promise<unknown> => {
     if (args.length < 1) return invalid(); const session = text(args[0]);
-    if (method.endsWith(".close")) { if (args.length !== 1) return invalid(); switch (method) { case "font.close": return font.closeFontPreviewSession(session); case "epub.close": return epub.closeEpubPreviewSession(session); case "mobi.close": return mobi.closeMobiPreviewSession(session); case "archive.close": return archive.closeArchivePreviewSession(session); case "pdf.close": return pdf.closePdfPreviewSession(session); default: return invalid(); } }
+    if (method.endsWith(".close")) { if (args.length !== 1) return invalid(); switch (method) { case "font.close": return font.closeFontPreviewSession(session); case "epub.close": return epub.closeEpubPreviewSession(session); case "mobi.close": return mobi.closeMobiPreviewSession(session); case "archive.close": return archive.closeArchivePreviewSession(session); case "pdf.close": return pdf.closePdfPreviewSession(session); case "psd.close": return psd.close(session); default: return invalid(); } }
     if (method === "font.inspect") { if (args.length !== 1) return invalid(); return font.inspectFontPreviewSource(text(args[0], true)); }
-    if (args.length < 2) return invalid(); const file = text(args[1], true);
+    if (method.startsWith("psd.")) return psd.dispatch(method, args); if (args.length < 2) return invalid(); const file = text(args[1], true);
     switch (method) {
       case "font.open": if (args.length !== 3 || !["zh-CN", "en-US"].includes(String(args[2]))) return invalid(); return font.openFontPreviewSession(session, file, args[2] as "zh-CN" | "en-US");
       case "epub.open": if (args.length !== 2) return invalid(); return epub.openEpubPreviewSession(session, file);

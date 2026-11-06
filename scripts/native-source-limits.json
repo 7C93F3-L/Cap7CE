@@ -204,5 +204,11 @@
   "core/shared/types.ts": 78,
   "core/shared/visualCacheTypes.d.ts": 61,
   "core/shared/visualRenderTypes.d.ts": 16,
-  "core/node/visualRendering/shell/nativeDocumentRenderers.ts": 15
+  "core/node/visualRendering/shell/nativeDocumentRenderers.ts": 15,
+  "core/node/providerPreview/psd/cursor.ts": 40,
+  "core/node/providerPreview/psd/layout.ts": 75,
+  "core/node/providerPreview/psd/source.ts": 45,
+  "core/node/providerPreview/psd/worker.ts": 50,
+  "core/node/providerPreview/psd/service.ts": 95,
+  "core/shared/psdPreviewTypes.d.ts": 5
 }
