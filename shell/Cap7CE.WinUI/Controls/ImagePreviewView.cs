@@ -33,6 +33,13 @@ internal sealed class ImagePreviewView : Grid
     {
         Background=new SolidColorBrush(Microsoft.UI.Colors.Transparent);
         surface.Children.Add(image);scroll.Content=surface;Children.Add(scroll);IdleScrollBars.Attach(scroll);
+        // Handle image-surface input before it bubbles to ScrollViewer's default scrolling/zooming.
+        surface.AddHandler(PointerWheelChangedEvent,new PointerEventHandler((_,e)=>{
+            var point=e.GetCurrentPoint(surface).Properties;
+            if(e.Handled||e.Pointer.PointerDeviceType!=Microsoft.UI.Input.PointerDeviceType.Mouse
+                ||point.IsHorizontalMouseWheel||point.MouseWheelDelta==0)return;
+            e.Handled=true;ShowTools();Zoom(MathF.Pow(1.25f,point.MouseWheelDelta/120f));
+        }),true);
         var tools=Ui.Row(scale,L.Tool("\uE71F","ui.preview.zoomOut",()=>Zoom(1/1.25f)),zoomSlider,L.Tool("\uE8A3","ui.preview.zoomIn",()=>Zoom(1.25f)),L.Button("ui.preview.fit",Fit),L.Tool("\uE8A7","ui.preview.openDefault",openExternal));
         tools.Spacing=4;scale.Width=44;scale.VerticalAlignment=VerticalAlignment.Center;
         if(pageTools is not null)tools.Children.Insert(0,pageTools);
