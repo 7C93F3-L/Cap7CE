@@ -9,6 +9,7 @@ using Cap7CE.Core.Reader.Host;
 using Cap7CE.Core.Setup;
 using Cap7CE.Core.Tests;
 
+if (args is ["--embedded-search-tests"]) { await CatalogEmbeddedSearchTests.RunAsync();await CatalogTextCandidateTests.RunAsync();await FileFactCatalogIntegrationTests.RunAsync();await FileFactExtractionBrokerTests.RunAsync(); return 0; }
 if (args is ["--catalog-health-tests"]) { await CatalogHealthTests.RunAsync(); return 0; }
 if (args is ["--catalog-throughput-probe"]) { await CatalogSnapshotDeltaTests.ProbeAsync(); return 0; }
 if (args is ["--metadata-throughput-probe"]) { await MetadataBuildSweepTests.ProbeAsync(); return 0; }
@@ -122,7 +123,7 @@ await CatalogEntrySnapshotFenceTests.RunAsync();
 await CatalogSnapshotEntryParentTests.RunAsync();
 await CatalogJournalEntryParentTests.RunAsync();
 await CatalogCrossVolumeResumeTests.RunAsync();
-await CatalogTextCandidateTests.RunAsync();
+await CatalogTextCandidateTests.RunAsync();await CatalogEmbeddedSearchTests.RunAsync();
 await CatalogEntryRetryTests.RunAsync();
 await CatalogEntryActivationTests.RunAsync();
 await CatalogEntryMaintenanceTests.RunAsync();

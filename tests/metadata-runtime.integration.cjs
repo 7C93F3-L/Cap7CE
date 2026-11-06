@@ -31,7 +31,17 @@ const hash = bytes => crypto.createHash("sha256").update(bytes).digest("hex");
       const timer = setTimeout(() => { cleanup(); reject(new Error("Standalone parser timed out.")); }, 15_000);
       child.once("message", receive); child.once("exit", exited); child.send({ type: "extract", id, task });
     });
+    const image = await sharp({ create: { width: 2, height: 2, channels: 3, background: "red" } }).png().toBuffer();
+    const graph = { "1": { class_type: "CLIPTextEncode", inputs: { text: "red dragon 红色龙 100%_sample" } },
+      "2": { class_type: "CLIPTextEncode", inputs: { text: "negative-only-unwanted" } },
+      "3": { class_type: "KSampler", inputs: { positive: ["1", 0], negative: ["2", 0] } } };
+    const chunk = Buffer.from("tEXtprompt\0" + JSON.stringify(graph));
+    let crc = 0xffffffff;
+    for (const byte of chunk) { crc ^= byte; for (let bit = 0; bit < 8; bit++) crc = (crc >>> 1) ^ ((crc & 1) ? 0xedb88320 : 0); }
+    const chunkHeader = Buffer.alloc(4), checksum = Buffer.alloc(4); chunkHeader.writeUInt32BE(chunk.length - 4); checksum.writeUInt32BE((crc ^ 0xffffffff) >>> 0);
+    const generated = Buffer.concat([image.subarray(0, 33), chunkHeader, chunk, checksum, image.subarray(33)]);
     const fixtures = [
+      ["generated.png", "image-dimensions", generated, { searchEvidence: [{ kind: "visual_content", text: "red dragon 红色龙 100%_sample" }] }],
       ["unicode.txt", "text-data", Buffer.from("你好🙂\nend"), { textDataProperties: { factKind: "text", characterCount: 7, lineCount: 2 } }],
       ["empty.zip", "archive", Buffer.from(zipSync({})), { archiveProperties: { listingComplete: true, fileCount: 0, hasDirectories: false, contentTypes: [] } }],
       ["slides.pptx", "document", Buffer.from(zipSync({ "ppt/presentation.xml": strToU8("<p:presentation><p:sldId/><p:sldId/><p:sldId/></p:presentation>") })), { documentProperties: { contentCount: 3, countKind: "slides", hasEmbeddedImages: false } }],

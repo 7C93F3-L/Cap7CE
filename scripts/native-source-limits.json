@@ -15,6 +15,7 @@
   "core/node/metadataExecution/documentMetadataInspector.ts": 20,
   "core/node/metadataExecution/metadataBuildSpecifications.ts": 25,
   "core/node/metadataExecution/metadataWorkerProcess.ts": 128,
+  "core/node/metadataExecution/metadataSearchEvidence.ts": 20,
   "core/node/metadataExecution/metadataWorkerTransport.ts": 35,
   "core/node/metadataExecution/metadataWorkerTypes.ts": 34,
   "core/node/metadataExecution/textDataMetadataInspector.ts": 14,

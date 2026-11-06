@@ -31,8 +31,8 @@ internal sealed record NodeMetadataResponse(long Id, long ResidentBytes, JsonEle
             return result;
         }
         var allowed = kind switch {
-            FileFactKind.ImageDimensions => new[] { "state", "width", "height", "isAnimated", "visualProperties" },
-            FileFactKind.Video => ["state", "width", "height", "durationMilliseconds", "visualProperties"],
+            FileFactKind.ImageDimensions => new[] { "state", "width", "height", "isAnimated", "visualProperties", "searchEvidence" },
+            FileFactKind.Video => ["state", "width", "height", "durationMilliseconds", "visualProperties", "searchEvidence"],
             FileFactKind.Audio => ["state", "durationMilliseconds", "channelCount"],
             FileFactKind.Font => ["state", "fontProperties"], FileFactKind.Model => ["state", "modelProperties"],
             FileFactKind.Document => ["state", "documentProperties"], FileFactKind.ThreeD => ["state", "threeDProperties"],

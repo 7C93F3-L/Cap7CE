@@ -1,5 +1,7 @@
 # Cap7CE 软件架构
 
+图片/视频嵌入搜索证据复用embeddedMetadata的旧版高价值字段选择，metadataSearchEvidence仅在既有后台元数据任务成功时附带读取，保留256 KiB私有帧限制（证据JSON预算192 KiB，极端超限缩短最长字段）；不在搜索过程中读取源图片，不将负向提示词或工作流JSON直接入库。FileFactSearchEvidence拥有Catalog中的稀疏catalog_embedded_search扩展表，初始化仅建表，不扫描旧库、不迁移个人数据；经现有broker源身份/版本校验后与事实同事务替换发布。查询同时接入候选键和完整逐词谓词，保持名称/路径专用搜索语义、分页计数和目录范围。证据比较创建时间、大小、修改时间；内容/格式变更、删除、盘级失效及显式事实失效在同事务删除对应投影，禁止旧提示词复活。图片/视频提取器升至3，旧文件通过现有已授权元数据任务或目录右键提取增量补齐，保持暂停/停止意图，不启动新的全盘扫描。Core只查询自己的投影，WinUI不直读SQLite，旧存储及即时详情展示链路保持各自所有权。
+
 GLB/glTF、OBJ、STL及FBX基础预览由Controls/ModelPreview中的独立WebView2控件承载，使用锁定版本Babylon.js离线脚本；仅该可信页面启用脚本，不开放HostObject、外部导航、下载或权限。modelLoader负责解析与OBJ内存灰模回退，modelScene负责相机、灯光及材质切换；不接入Catalog、Node任务或缩略图缓存。ModelPreviewResources唯一拥有显示快照读取，复用FileAccessGuard身份/链接检查，只允许模型及同目录子树内白名单配套文件；主文件和单资源各限64 MiB、累计256 MiB、128次请求、两路读取。控件启动限20秒，关闭、切换、取消和渲染进程失败均释放WebView及响应内存，读取完成立即关闭源文件句柄。STL及FBX复用锁定Babylon.js中的加载器，不增加解析依赖；构建只分发离线脚本与许可证，不分发Sandbox或完整npm库；model-preview-architecture-check及ModelPreview测试守护模块、资源范围与生命周期边界。
 
 当前源码主线为 Windows x64 / C# / WinUI 3，当前版本为 2.0.3。Electron/Renderer/Preload 源码、React/Vite 和旧构建入口已退役；历史实现与迁移记录可从 Git 历史查看。安装布局和数据所有权延续2.0.0，本轮不新增用户数据迁移。

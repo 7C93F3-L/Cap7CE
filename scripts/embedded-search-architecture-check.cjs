@@ -1,0 +1,11 @@
+const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict');
+const root=path.resolve(__dirname,'..'),read=p=>fs.readFileSync(path.join(root,p),'utf8');
+const evidence=read('core/src/Cap7CE.Core.Catalog/FileFacts/FileFactSearchEvidence.cs');
+assert(evidence.trimEnd().split(/\r?\n/).length<=85,'embedded projection must remain one bounded owner');
+assert(!/FileStream|File\.Read|Process\.Start|NodeMetadata|Microsoft\.UI/.test(evidence),'Catalog evidence cannot parse files, launch workers or depend on UI');
+const candidate=read('core/src/Cap7CE.Core.Catalog/Queries/CatalogTextCandidateSql.cs');
+assert(candidate.includes('FROM catalog_embedded_search WHERE search_text LIKE $candidateTerm'),'prompt matches must survive the global candidate gate');
+assert(read('core/src/Cap7CE.Core.Catalog/CatalogV2Database.cs').includes('FileFactSearchEvidence.Match(parameter)'),'complete predicates must verify embedded terms');
+const invalidation=read('core/src/Cap7CE.Core.Catalog/FileFacts/FileFactCatalogInvalidation.cs');
+assert(invalidation.includes('identity.VolumeId, identity.FileReference, token')&&invalidation.includes('volumeId, null, token'),'source and volume fences must invalidate search projection transactionally');
+console.log('Embedded search persistence, candidate and source-fence boundaries passed.');

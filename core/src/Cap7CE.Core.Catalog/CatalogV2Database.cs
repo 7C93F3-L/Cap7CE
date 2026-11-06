@@ -31,7 +31,7 @@ public sealed partial class CatalogV2Database
         startupStage?.Invoke("catalog.schema");
         await CatalogV2Schema.InitializeAsync(connection, token, createEntryCatalog);
         startupStage?.Invoke("catalog.keywords-schema");
-        await Keywords.CatalogKeywordSchema.InitializeAsync(connection, token);
+        await Keywords.CatalogKeywordSchema.InitializeAsync(connection, token);await FileFacts.FileFactSearchEvidence.InitializeAsync(connection, token);
         startupStage?.Invoke("catalog.wal");
         using var wal = connection.CreateCommand();
         wal.CommandText = "PRAGMA journal_mode = WAL;";
@@ -442,7 +442,7 @@ public sealed partial class CatalogV2Database
                 CatalogQueryTextTarget.Name => nameMatch,
                 CatalogQueryTextTarget.Path => pathMatch,
                 CatalogQueryTextTarget.NameOrPath => nameMatch + " OR " + pathMatch,
-                _ => nameMatch + " OR " + pathMatch + " OR " + Keywords.CatalogKeywordSchema.Match(parameter)
+                _ => nameMatch + " OR " + pathMatch + " OR " + Keywords.CatalogKeywordSchema.Match(parameter) + " OR " + FileFacts.FileFactSearchEvidence.Match(parameter)
             }).Append(')');
             command.Parameters.AddWithValue("$term" + index, Queries.CatalogTextCandidateSql.Pattern(terms[index]));
         }

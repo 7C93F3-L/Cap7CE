@@ -13,7 +13,7 @@ public sealed record FileFactExtractionResult(FileFactState State, int? Width = 
     FileFactDocumentProperties? DocumentProperties = null,
     FileFactThreeDProperties? ThreeDProperties = null,
     FileFactTextDataProperties? TextDataProperties = null,
-    FileFactArchiveProperties? ArchiveProperties = null);
+    FileFactArchiveProperties? ArchiveProperties = null, IReadOnlyList<FileFactEvidence>? SearchEvidence = null);
 public enum FileFactBrokerCompletion { Published, LeaseLost, SourceDeferred, SourceChanged, ExtractorSuperseded }
 
 // Explicitly activated broker for an ordinary-account extraction client. No worker processes or source content access.
@@ -123,7 +123,7 @@ public sealed class FileFactExtractionBroker
             if (!await resolver.IsAuthorizedAsync(current.Source, lease, token)) { owned.Remove(leaseId); return FileFactBrokerCompletion.LeaseLost; }
             var observation = new FileFactObservation(lease.Job.Identity, lease.Source, lease.Job.Kind,
                 lease.Job.ExtractorVersion, result.State, result.Width, result.Height, result.DurationMilliseconds, result.ErrorCode,
-                result.IsAnimated, result.VisualProperties, result.ChannelCount, result.FontProperties, result.ModelProperties, result.DocumentProperties, result.ThreeDProperties, result.TextDataProperties, result.ArchiveProperties);
+                result.IsAnimated, result.VisualProperties, result.ChannelCount, result.FontProperties, result.ModelProperties, result.DocumentProperties, result.ThreeDProperties, result.TextDataProperties, result.ArchiveProperties, result.SearchEvidence);
             var completed = await queue.CompleteAsync(leaseId, observation, token);
             owned.Remove(leaseId);
             return completed switch

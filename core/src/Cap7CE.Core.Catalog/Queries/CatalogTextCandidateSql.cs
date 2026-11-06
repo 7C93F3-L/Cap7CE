@@ -54,6 +54,7 @@ internal static class CatalogTextCandidateSql
         if (target == CatalogQueryTextTarget.NamePathOrKeywords) sql += $"""
              OR ({alias}.volume_id,{alias}.file_reference) IN (SELECT volume_id,file_reference FROM catalog_manual_keywords WHERE search_text LIKE $candidateTerm ESCAPE '\' COLLATE NOCASE)
             """;
+        if (target == CatalogQueryTextTarget.NamePathOrKeywords) sql += $" OR ({alias}.volume_id,{alias}.file_reference) IN (SELECT volume_id,file_reference FROM catalog_embedded_search WHERE search_text LIKE $candidateTerm ESCAPE '\\' COLLATE NOCASE)";
         return sql;
     }
     public static string Pattern(string value) => "%" + value.Replace("\\", "\\\\", StringComparison.Ordinal)

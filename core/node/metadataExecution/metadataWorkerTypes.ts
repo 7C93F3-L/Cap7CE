@@ -23,7 +23,7 @@ export interface MetadataWorkerResult {
   threeDProperties?: MetadataThreeDProperties;
   textDataProperties?: MetadataTextDataProperties;
   archiveProperties?: import("../fileFacts/domain/archiveMetadataReader").ArchiveMetadataProperties;
-  errorCode?: string;
+  errorCode?: string; searchEvidence?: { kind: string; text: string }[];
   isAnimated?: boolean | null;
   visualProperties?: import("../fileFacts/domain/imageMetadataMetrics").ImageMetadataProperties | null;
 }

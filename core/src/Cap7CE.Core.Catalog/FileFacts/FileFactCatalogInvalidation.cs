@@ -41,6 +41,7 @@ internal static class FileFactCatalogInvalidation
         {
             volume.Value = identity.VolumeId;
             reference.Value = identity.FileReference.ToUpperInvariant();
+            await FileFactSearchEvidence.InvalidateAsync(connection, transaction, identity.VolumeId, identity.FileReference, token);
             await command.ExecuteNonQueryAsync(token);
         }
         command.CommandText = "UPDATE file_fact_state SET fact_revision = fact_revision + 1 WHERE singleton = 1;";
@@ -61,6 +62,7 @@ internal static class FileFactCatalogInvalidation
         await command.ExecuteNonQueryAsync(token);
         command.CommandText = "UPDATE file_fact_state SET fact_revision = fact_revision + 1 WHERE singleton = 1;";
         await command.ExecuteNonQueryAsync(token);
+        await FileFactSearchEvidence.InvalidateAsync(connection, transaction, volumeId, null, token);
         await FileFactChangeLog.RecordVolumeAsync(connection, transaction, volumeId, token);
     }
 

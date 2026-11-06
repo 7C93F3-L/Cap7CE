@@ -29,6 +29,6 @@ public sealed record FileFactObservation(
     FileFactDocumentProperties? DocumentProperties = null,
     FileFactThreeDProperties? ThreeDProperties = null,
     FileFactTextDataProperties? TextDataProperties = null,
-    FileFactArchiveProperties? ArchiveProperties = null);
+    FileFactArchiveProperties? ArchiveProperties = null, IReadOnlyList<FileFactEvidence>? SearchEvidence = null);
 
 public enum FileFactPublishResult { Published, SourceChanged, ExtractorSuperseded }

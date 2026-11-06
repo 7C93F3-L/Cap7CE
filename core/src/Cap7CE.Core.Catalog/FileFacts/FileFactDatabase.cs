@@ -75,6 +75,7 @@ public sealed class FileFactDatabase(string databasePath)
         command.Parameters.AddWithValue("$duration", (object?)observation.DurationMilliseconds ?? DBNull.Value);
         command.Parameters.AddWithValue("$error", (object?)observation.ErrorCode ?? DBNull.Value);
         if (await command.ExecuteNonQueryAsync(token) == 0) return FileFactPublishResult.ExtractorSuperseded;
+        await FileFactSearchEvidence.PublishAsync(connection, transaction, observation, token);
         await FileFactImageDetails.PublishAsync(connection, transaction, observation, token);
         await FileFactAudioDetails.PublishAsync(connection, transaction, observation, token);
         await FileFactFontDetails.PublishAsync(connection, transaction, observation, token);
@@ -123,7 +124,7 @@ public sealed class FileFactDatabase(string databasePath)
             reader.IsDBNull(2) ? null : reader.GetInt32(2),
             reader.IsDBNull(3) ? null : reader.GetInt64(3),
             reader.IsDBNull(4) ? null : reader.GetString(4));
-        await reader.DisposeAsync();
+        await reader.DisposeAsync();observation=observation with { SearchEvidence=await FileFactSearchEvidence.ReadAsync(connection,transaction,identity,kind,token) };
         if (kind == FileFactKind.Archive) return observation with {
             ArchiveProperties = await FileFactArchiveDetails.ReadAsync(connection, transaction, identity, token) };
         if (kind == FileFactKind.TextData) return observation with {
@@ -175,6 +176,7 @@ public sealed class FileFactDatabase(string databasePath)
         await command.ExecuteNonQueryAsync(token);
         command.CommandText = "UPDATE file_fact_state SET fact_revision = fact_revision + 1 WHERE singleton = 1;";
         await command.ExecuteNonQueryAsync(token);
+        await FileFactSearchEvidence.InvalidateAsync(connection, transaction, identity.VolumeId, volume ? null : identity.FileReference, token);
         transaction.Commit();
     }
 
@@ -244,7 +246,7 @@ public sealed class FileFactDatabase(string databasePath)
         ArgumentNullException.ThrowIfNull(observation);
         ValidateIdentity(observation.Identity);
         ArgumentNullException.ThrowIfNull(observation.Source);
-        FileFactImageMetrics.Validate(observation.VisualProperties);
+        FileFactImageMetrics.Validate(observation.VisualProperties);FileFactSearchEvidence.Validate(observation);
         FileFactFontDetails.Validate(observation);
         FileFactModelDetails.Validate(observation);
         FileFactDocumentDetails.Validate(observation);

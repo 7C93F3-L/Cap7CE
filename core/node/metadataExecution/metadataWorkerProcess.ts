@@ -1,4 +1,5 @@
 import { readArchiveMetadata } from "../fileFacts/domain/archiveMetadataReader";
+import { withSearchEvidence } from "./metadataSearchEvidence";
 import fs from "node:fs/promises";
 import path from "node:path";
 import sharp from "sharp";
@@ -31,7 +32,6 @@ const stop = () => {
 process.on("disconnect", stop);
 
 const extract = async (task: MetadataWorkerTask, signal: AbortSignal): Promise<MetadataWorkerResult> => {
-  // The broker performs native volume/file identity checks before and after this call.
   // Independently reject UNC/device paths and directly linked files here.
   if (!/^[a-z]:[\\/]/i.test(task.filePath) || task.filePath.includes("\0")) {
     return { state: "failed", errorCode: "metadata-path-rejected" };
@@ -120,7 +120,7 @@ const send = metadataWorkerTransport(async (message: unknown) => {
   const controller = new AbortController();
   active = controller;
   let result: MetadataWorkerResult;
-  try { result = await extract(task, controller.signal); }
+  try { result = await withSearchEvidence(task, await extract(task, controller.signal), controller.signal); }
   catch { result = { state: "failed", errorCode: "metadata-read-failed" }; }
   active = undefined;
   if (stopping) return finish();
