@@ -22,14 +22,18 @@ internal sealed class DesktopActionController : IDisposable
     {
         this.main=main;this.services=services;this.session=session;this.toolbar=toolbar;this.settings=settings;this.notice=notice;
         services.DesktopActions.Changed+=Changed;services.Preferences.Changed+=Changed;toolbar.SearchSubmitted+=Remember;
+        toolbar.SetSearchHistory(History);main.Activated+=MainActivated;
     }
     public async Task InitializeAsync(){try{await services.DesktopActions.LoadAsync();}catch(Exception e){notice(FailureText.From(e));}ready=true;Changed();}
     private void Changed()=>main.DispatcherQueue.TryEnqueue(()=>{
         if(disposed||!ready)return;
+        toolbar.SetSearchHistory(History);
         if(!services.DesktopActions.Current.Enabled){operation?.Cancel();capsule?.Close();capsule=null;return;}
         capsule??=new(services,Replay,RunProgram,settings,error=>notice(FailureText.From(error)));
         capsule.Configure();
     });
+    private IReadOnlyList<string> History(string text)=>!ready||disposed?[]:ScopedSearchHistory.Select(services.DesktopActions.Current,session.PathValue,session.PreferenceScope==WorkspacePreferenceScope.Favorites,session.EntryPath,text);
+    private void MainActivated(object sender,WindowActivatedEventArgs args){if(args.WindowActivationState==WindowActivationState.Deactivated)toolbar.CloseSearchHistory();}
     private async void Remember(string query)
     {
         if(string.IsNullOrWhiteSpace(query)||!ready||!services.DesktopActions.Current.RecordHistory)return;
@@ -65,5 +69,5 @@ internal sealed class DesktopActionController : IDisposable
         finally{operation=null;busy=false;}
     }
     private bool busy;
-    public void Dispose(){disposed=true;lifetime.Cancel();capsule?.Close();services.DesktopActions.Changed-=Changed;services.Preferences.Changed-=Changed;toolbar.SearchSubmitted-=Remember;lifetime.Dispose();}
+    public void Dispose(){disposed=true;lifetime.Cancel();capsule?.Close();services.DesktopActions.Changed-=Changed;services.Preferences.Changed-=Changed;toolbar.SearchSubmitted-=Remember;toolbar.SetSearchHistory(null);main.Activated-=MainActivated;lifetime.Dispose();}
 }

@@ -15,6 +15,7 @@ internal sealed class WorkspaceAddress : UserControl
     private readonly StackPanel crumbs=new(){Orientation=Orientation.Horizontal,Spacing=0};
     private readonly TextBox address=new();
     private readonly TextBox search=new();
+    private readonly SearchHistoryPopup history;
     private readonly Button toggle,badge,trailing;
     private readonly ScrollViewer breadcrumb;
     private string path="",query="";
@@ -41,17 +42,19 @@ internal sealed class WorkspaceAddress : UserControl
         badge=new Button{Style=(Style)Application.Current.Resources["CapWorkspaceCrumb"]};L.Bind(badge,Button.ContentProperty,"main.searchActive");badge.Click+=(_,_)=>FocusSearch();Grid.SetColumn(badge,2);root.Children.Add(badge);
         address.KeyDown+=(_,e)=>{if(e.Key==VirtualKey.Enter){e.Handled=true;SubmitPath();}else if(e.Key==VirtualKey.Escape){e.Handled=true;editing=false;address.Text=path;Render();toggle.Focus(FocusState.Programmatic);}};
         address.LostFocus+=(_,_)=>{if(editing){editing=false;Render();}};
+        history=new(search,()=>searchMode&&!commandEditing,term=>{search.Text=term;history!.Close();Search?.Invoke(term);});
         search.TextChanged+=(_,_)=>{if(!commandEditing&&string.IsNullOrWhiteSpace(search.Text)&&!string.IsNullOrWhiteSpace(query)){query="";Search?.Invoke("");}};
         search.KeyDown+=(_,e)=>{if(e.Key==VirtualKey.Enter){e.Handled=true;if(CommandSubmitted?.Invoke(search.Text)!=true)Search?.Invoke(search.Text);return;}if(e.Key!=VirtualKey.Escape)return;e.Handled=true;if(commandEditing){CommandCancelled?.Invoke();return;}if(search.Text.Length>0)search.Text="";else{searchMode=false;Render();toggle.Focus(FocusState.Programmatic);}};
         Content=root;Render();
     }
     public void Bind(string nextPath,string nextQuery,bool reset,bool defaultSearch=false)
     {
+        var closeHistory=reset||path!=nextPath;if(closeHistory)history.Close();
         if(reset||path!=nextPath)CommandCancelled?.Invoke();
         if(reset){searchMode=defaultSearch||nextQuery.Length>0;editing=false;}
         if(path!=nextPath||reset){path=nextPath;address.Text=path;Rebuild();}
         if(query!=nextQuery||reset){query=nextQuery;if(!commandEditing)search.Text=query;}
-        Render();
+        Render();if(closeHistory)history.Close();
     }
     private void Rebuild()
     {
@@ -64,6 +67,7 @@ internal sealed class WorkspaceAddress : UserControl
     }
     private void Render()
     {
+        if(!searchMode||commandEditing)history.Close();
         address.Visibility=editing&&!searchMode?Visibility.Visible:Visibility.Collapsed;
         search.Visibility=searchMode?Visibility.Visible:Visibility.Collapsed;breadcrumb.Visibility=!searchMode&&!editing?Visibility.Visible:Visibility.Collapsed;
         toggle.Content=WorkspaceIcons.Icon(searchMode?"search":"computer");L.Label(toggle,searchMode?"main.toAddress":"main.toSearch");
@@ -83,11 +87,14 @@ internal sealed class WorkspaceAddress : UserControl
     private void SubmitPath(){var value=address.Text.Trim();if(CommandSubmitted?.Invoke(value)==true)return;if(value.Length==0)return;editing=false;Navigate?.Invoke(value);Render();}
     public void CommandInput(string? text,bool busy=false)
     {
+        history.Close();
         commandEditing=true;search.IsEnabled=address.IsEnabled=!busy;
         if(text is null){search.Text=query;address.Text=path;commandEditing=false;Render();return;}
         editing=false;searchMode=true;search.Text=text;Render();if(!busy)search.Focus(FocusState.Programmatic);
     }
     public void FocusSearch(){editing=false;searchMode=true;Render();search.Focus(FocusState.Programmatic);}
+    public void SetSearchHistory(Func<string,IReadOnlyList<string>>? provider)=>history.SetProvider(provider);
+    public void CloseSearchHistory()=>history.Close();
     public void FocusPath(){CommandCancelled?.Invoke();searchMode=false;editing=true;address.Text=path;Render();address.Focus(FocusState.Programmatic);address.SelectAll();}
     private bool HasButton(DependencyObject? element)
     {for(var item=element;item is not null&&!ReferenceEquals(item,breadcrumb);item=VisualTreeHelper.GetParent(item))if(item is Button)return true;return false;}

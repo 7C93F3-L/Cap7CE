@@ -4,6 +4,7 @@ using Cap7CE.WinUI.Services;
 
 Environment.SetEnvironmentVariable("CAP7CE_BROWSE_TIMING",null);
 await DesktopActionChecks.RunAsync();
+ScopedSearchHistoryChecks.Run();
 await NativeSnapChecks.RunAsync();
 CapsuleShapeChecks.Run();
 CapsuleGlowChecks.Run();

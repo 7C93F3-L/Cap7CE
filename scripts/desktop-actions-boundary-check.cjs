@@ -1,7 +1,7 @@
 const assert = require('node:assert/strict');
 module.exports = read => {
   const base = 'shell/Cap7CE.WinUI/DesktopActions/';
-  const limits = { 'NativeSnapInput.cs': 110, 'NativeSnapSequence.cs': 40, 'DesktopActionStore.cs': 65, 'DesktopActionController.cs': 95, 'DesktopProgramWindows.cs': 55,
+  const limits = { 'ScopedSearchHistory.cs': 25, 'NativeSnapInput.cs': 110, 'NativeSnapSequence.cs': 40, 'DesktopActionStore.cs': 65, 'DesktopActionController.cs': 95, 'DesktopProgramWindows.cs': 55,
     'CapsuleShadowTexture.cs': 35, 'CapsuleLayeredSurface.cs': 55, 'CapsuleShadowWindow.cs': 50, 'CapsuleGlowTexture.cs': 65, 'CapsuleGlowImage.cs': 40, 'CapsuleAppearance.cs': 75, 'CapsuleWindow.cs': 155, 'CapsuleWindowFrame.cs': 75, 'CapsuleTransparentBackdrop.cs': 30, 'CapsuleTransparency.cs': 45, 'CapsuleShape.cs': 25, 'CapsuleMenu.cs': 75, 'DesktopProgramSettingsRow.cs': 45, 'DesktopProgramIcon.cs': 25, 'DesktopActionSettings.cs': 110 };
   for (const [file, limit] of Object.entries(limits)) {
     const source = read(base + file);
@@ -33,6 +33,11 @@ module.exports = read => {
   assert(read(base + 'CapsuleWindow.cs').includes('CapsuleShape.RadiusPixels(width,height)/scale'), 'capsule drawing must use the same physical geometry as hit testing');
   assert(!read(base + 'CapsuleWindow.cs').includes('ThemeService.Apply('), 'capsule cannot acquire the main-window caption wrapper');
   const store = read(base + 'DesktopActionStore.cs'), controller = read(base + 'DesktopActionController.cs');
+  const historyPopup = read('shell/Cap7CE.WinUI/Controls/Workspace/SearchHistoryPopup.cs');
+  assert(historyPopup.trimEnd().split(/\r?\n/).length <= 90 && !/DesktopActionStore|BrowseSession|File\.|RequestAsync|CoreConnection/.test(historyPopup), 'history popup must remain a bounded presentation component with injected suggestions and submission');
+  assert(historyPopup.includes('ThemeService.Flyout(surface)') && historyPopup.includes('popup.ShowAt(input') && historyPopup.includes('FlyoutShowMode.Transient') && !/HorizontalOffset|VerticalOffset|TransformToVisual|new Popup/.test(historyPopup), 'search history must use the shared acrylic flyout anchored to its editor without compounded coordinate offsets or stolen typing focus');
+  assert(historyPopup.includes('Control.BackgroundProperty,Application.Current.Resources["CapFlyoutSurfaceBrush"]') && historyPopup.includes('Control.CornerRadiusProperty,Application.Current.Resources["CapPanelRadius"]'), 'local history presenter styling must retain the shared backdrop-transparent surface and panel radius');
+  assert(!/File\.|BrowseSession|ShellServices|Microsoft.UI.Xaml/.test(read(base + 'ScopedSearchHistory.cs')), 'scoped history projection must remain pure');
   assert(store.includes('desktop-actions.json') && store.includes('gate.WaitAsync()') && store.includes('File.Move(temp,path,true);Current=next;Changed?.Invoke()'), 'desktop preferences must persist atomically before publication');
   assert(!store.includes('public bool NativeSnap') && !controller.includes('ArrangeAsync') && !read(base + 'DesktopProgramWindows.cs').includes('SetWindowPos'), 'native snapping is the sole placement path; retired size-based placement cannot return');
   assert(store.includes('!v.RecordHistory?v:v with') && store.includes('Take(50)'), 'history admission and retention must be bounded');

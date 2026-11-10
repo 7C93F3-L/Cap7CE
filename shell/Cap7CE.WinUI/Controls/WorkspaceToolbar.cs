@@ -89,6 +89,8 @@ internal sealed class WorkspaceToolbar : UserControl
     public event Action? CommandCancelled {add=>address.CommandCancelled+=value;remove=>address.CommandCancelled-=value;}
     public void CommandInput(string? text,bool busy=false)=>address.CommandInput(text,busy);
     public void FocusSearch()=>address.FocusSearch();
+    public void SetSearchHistory(Func<string,IReadOnlyList<string>>? provider)=>address.SetSearchHistory(provider);
+    public void CloseSearchHistory()=>address.CloseSearchHistory();
     public void FocusPath()=>address.FocusPath();
     public bool ContainsKeyboardTarget(DependencyObject target)
     {for(DependencyObject? item=target;item is not null;item=Microsoft.UI.Xaml.Media.VisualTreeHelper.GetParent(item))if(ReferenceEquals(item,this))return true;return false;}
