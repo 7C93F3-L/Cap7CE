@@ -7,7 +7,7 @@ using Microsoft.UI.Xaml.Media;
 namespace Cap7CE.WinUI.DesktopActions;
 internal sealed class CapsuleMenu : UserControl
 {
-    public CapsuleMenu(DesktopActionOptions options,Action<DesktopSearch> replay,Action<DesktopProgram,int> run,Action settings)
+    public CapsuleMenu(DesktopActionOptions options,Action<DesktopSearch> replay,Action<DesktopProgram,int> run)
     {
         var body=Ui.Column();body.Width=300;
         if(options.RecordHistory){
@@ -23,7 +23,6 @@ internal sealed class CapsuleMenu : UserControl
         body.Children.Add(Ui.Text(AppLanguage.Text("ui.desktop.apps"),true));
         foreach(var app in options.Programs)body.Children.Add(ProgramRow(app,run));
         if(options.Programs.Length==0)body.Children.Add(Ui.Text(AppLanguage.Text("ui.desktop.appsEmpty"),true));
-        body.Children.Add(Ui.Button(AppLanguage.Text("ui.desktop.settings"),settings));
         Content=new ScrollViewer{Content=body,MaxHeight=520,HorizontalScrollBarVisibility=ScrollBarVisibility.Disabled};
     }
     private static Grid ProgramRow(DesktopProgram app,Action<DesktopProgram,int> run)

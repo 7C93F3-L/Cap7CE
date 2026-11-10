@@ -6,7 +6,7 @@ namespace Cap7CE.WinUI.Services;
 // Windows owns tracking, placement, keyboard navigation and dismissal.
 internal static class TrayMenu
 {
-    public static uint Show(bool edge,bool login,string runtime,bool busy)
+    public static uint Show(bool edge,bool login,string runtime,bool busy,bool capsule)
     {
         if(!TrayNative.GetCursorPos(out var cursor))throw new Win32Exception();
         var owner=TrayNative.CreateWindowExW(0x80,"STATIC","",0x80000000,cursor.X,cursor.Y,0,0,0,0,0,0);
@@ -15,6 +15,7 @@ internal static class TrayMenu
         try{
             menu=Create();
             Item(menu,1,"ui.tray.open");Item(menu,2,"main.settings");Separator(menu);
+            Item(menu,32,"ui.desktop.show",capsule?8u:0u);
             Submenu(menu,"settings.edgeCollapse",m=>{
                 Item(m,10,"settings.standardWindowMode");Item(m,11,"settings.edgeCollapseMode");
                 if(!TrayNative.CheckMenuRadioItem(m,10,11,edge?11u:10u,0))throw new Win32Exception();

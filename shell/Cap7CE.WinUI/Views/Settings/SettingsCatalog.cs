@@ -15,7 +15,7 @@ internal sealed class SettingsCatalog
     private readonly Action<UiMessage> notice;
     private readonly Window owner;
     private ModelSettingsView? models;
-    private bool metadataFocus,updatesFocus,indexFocus;
+    private bool metadataFocus,updatesFocus,indexFocus,capsuleFocus;
     private readonly Action<string,Func<UIElement>> openSubpage;
     public List<SettingsEntry> Entries {get;}=[];
     public SettingsCatalog(ShellServices services,Window owner,SettingsActions actions,Action<UiMessage> notice,Action<string,Func<UIElement>> openSubpage)
@@ -25,6 +25,13 @@ internal sealed class SettingsCatalog
     }
     public void BeginRender()=>models=null;
     public void FocusMetadata()=>metadataFocus=true;
+    public void FocusCapsule()=>capsuleFocus=true;
+    private UIElement CapsuleView()
+    {
+        var focus=capsuleFocus;capsuleFocus=false;var view=new DesktopActions.DesktopActionSettings(services.DesktopActions,owner,notice);
+        if(focus)view.Loaded+=(_,_)=>view.DispatcherQueue.TryEnqueue(()=>view.StartBringIntoView());
+        return new SettingsExpandable(view,initiallyExpanded:focus);
+    }
     public void FocusUpdates()=>updatesFocus=true;
     public void FocusIndex()=>indexFocus=true;
     private UIElement IndexView(){var focus=indexFocus;indexFocus=false;return new MaintenanceSettingsView(services,owner,focus);}
@@ -82,7 +89,7 @@ internal sealed class SettingsCatalog
     {
         Mainline("快捷操作","keyboard","settings.quickActions","stableSettings.desc.quickActions",()=>new SettingsPageLink(()=>openSubpage("settings.quickActions",()=>new SettingsShortcutEditor(services,owner,notice))));
         Mainline("快捷操作","keyboard","settings.quickCommands","stableSettings.desc.quickCommands",()=>new SettingsPageLink(()=>openSubpage("settings.quickCommands",SettingsShortcutReference.Commands)));
-        Mainline("快捷操作","desktop","ui.desktop.capsule","ui.desktop.description",()=>new SettingsExpandable(new DesktopActions.DesktopActionSettings(services.DesktopActions,owner,notice)));
+        Mainline("快捷操作","desktop","ui.desktop.capsule","ui.desktop.description",CapsuleView);
         Mainline("快捷操作","history","ui.desktop.history","ui.desktop.historyDescription",()=>new SettingsExpandable(new DesktopActions.DesktopHistorySettings(services.DesktopActions,()=>((FrameworkElement)owner.Content).XamlRoot,notice)));
     }
     private void Models()

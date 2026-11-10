@@ -73,7 +73,12 @@ internal sealed class SettingsWindow : Window
         if(category=="关于")Render();
         else navigation.SelectedItem=navigation.MenuItems.OfType<NavigationViewItem>().Single(item=>item.Tag.ToString()=="关于");
     }
-    public void ShowQuickActions()=>navigation.SelectedItem=navigation.MenuItems.OfType<NavigationViewItem>().Single(item=>item.Tag.ToString()=="快捷操作");
+    public void ShowQuickActions()
+    {
+        pages.FocusCapsule();
+        if(category=="快捷操作")Render();
+        else navigation.SelectedItem=navigation.MenuItems.OfType<NavigationViewItem>().Single(item=>item.Tag.ToString()=="快捷操作");
+    }
     public void ShowIndex()
     {
         pages.FocusIndex();

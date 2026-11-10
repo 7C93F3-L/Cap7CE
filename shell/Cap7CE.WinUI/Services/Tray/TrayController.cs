@@ -47,7 +47,7 @@ internal sealed class TrayController : IDisposable
                 try{using var timeout=new CancellationTokenSource(TimeSpan.FromSeconds(2));state=(await new ModelCommandActions(services).RuntimeAsync("runtime.state",token:timeout.Token)).GetProperty("status").GetString()??state;}catch(Exception error){NativeDiagnostics.VisualFailure(error);}
             if(disposed)return;
 
-            action=TrayMenu.Show(services.Preferences.Current.EdgeCollapseEnabled,SystemSettings.LaunchAtLogin,state,working||services.ModelChanges.Busy||services.AutoKeywords.Busy);
+            action=TrayMenu.Show(services.Preferences.Current.EdgeCollapseEnabled,SystemSettings.LaunchAtLogin,state,working||services.ModelChanges.Busy||services.AutoKeywords.Busy,services.DesktopActions.Current.Enabled);
             // Tracking is complete. The selected action may take seconds, but must
             // not prevent a new menu from offering Open, Settings or Exit.
         }catch(Exception error){if(!disposed)Fail(error);return;}
@@ -70,6 +70,7 @@ internal sealed class TrayController : IDisposable
                 finally{working=false;}break;
             case 30:SystemSettings.LaunchAtLogin=!SystemSettings.LaunchAtLogin;break;
             case 31:updates();break;
+            case 32:await services.DesktopActions.UpdateAsync(value=>value with{Enabled=!value.Enabled});break;
             case 40:Exit();break;
         }
     }

@@ -15,6 +15,7 @@ internal sealed class SettingsPages
     public SettingsPages(ShellServices services,Window owner,Action<UiMessage> notice)
         =>catalog=new SettingsCatalog(services,owner,new SettingsActions(notice),notice,(title,create)=>SubpageRequested?.Invoke(title,create));
     public void FocusMetadata()=>catalog.FocusMetadata();
+    public void FocusCapsule()=>catalog.FocusCapsule();
     public void FocusUpdates()=>catalog.FocusUpdates();
     public void FocusIndex()=>catalog.FocusIndex();
     public UIElement Build(string category)

@@ -22,7 +22,7 @@ internal sealed class CapsuleWindow : Window
     private readonly Grid root=new();
     private readonly CapsuleWindowFrame frame;
     private readonly CapsuleShadowWindow shadow=new();
-    private Flyout? menu;
+    private FlyoutBase? menu;
     private bool pressed,moved,shown,closed;
     private uint appliedDpi;
     private NativePoint start;
@@ -36,6 +36,7 @@ internal sealed class CapsuleWindow : Window
         AppWindow.SetPresenter(presenter);AppWindow.IsShownInSwitchers=false;
         frame=new(this,presenter);SystemBackdrop=new CapsuleTransparentBackdrop();
         pill.PointerPressed+=Pressed;pill.PointerMoved+=Moved;pill.PointerReleased+=Released;
+        pill.RightTapped+=(_,e)=>{e.Handled=true;ShowMenu(true);};
         pill.PointerCanceled+=(_,_)=>pressed=false;pill.PointerCaptureLost+=(_,_)=>pressed=false;
         pill.KeyDown+=(_,e)=>{if(e.Key is Windows.System.VirtualKey.Enter or Windows.System.VirtualKey.Space){e.Handled=true;ShowMenu();}};
         pill.IsTabStop=true;Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(pill,AppLanguage.Text("ui.desktop.capsule"));
@@ -90,10 +91,16 @@ internal sealed class CapsuleWindow : Window
             await services.DesktopActions.UpdateAsync(v=>v with{X=x,Y=y,Vertical=vertical});
         }catch(Exception error){failure(error);}
     }
-    private void ShowMenu()
+    private void ShowMenu(bool management=false)
     {
-        var content=new CapsuleMenu(services.DesktopActions.Current,item=>{menu?.Hide();replay(item);},(app,layout)=>{menu?.Hide();run(app,layout);},()=>{menu?.Hide();settings();});
-        var next=ThemeService.Flyout(content);menu?.Hide();menu=next;
+        FlyoutBase next;
+        if(management){
+            var context=new MenuFlyout();var configure=new MenuFlyoutItem{Text=AppLanguage.Text("ui.desktop.settings")};
+            configure.Click+=(_,_)=>{menu?.Hide();settings();};context.Items.Add(configure);
+            var hide=new MenuFlyoutItem{Text=AppLanguage.Text("ui.desktop.hide")};
+            hide.Click+=async(_,_)=>{menu?.Hide();try{await services.DesktopActions.UpdateAsync(v=>v with{Enabled=false});}catch(Exception error){failure(error);}};context.Items.Add(hide);next=context;
+        }else next=ThemeService.Flyout(new CapsuleMenu(services.DesktopActions.Current,item=>{menu?.Hide();replay(item);},(app,layout)=>{menu?.Hide();run(app,layout);}));
+        menu?.Hide();menu=next;
         next.Opened+=(_,_)=>{if(!closed&&ReferenceEquals(menu,next))pill.SetExpanded(true);};
         next.Closed+=(_,_)=>{
             if(closed||!ReferenceEquals(menu,next))return;
