@@ -10,6 +10,12 @@ internal static class DesktopActionChecks
         try{
             var store=new DesktopActionStore(path);await store.LoadAsync();
             Check(!store.Current.Enabled&&!File.Exists(path),"Loading new desktop settings must not create or enable anything");
+            Check(store.Current.Vertical,"The default right-edge placement must be vertical");
+            Directory.CreateDirectory(directory);await File.WriteAllTextAsync(path,"{\"vertical\":false}");await store.LoadAsync();
+            Check(store.Current.Vertical,"Legacy unset coordinates must resolve to the vertical right-edge default");
+            await store.UpdateAsync(v=>v with{X=100,Y=0,Vertical=false});var positioned=new DesktopActionStore(path);await positioned.LoadAsync();
+            Check(!positioned.Current.Vertical&&positioned.Current.X==100&&positioned.Current.Y==0,"An explicitly positioned horizontal capsule must retain its direction");
+            await store.ResetCapsuleAsync();
             var first=new DesktopSearch("poster",@"D:\Assets",true,@"D:\",new BrowseFilter{Count=2},true);
             await store.RememberAsync(first);
             await store.RememberAsync(first with{Query="photo"});await store.RememberAsync(first);
@@ -20,6 +26,11 @@ internal static class DesktopActionChecks
             var restored=new DesktopActionStore(path);await restored.LoadAsync();
             Check(restored.Current.Enabled&&restored.Current.Size==44,"Concurrent field updates preserve both changes");
             Check(restored.Current.History[1].Filter.Count==2&&restored.Current.History[1].Recursive&&restored.Current.History[1].Favorite,"History round-trip preserves search context");
+            var app=new DesktopProgram("Editor",@"D:\Editor.exe");
+            await restored.UpdateAsync(v=>v with{X=150,Y=250,Vertical=true,Programs=[app],HistoryCount=10});
+            await restored.ResetCapsuleAsync();var reset=new DesktopActionStore(path);await reset.LoadAsync();var defaults=new DesktopActionOptions();
+            Check(reset.Current.Size==defaults.Size&&reset.Current.X==defaults.X&&reset.Current.Y==defaults.Y&&reset.Current.Vertical==defaults.Vertical,"Capsule reset persists default size, position and orientation");
+            Check(reset.Current.Enabled&&reset.Current.RecordHistory&&reset.Current.HistoryCount==10&&reset.Current.Programs.SequenceEqual(new[]{app})&&reset.Current.History.Length==3,"Capsule reset preserves visibility, programs and history settings/data");
             await restored.UpdateAsync(v=>v with{RecordHistory=false});await restored.RememberAsync(first with{Query="private"});
             Check(restored.Current.History.All(h=>h.Query!="private"),"Disabled history must not record searches");
             await restored.UpdateAsync(v=>v with{RecordHistory=true,HistoryCount=3});

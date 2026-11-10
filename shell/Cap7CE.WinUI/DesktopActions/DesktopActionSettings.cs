@@ -17,12 +17,14 @@ internal sealed class DesktopActionSettings : StackPanel
     public DesktopActionSettings(DesktopActionStore store,Window owner,Action<UiMessage> notice)
     {
         this.store=store;this.owner=owner;this.notice=notice;Spacing=12;
-        var enabled=new ToggleSwitch{IsOn=store.Current.Enabled,OnContent="",OffContent="",MinWidth=0};
+        var enabled=LanguageUi.Toggle();enabled.IsOn=store.Current.Enabled;
         enabled.Toggled+=(_,_)=>Run(()=>store.UpdateAsync(v=>v with{Enabled=enabled.IsOn}));Children.Add(Row("ui.desktop.show",enabled));
         var size=new Slider{Minimum=24,Maximum=48,StepFrequency=2,Value=store.Current.Size,MinWidth=160};
         size.ValueChanged+=(_,_)=>pendingSize=size.Value;
         size.PointerCaptureLost+=(_,_)=>SaveSize();size.KeyUp+=(_,_)=>SaveSize();
-        Children.Add(Row("ui.desktop.size",size));Children.Add(Row("ui.desktop.resetPosition",LanguageUi.Button("ui.desktop.reset",()=>Run(()=>store.UpdateAsync(v=>v with{X=int.MinValue,Y=int.MinValue,Vertical=false})))));
+        var reset=LanguageUi.Button("ui.desktop.reset",()=>Run(async()=>{await store.ResetCapsuleAsync();size.Value=store.Current.Size;pendingSize=0;}));
+        ToolTipService.SetToolTip(reset,AppLanguage.Text("ui.desktop.resetCapsuleHint"));
+        Children.Add(Row("ui.desktop.size",size));Children.Add(Row("ui.desktop.resetCapsule",reset));
         Children.Add(new Border{Height=1,Margin=new(0,4,0,4),Background=(Microsoft.UI.Xaml.Media.Brush)Application.Current.Resources["DividerStrokeColorDefaultBrush"]});
         Children.Add(Row("ui.desktop.apps",LanguageUi.Button("ui.desktop.add",Add)));
         RestoreRows();list.ItemsSource=programs;
@@ -69,7 +71,7 @@ internal sealed class DesktopHistorySettings : StackPanel
 {
     public DesktopHistorySettings(DesktopActionStore store,Func<XamlRoot> root,Action<UiMessage> notice)
     {
-        Spacing=12;var toggle=new ToggleSwitch{IsOn=store.Current.RecordHistory,OnContent="",OffContent="",MinWidth=0};
+        Spacing=12;var toggle=LanguageUi.Toggle();toggle.IsOn=store.Current.RecordHistory;
         async void Save(Func<DesktopActionOptions,DesktopActionOptions> update){try{await store.UpdateAsync(update);}catch(Exception error){notice(FailureText.From(error));}}
         toggle.Toggled+=(_,_)=>Save(v=>v with{RecordHistory=toggle.IsOn});Children.Add(DesktopActionSettings.Row("ui.desktop.record",toggle));
         int[] counts=[3,5,10,20];var count=Ui.Select(counts.Select(i=>i.ToString()),Array.IndexOf(counts,store.Current.HistoryCount),i=>Save(v=>v with{HistoryCount=counts[i]}));

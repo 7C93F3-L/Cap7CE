@@ -57,7 +57,7 @@ internal sealed class CapsuleWindow : Window
         pill.Margin=new(CapsuleShape.InsetPixels/scale);
         pill.Configure(services.Preferences.Current.Color1,services.Preferences.Current.Color2,options.Vertical,CapsuleShape.RadiusPixels(width,height)/scale,scale,shortSide/scale);
         var x=options.X==int.MinValue?area.X+area.Width-width:Math.Clamp(options.X,area.X,Math.Max(area.X,area.X+area.Width-width));
-        var y=options.Y==int.MinValue?area.Y+area.Height/2:Math.Clamp(options.Y,area.Y,Math.Max(area.Y,area.Y+area.Height-height));
+        var y=options.Y==int.MinValue?area.Y+Math.Max(0,(area.Height-height)/2):Math.Clamp(options.Y,area.Y,Math.Max(area.Y,area.Y+area.Height-height));
         if(!pressed)AppWindow.MoveAndResize(new(x,y,width,height));
         if(!shown){shown=true;AppWindow.Show(false);}
         frame.Apply();RefreshShadow();

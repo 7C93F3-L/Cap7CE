@@ -10,7 +10,7 @@ internal sealed record DesktopActionOptions
     public double Size {get;init;}=32;
     public int X {get;init;}=int.MinValue;
     public int Y {get;init;}=int.MinValue;
-    public bool Vertical {get;init;}
+    public bool Vertical {get;init;}=true;
     public bool RecordHistory {get;init;}=true;
     public int HistoryCount {get;init;}=5;
     public DesktopProgram[] Programs {get;init;}=[];
@@ -28,7 +28,8 @@ internal sealed class DesktopActionStore
     public async Task LoadAsync()
     {
         if(File.Exists(path))Current=JsonSerializer.Deserialize<DesktopActionOptions>(await File.ReadAllTextAsync(path),FramedRpc.Json)??new();
-        Current=Current with{Size=double.IsFinite(Current.Size)?Math.Clamp(Current.Size,24,48):32,HistoryCount=Math.Clamp(Current.HistoryCount,1,20),
+        Current=Current with{Vertical=Current.X==int.MinValue||Current.Y==int.MinValue||Current.Vertical,
+            Size=double.IsFinite(Current.Size)?Math.Clamp(Current.Size,24,48):32,HistoryCount=Math.Clamp(Current.HistoryCount,1,20),
             Programs=(Current.Programs??[]).Where(p=>!string.IsNullOrWhiteSpace(p.Path)&&!string.IsNullOrWhiteSpace(p.Name)).Take(30).ToArray(),
             History=(Current.History??[]).Where(h=>!string.IsNullOrWhiteSpace(h.Query)&&h.Filter is not null).Take(50).ToArray()};
         Changed?.Invoke();
@@ -42,4 +43,9 @@ internal sealed class DesktopActionStore
     }
     public Task RememberAsync(DesktopSearch item)=>UpdateAsync(v=>!v.RecordHistory?v:v with{History=new[]{item}.Concat(v.History.Where(h=>
         h.Query!=item.Query||!string.Equals(h.Path,item.Path,StringComparison.OrdinalIgnoreCase)||h.Favorite!=item.Favorite)).Take(50).ToArray()});
+    public Task ResetCapsuleAsync()
+    {
+        var defaults=new DesktopActionOptions();
+        return UpdateAsync(v=>v with{Size=defaults.Size,X=defaults.X,Y=defaults.Y,Vertical=defaults.Vertical});
+    }
 }

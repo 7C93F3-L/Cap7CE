@@ -29,7 +29,7 @@ internal sealed class NativeUpdateView : UserControl
         actions = Ui.Row(download, pause, install); actions.HorizontalAlignment = HorizontalAlignment.Right;
         var details = Ui.Column(status, progress, actions); details.Spacing = 8; details.Margin = new(12, 8, 12, 8);
         section=details;section.Visibility=Visibility.Collapsed;
-        var automatic=new ToggleSwitch{IsOn=services.Preferences.Current.AutomaticUpdateChecks,OnContent="",OffContent="",MinWidth=0};
+        var automatic=L.Toggle();automatic.IsOn=services.Preferences.Current.AutomaticUpdateChecks;
         L.Label(automatic,"ui.update.automaticCheck");
         automatic.Toggled+=async(_,_)=>{
             if(!automatic.IsEnabled)return;automatic.IsEnabled=false;
