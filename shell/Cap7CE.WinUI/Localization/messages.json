@@ -27,7 +27,7 @@
   "ui.desktop.count": {"zh-CN": "显示历史条数", "en-US": "History display count"},
   "ui.desktop.clear": {"zh-CN": "清除", "en-US": "Clear"},
   "ui.desktop.clearHistory": {"zh-CN": "清除历史记录", "en-US": "Clear search history"},
-  "ui.desktop.clearConfirm": {"zh-CN": "清除所有搜索历史记录？", "en-US": "Clear all search history?"},
+  "ui.desktop.cleared": {"zh-CN": "已清除", "en-US": "Cleared"},
   "ui.desktop.recent": {"zh-CN": "最近搜索", "en-US": "Recent searches"},
   "ui.desktop.historyEmpty": {"zh-CN": "提交搜索后，记录会显示在这里。", "en-US": "Submitted searches will appear here."},
   "ui.desktop.appsEmpty": {"zh-CN": "在设置中添加快速打开的应用。", "en-US": "Add quick-launch apps in Settings."},

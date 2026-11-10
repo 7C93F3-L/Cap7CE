@@ -89,7 +89,7 @@ internal sealed class WorkspaceToolbar : UserControl
     public event Action? CommandCancelled {add=>address.CommandCancelled+=value;remove=>address.CommandCancelled-=value;}
     public void CommandInput(string? text,bool busy=false)=>address.CommandInput(text,busy);
     public void FocusSearch()=>address.FocusSearch();
-    public void SetSearchHistory(Func<string,IReadOnlyList<string>>? provider)=>address.SetSearchHistory(provider);
+    public void SetSearchHistory(Func<string,IReadOnlyList<string>>? provider,Action? clearHistory=null)=>address.SetSearchHistory(provider,clearHistory);
     public void CloseSearchHistory()=>address.CloseSearchHistory();
     public void FocusPath()=>address.FocusPath();
     public bool ContainsKeyboardTarget(DependencyObject target)

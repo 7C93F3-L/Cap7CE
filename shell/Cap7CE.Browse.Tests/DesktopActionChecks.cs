@@ -36,7 +36,7 @@ internal static class DesktopActionChecks
             await restored.UpdateAsync(v=>v with{RecordHistory=true,HistoryCount=3});
             for(var i=0;i<55;i++)await restored.RememberAsync(first with{Query="item"+i});
             Check(restored.Current.History.Length==50,"History has a fixed retention bound independent of display count");
-            await restored.UpdateAsync(v=>v with{History=[]});var cleared=new DesktopActionStore(path);await cleared.LoadAsync();
+            await restored.ClearHistoryAsync();var cleared=new DesktopActionStore(path);await cleared.LoadAsync();
             Check(cleared.Current.History.Length==0&&cleared.Current.Enabled,"Clearing history preserves independent settings");
             var legacy=File.ReadAllText(path).Insert(1,"\"nativeSnap\":false,");await File.WriteAllTextAsync(path,legacy);
             var nativeOnly=new DesktopActionStore(path);await nativeOnly.LoadAsync();

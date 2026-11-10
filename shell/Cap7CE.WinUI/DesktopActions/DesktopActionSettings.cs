@@ -69,17 +69,19 @@ internal sealed class DesktopActionSettings : StackPanel
 }
 internal sealed class DesktopHistorySettings : StackPanel
 {
-    public DesktopHistorySettings(DesktopActionStore store,Func<XamlRoot> root,Action<UiMessage> notice)
+    public DesktopHistorySettings(DesktopActionStore store,Action<UiMessage> notice)
     {
         Spacing=12;var toggle=LanguageUi.Toggle();toggle.IsOn=store.Current.RecordHistory;
         async void Save(Func<DesktopActionOptions,DesktopActionOptions> update){try{await store.UpdateAsync(update);}catch(Exception error){notice(FailureText.From(error));}}
         toggle.Toggled+=(_,_)=>Save(v=>v with{RecordHistory=toggle.IsOn});Children.Add(DesktopActionSettings.Row("ui.desktop.record",toggle));
         int[] counts=[3,5,10,20];var count=Ui.Select(counts.Select(i=>i.ToString()),Array.IndexOf(counts,store.Current.HistoryCount),i=>Save(v=>v with{HistoryCount=counts[i]}));
         Children.Add(DesktopActionSettings.Row("ui.desktop.count",count));
-        var clear=LanguageUi.Button("ui.desktop.clear",async()=>{try{
-            var dialog=ThemeService.Dialog(root(),ContentDialogButton.Close);dialog.Title=AppLanguage.Text("ui.desktop.clear");dialog.Content=AppLanguage.Text("ui.desktop.clearConfirm");dialog.PrimaryButtonText=AppLanguage.Text("ui.desktop.clear");dialog.CloseButtonText=AppLanguage.Text("common.cancel");
-            if(await dialog.ShowAsync()==ContentDialogResult.Primary)Save(v=>v with{History=[]});
-            }catch(Exception error){notice(FailureText.From(error));}
-        });Children.Add(DesktopActionSettings.Row("ui.desktop.clearHistory",clear));
+        var clear=new Button{MinWidth=76};LanguageUi.Bind(clear,Button.ContentProperty,"ui.desktop.clear");
+        clear.Click+=async(_,_)=>{
+            if(!clear.IsEnabled)return;clear.IsEnabled=false;
+            try{await store.ClearHistoryAsync();if(clear.IsLoaded){LanguageUi.Bind(clear,Button.ContentProperty,"ui.desktop.cleared");await Task.Delay(1400);}}
+            catch(Exception error){notice(FailureText.From(error));}
+            finally{LanguageUi.Bind(clear,Button.ContentProperty,"ui.desktop.clear");clear.IsEnabled=true;}
+        };Children.Add(DesktopActionSettings.Row("ui.desktop.clearHistory",clear));
     }
 }

@@ -92,8 +92,8 @@ internal sealed class WorkspaceAddress : UserControl
         if(text is null){search.Text=query;address.Text=path;commandEditing=false;Render();return;}
         editing=false;searchMode=true;search.Text=text;Render();if(!busy)search.Focus(FocusState.Programmatic);
     }
-    public void FocusSearch(){editing=false;searchMode=true;Render();search.Focus(FocusState.Programmatic);}
-    public void SetSearchHistory(Func<string,IReadOnlyList<string>>? provider)=>history.SetProvider(provider);
+    public void FocusSearch(){editing=false;searchMode=true;Render();search.Focus(FocusState.Programmatic);history.Open();}
+    public void SetSearchHistory(Func<string,IReadOnlyList<string>>? provider,Action? clearHistory)=>history.SetProvider(provider,clearHistory);
     public void CloseSearchHistory()=>history.Close();
     public void FocusPath(){CommandCancelled?.Invoke();searchMode=false;editing=true;address.Text=path;Render();address.Focus(FocusState.Programmatic);address.SelectAll();}
     private bool HasButton(DependencyObject? element)

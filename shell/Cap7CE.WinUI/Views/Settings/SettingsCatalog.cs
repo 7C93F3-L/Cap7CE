@@ -90,7 +90,7 @@ internal sealed class SettingsCatalog
         Mainline("快捷操作","keyboard","settings.quickActions","stableSettings.desc.quickActions",()=>new SettingsPageLink(()=>openSubpage("settings.quickActions",()=>new SettingsShortcutEditor(services,owner,notice))));
         Mainline("快捷操作","keyboard","settings.quickCommands","stableSettings.desc.quickCommands",()=>new SettingsPageLink(()=>openSubpage("settings.quickCommands",SettingsShortcutReference.Commands)));
         Mainline("快捷操作","desktop","ui.desktop.capsule","ui.desktop.description",CapsuleView);
-        Mainline("快捷操作","history","ui.desktop.history","ui.desktop.historyDescription",()=>new SettingsExpandable(new DesktopActions.DesktopHistorySettings(services.DesktopActions,()=>((FrameworkElement)owner.Content).XamlRoot,notice)));
+        Mainline("快捷操作","history","ui.desktop.history","ui.desktop.historyDescription",()=>new SettingsExpandable(new DesktopActions.DesktopHistorySettings(services.DesktopActions,notice)));
     }
     private void Models()
     {

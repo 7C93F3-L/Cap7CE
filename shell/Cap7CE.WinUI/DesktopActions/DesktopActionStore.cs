@@ -48,4 +48,5 @@ internal sealed class DesktopActionStore
         var defaults=new DesktopActionOptions();
         return UpdateAsync(v=>v with{Size=defaults.Size,X=defaults.X,Y=defaults.Y,Vertical=defaults.Vertical});
     }
+    public Task ClearHistoryAsync()=>UpdateAsync(value=>value with{History=[]});
 }
