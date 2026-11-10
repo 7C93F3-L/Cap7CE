@@ -24,6 +24,7 @@ for (const file of files('shell/Cap7CE.WinUI').filter(name => name.endsWith('.cs
   assert(!/Microsoft\.Data\.Sqlite|Core\.Catalog|Core\.Host|FileSystemWatcher/.test(dependencies), `${file}: UI cannot own Catalog, Reader or indexing`);
   assert(source.split('\n').length <= 260, `${file}: split responsibilities before growing beyond 260 lines`);
 }
+require('./desktop-actions-boundary-check.cjs')(read);
 const host = read('shell/Cap7CE.QueryHost/Program.cs').replace(/\/\/[^\r\n]*/g, '');
 assert(!/\.InitializeAsync|ActivateMaintenanceAsync|ConfigureMetadataBuild|StartSynchronization|FileFactHostSession/.test(host), 'query host must never activate storage writes or maintenance');
 const allowed = host.match(/var allowed =[\s\S]*?\};/)[0];

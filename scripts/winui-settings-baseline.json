@@ -15,5 +15,7 @@
   "stableSettings.license:stableSettings.desc.license",
   "ui.model.serviceTitle:ui.model.serviceDescription",
   "ui.tray.enabled:ui.tray.enabledHint",
-  "ui.tray.showStartup:ui.tray.showStartupHint"
+  "ui.tray.showStartup:ui.tray.showStartupHint",
+  "ui.desktop.capsule:ui.desktop.description",
+  "ui.desktop.history:ui.desktop.historyDescription"
 ]

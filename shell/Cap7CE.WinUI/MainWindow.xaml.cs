@@ -15,6 +15,7 @@ namespace Cap7CE.WinUI;
 public sealed partial class MainWindow : Window
 {
     private readonly ShellServices services;
+    private readonly DesktopActions.DesktopActionController desktopActions;
     private readonly FileCommands commands;
     private readonly SidebarView sidebar=new();
     private readonly WorkspaceToolbar toolbar=new();
@@ -122,6 +123,7 @@ public sealed partial class MainWindow : Window
             if(minimized==next)return;minimized=next;results.Suspend(next);if(next)details.Stop();else {details.Select(results.Selection);QueueCatalogRefresh();}
         };
         catalogHealth=new(this,services);
+        desktopActions=new(this,services,active,toolbar,()=>{OpenSettings();settings?.ShowQuickActions();},Notice);
         Closed+=OnClosed;
     }
     public bool ShowMainOnStartup=>services.Preferences.Current.ShowMainOnStartup;
@@ -129,7 +131,7 @@ public sealed partial class MainWindow : Window
     public async Task LoadStartupAsync()
     {
         try{await services.Preferences.LoadAsync();preferencesLoaded=true;ApplyPreferences();}catch(Exception error){Notice(UiMessage.Key("ui.notice.preferencesFailed",new Dictionary<string,object?>{{"error",FailureText.From(error)}}));}
-        tray.Initialize();
+        tray.Initialize();await desktopActions.InitializeAsync();
     }
     public async Task StartServicesAsync()
     {
@@ -225,7 +227,7 @@ public sealed partial class MainWindow : Window
     }
     private async void OnClosed(object sender,WindowEventArgs e)
     {
-        closed=true;indexOnboarding.Dispose();catalogHealth.Dispose();services.Updates.InstallerStarted-=tray.Exit;tray.Dispose();commandInput.Dispose();services.Notifications.Invoked-=NotificationInvoked;services.Notifications.UpdateInvoked-=UpdateNotificationInvoked;ResultDrag.Changed-=edgeCollapse.Wake;edgeCollapse.Dispose();pointerInput.Dispose();keywordNotice.Dispose();indexNotice.Dispose();metadataNotice.Dispose();metadataFilters.Dispose();notifications.Dispose();filterAvailability.Dispose();services.Preferences.Changed-=ApplyPreferences;layout.Dispose();details.Stop();preview?.Close();settings?.Close();AssetTile.Visuals=null;
+        closed=true;desktopActions.Dispose();indexOnboarding.Dispose();catalogHealth.Dispose();services.Updates.InstallerStarted-=tray.Exit;tray.Dispose();commandInput.Dispose();services.Notifications.Invoked-=NotificationInvoked;services.Notifications.UpdateInvoked-=UpdateNotificationInvoked;ResultDrag.Changed-=edgeCollapse.Wake;edgeCollapse.Dispose();pointerInput.Dispose();keywordNotice.Dispose();indexNotice.Dispose();metadataNotice.Dispose();metadataFilters.Dispose();notifications.Dispose();filterAvailability.Dispose();services.Preferences.Changed-=ApplyPreferences;layout.Dispose();details.Stop();preview?.Close();settings?.Close();AssetTile.Visuals=null;
         active.Changed-=Bind;active.Dispose();
         try{await services.DisposeAsync();}catch{}
     }

@@ -9,6 +9,7 @@ using Cap7CE.WinUI.Themes;
 namespace Cap7CE.WinUI.Controls;
 internal sealed class WorkspaceToolbar : UserControl
 {
+    public event Action<string>? SearchSubmitted;
     private readonly WorkspaceAddress address=new();
     private readonly Grid root=new(){ColumnSpacing=4,Padding=new(8,2,8,2)};
     private readonly StackPanel navigation,tools;
@@ -35,7 +36,7 @@ internal sealed class WorkspaceToolbar : UserControl
         refresh=WorkspaceIcons.ResourceButton("refresh","main.refresh",Reload);navigation=Ui.Row(back,forward,up,refresh);navigation.Spacing=2;root.Children.Add(navigation);
         Grid.SetColumn(address,1);root.Children.Add(address);
         address.Navigate+=path=>{if(session is null)return;session.Query="";if(path.Length==0)session.Filter=new();Run(()=>session.NavigateAsync(path));};
-        address.Search+=query=>{if(session is null)return;session.Query=query;Reload();};
+        address.Search+=query=>{if(session is null)return;SearchSubmitted?.Invoke(query);session.Query=query;Reload();};
         random=WorkspaceIcons.ResourceToggle("shuffle","main.random",ToggleRandom);
         next=WorkspaceIcons.ResourceButton("refresh","main.next",RefreshRandom);
         sizeButton=WorkspaceIcons.ResourceButton("size","main.gridSize",ShowSize);WorkspacePointerInput.PreserveSelection(sizeButton);

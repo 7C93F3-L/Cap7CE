@@ -3,6 +3,11 @@ using Cap7CE.WinUI.Controllers;
 using Cap7CE.WinUI.Services;
 
 Environment.SetEnvironmentVariable("CAP7CE_BROWSE_TIMING",null);
+await DesktopActionChecks.RunAsync();
+await NativeSnapChecks.RunAsync();
+CapsuleShapeChecks.Run();
+CapsuleGlowChecks.Run();
+CapsuleShadowChecks.Run();
 NativeContentPathChecks.Run();
 await DeletedPathChecks.RunAsync();
 await RuntimePrerequisiteTests.RunAsync();

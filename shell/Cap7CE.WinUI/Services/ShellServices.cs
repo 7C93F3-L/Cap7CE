@@ -5,6 +5,7 @@ using Cap7CE.WinUI.Models;
 namespace Cap7CE.WinUI.Services;
 internal sealed class ShellServices : IAsyncDisposable
 {
+    public DesktopActions.DesktopActionStore DesktopActions {get;}=new();
     public string Root { get; }
     public NativeUpdates Updates { get; }
     public AutomaticUpdateCheck AutomaticUpdates {get;}
