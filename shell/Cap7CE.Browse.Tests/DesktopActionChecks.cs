@@ -9,12 +9,12 @@ internal static class DesktopActionChecks
         void Check(bool value,string message){if(!value)throw new Exception(message);}
         try{
             var store=new DesktopActionStore(path);await store.LoadAsync();
-            Check(!store.Current.Enabled&&!File.Exists(path),"Loading new desktop settings must not create or enable anything");
+            Check(store.Current.Enabled&&!File.Exists(path),"New desktop settings enable the capsule without creating a file during load");
             Check(store.Current.Vertical,"The default right-edge placement must be vertical");
             Directory.CreateDirectory(directory);await File.WriteAllTextAsync(path,"{\"vertical\":false}");await store.LoadAsync();
             Check(store.Current.Vertical,"Legacy unset coordinates must resolve to the vertical right-edge default");
-            await store.UpdateAsync(v=>v with{X=100,Y=0,Vertical=false});var positioned=new DesktopActionStore(path);await positioned.LoadAsync();
-            Check(!positioned.Current.Vertical&&positioned.Current.X==100&&positioned.Current.Y==0,"An explicitly positioned horizontal capsule must retain its direction");
+            await store.UpdateAsync(v=>v with{Enabled=false,X=100,Y=0,Vertical=false});var positioned=new DesktopActionStore(path);await positioned.LoadAsync();
+            Check(!positioned.Current.Enabled&&!positioned.Current.Vertical&&positioned.Current.X==100&&positioned.Current.Y==0,"Explicitly hidden and positioned capsules retain the saved visibility and direction");
             await store.ResetCapsuleAsync();
             var first=new DesktopSearch("poster",@"D:\Assets",true,@"D:\",new BrowseFilter{Count=2},true);
             await store.RememberAsync(first);
@@ -44,8 +44,8 @@ internal static class DesktopActionChecks
             await nativeOnly.UpdateAsync(v=>v with{Size=40});
             Check(!File.ReadAllText(path).Contains("\"nativeSnap\""),"Retired placement preference must not be written again");
             Check(Directory.GetFiles(directory).Length==1,"Atomic writes leave no temporary files");
-            var blocked=new DesktopActionStore(directory);try{await blocked.UpdateAsync(v=>v with{Enabled=true});throw new Exception("Expected failed write");}catch(Exception e) when(e is IOException or UnauthorizedAccessException){}
-            Check(!blocked.Current.Enabled,"A failed write must not publish unpersisted settings");
+            var blocked=new DesktopActionStore(directory);try{await blocked.UpdateAsync(v=>v with{Size=44});throw new Exception("Expected failed write");}catch(Exception e) when(e is IOException or UnauthorizedAccessException){}
+            Check(blocked.Current.Size==new DesktopActionOptions().Size,"A failed write must not publish unpersisted settings");
             Console.WriteLine("Desktop actions persistence, bounded history, scope replay data and atomic update checks passed.");
         }finally{if(Directory.Exists(directory))Directory.Delete(directory,true);}
     }

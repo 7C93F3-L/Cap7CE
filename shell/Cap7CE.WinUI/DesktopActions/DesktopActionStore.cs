@@ -6,7 +6,7 @@ internal sealed record DesktopProgram(string Name,string Path);
 internal sealed record DesktopSearch(string Query,string Path,bool Favorite,string EntryPath,BrowseFilter Filter,bool Recursive);
 internal sealed record DesktopActionOptions
 {
-    public bool Enabled {get;init;}
+    public bool Enabled {get;init;}=true;
     public double Size {get;init;}=32;
     public int X {get;init;}=int.MinValue;
     public int Y {get;init;}=int.MinValue;
