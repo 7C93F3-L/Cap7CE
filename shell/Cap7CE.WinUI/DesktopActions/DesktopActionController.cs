@@ -29,7 +29,7 @@ internal sealed class DesktopActionController : IDisposable
         if(disposed||!ready)return;
         toolbar.SetSearchHistory(History,ClearHistory);
         if(!services.DesktopActions.Current.Enabled){operation?.Cancel();capsule?.Close();capsule=null;return;}
-        capsule??=new(services,Replay,RunProgram,settings,error=>notice(FailureText.From(error)));
+        capsule??=new(services,Replay,RunProgram,settings,()=>WindowActivation.Show(main),error=>notice(FailureText.From(error)));
         capsule.Configure();
     });
     private IReadOnlyList<string> History(string text)=>!ready||disposed?[]:ScopedSearchHistory.Select(services.DesktopActions.Current,session.PathValue,session.PreferenceScope==WorkspacePreferenceScope.Favorites,session.EntryPath,text);

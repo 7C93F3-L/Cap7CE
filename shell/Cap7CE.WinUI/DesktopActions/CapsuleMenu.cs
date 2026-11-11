@@ -17,13 +17,19 @@ internal sealed class CapsuleMenu : UserControl
                 var button=new Button{Content=text,HorizontalAlignment=HorizontalAlignment.Stretch,HorizontalContentAlignment=HorizontalAlignment.Stretch};
                 ToolTipService.SetToolTip(button,item.Query);button.Click+=(_,_)=>replay(item);body.Children.Add(button);
             }
-            if(options.History.Length==0)body.Children.Add(Ui.Text(AppLanguage.Text("ui.desktop.historyEmpty"),true));
+            if(options.History.Length==0)body.Children.Add(Description("ui.desktop.historyEmpty"));
             body.Children.Add(new Border{Height=1,Background=(Microsoft.UI.Xaml.Media.Brush)Application.Current.Resources["DividerStrokeColorDefaultBrush"],Margin=new(0,6,0,6)});
         }
         body.Children.Add(Ui.Text(AppLanguage.Text("ui.desktop.apps"),true));
         foreach(var app in options.Programs)body.Children.Add(ProgramRow(app,run));
-        if(options.Programs.Length==0)body.Children.Add(Ui.Text(AppLanguage.Text("ui.desktop.appsEmpty"),true));
+        if(options.Programs.Length==0)body.Children.Add(Description("ui.desktop.appsEmpty"));
         Content=new ScrollViewer{Content=body,MaxHeight=520,HorizontalScrollBarVisibility=ScrollBarVisibility.Disabled};
+    }
+    private static TextBlock Description(string key)
+    {
+        var text=Ui.Text(AppLanguage.Text(key),true);
+        text.Foreground=(Brush)Application.Current.Resources["TextFillColorTertiaryBrush"];
+        return text;
     }
     private static Grid ProgramRow(DesktopProgram app,Action<DesktopProgram,int> run)
     {
