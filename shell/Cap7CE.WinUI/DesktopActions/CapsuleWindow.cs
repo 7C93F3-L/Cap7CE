@@ -16,7 +16,7 @@ internal sealed class CapsuleWindow : Window
     private readonly ShellServices services;
     private readonly Action<DesktopSearch> replay;
     private readonly Action<DesktopProgram,int> run;
-    private readonly Action settings,openMain;
+    private readonly Action settings,openMain,exit;
     private readonly Action<Exception> failure;
     private readonly CapsuleAppearance pill=new();
     private readonly Grid root=new();
@@ -27,9 +27,9 @@ internal sealed class CapsuleWindow : Window
     private uint appliedDpi;
     private NativePoint start;
     private Windows.Graphics.PointInt32 origin;
-    public CapsuleWindow(ShellServices services,Action<DesktopSearch> replay,Action<DesktopProgram,int> run,Action settings,Action openMain,Action<Exception> failure)
+    public CapsuleWindow(ShellServices services,Action<DesktopSearch> replay,Action<DesktopProgram,int> run,Action settings,Action openMain,Action exit,Action<Exception> failure)
     {
-        this.services=services;this.replay=replay;this.run=run;this.settings=settings;this.openMain=openMain;this.failure=failure;
+        this.services=services;this.replay=replay;this.run=run;this.settings=settings;this.openMain=openMain;this.exit=exit;this.failure=failure;
         Content=root;root.Children.Add(pill);Title="Cap7CE";
         var presenter=OverlappedPresenter.Create();presenter.SetBorderAndTitleBar(false,false);
         presenter.IsResizable=false;presenter.IsMaximizable=false;presenter.IsMinimizable=false;presenter.IsAlwaysOnTop=true;
@@ -100,7 +100,9 @@ internal sealed class CapsuleWindow : Window
             var configure=new MenuFlyoutItem{Text=AppLanguage.Text("ui.desktop.settings")};
             configure.Click+=(_,_)=>{menu?.Hide();settings();};context.Items.Add(configure);
             var hide=new MenuFlyoutItem{Text=AppLanguage.Text("ui.desktop.hide")};
-            hide.Click+=async(_,_)=>{menu?.Hide();try{await services.DesktopActions.UpdateAsync(v=>v with{Enabled=false});}catch(Exception error){failure(error);}};context.Items.Add(hide);next=context;
+            hide.Click+=async(_,_)=>{menu?.Hide();try{await services.DesktopActions.UpdateAsync(v=>v with{Enabled=false});}catch(Exception error){failure(error);}};context.Items.Add(hide);
+            context.Items.Add(new MenuFlyoutSeparator());var quit=new MenuFlyoutItem{Text=AppLanguage.Text("ui.tray.exit")};
+            quit.Click+=(_,_)=>{menu?.Hide();exit();};context.Items.Add(quit);next=context;
         }else{
             var flyout=ThemeService.Flyout(new CapsuleMenu(services.DesktopActions.Current,item=>{menu?.Hide();replay(item);},(app,layout)=>{menu?.Hide();run(app,layout);}));
             var style=new Style(typeof(FlyoutPresenter));style.Setters.Add(new Setter(Control.PaddingProperty,new Thickness(0)));

@@ -123,7 +123,7 @@ public sealed partial class MainWindow : Window
             if(minimized==next)return;minimized=next;results.Suspend(next);if(next)details.Stop();else {details.Select(results.Selection);QueueCatalogRefresh();}
         };
         catalogHealth=new(this,services);
-        desktopActions=new(this,services,active,toolbar,()=>{OpenSettings();settings?.ShowQuickActions();},Notice);
+        desktopActions=new(this,services,active,toolbar,()=>{OpenSettings();settings?.ShowQuickActions();},tray.Exit,Notice);
         Closed+=OnClosed;
     }
     public bool ShowMainOnStartup=>services.Preferences.Current.ShowMainOnStartup;

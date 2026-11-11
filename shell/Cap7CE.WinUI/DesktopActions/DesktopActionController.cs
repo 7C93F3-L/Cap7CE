@@ -13,14 +13,14 @@ internal sealed class DesktopActionController : IDisposable
     private readonly BrowseSession session;
     private readonly WorkspaceToolbar toolbar;
     private readonly Action<UiMessage> notice;
-    private readonly Action settings;
+    private readonly Action settings,exit;
     private readonly CancellationTokenSource lifetime=new();
     private CapsuleWindow? capsule;
     private CancellationTokenSource? operation;
     private bool disposed,ready;
-    public DesktopActionController(Window main,ShellServices services,BrowseSession session,WorkspaceToolbar toolbar,Action settings,Action<UiMessage> notice)
+    public DesktopActionController(Window main,ShellServices services,BrowseSession session,WorkspaceToolbar toolbar,Action settings,Action exit,Action<UiMessage> notice)
     {
-        this.main=main;this.services=services;this.session=session;this.toolbar=toolbar;this.settings=settings;this.notice=notice;
+        this.main=main;this.services=services;this.session=session;this.toolbar=toolbar;this.settings=settings;this.exit=exit;this.notice=notice;
         services.DesktopActions.Changed+=Changed;services.Preferences.Changed+=Changed;toolbar.SearchSubmitted+=Remember;
         toolbar.SetSearchHistory(History,ClearHistory);main.Activated+=MainActivated;
     }
@@ -29,7 +29,7 @@ internal sealed class DesktopActionController : IDisposable
         if(disposed||!ready)return;
         toolbar.SetSearchHistory(History,ClearHistory);
         if(!services.DesktopActions.Current.Enabled){operation?.Cancel();capsule?.Close();capsule=null;return;}
-        capsule??=new(services,Replay,RunProgram,settings,()=>WindowActivation.Show(main),error=>notice(FailureText.From(error)));
+        capsule??=new(services,Replay,RunProgram,settings,()=>WindowActivation.Show(main),exit,error=>notice(FailureText.From(error)));
         capsule.Configure();
     });
     private IReadOnlyList<string> History(string text)=>!ready||disposed?[]:ScopedSearchHistory.Select(services.DesktopActions.Current,session.PathValue,session.PreferenceScope==WorkspacePreferenceScope.Favorites,session.EntryPath,text);
