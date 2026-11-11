@@ -12,7 +12,7 @@ internal sealed class CoreNodeHost : IAsyncDisposable
     public CoreNodeHost(string root,string worker,string dataRoot)
     {
         this.root=root;this.worker=worker;this.dataRoot=dataRoot;
-        lifetime=new(StopIdleAsync,TimeSpan.FromSeconds(60),error=>SessionDiagnostics.Record("worker.idle.failed",new{worker,type=error.GetType().Name}));
+        lifetime=new(StopIdleAsync,TimeSpan.FromSeconds(60),error=>SessionDiagnostics.Record("worker.idle.failed",new{worker,type=error.GetType().Name}),()=>retryIdle);
     }
     private bool Atomic(string method,object?[] args)=>WorkerIdleLifetime.IsAtomic(worker,method,args);
     private Process? process;
@@ -20,7 +20,7 @@ internal sealed class CoreNodeHost : IAsyncDisposable
     private readonly SemaphoreSlim starting = new(1), sending = new(1);
     private readonly string nonce = Guid.NewGuid().ToString();
     private long sequence;
-    private bool closed;
+    private bool closed,retryIdle;
     private readonly Queue<string> errors=new();
     public bool HasProcess=>process is not null;
     public bool IsActive {get{try{return !closed&&process is {} owner&&!owner.HasExited;}catch(InvalidOperationException){return false;}}}
@@ -83,11 +83,12 @@ internal sealed class CoreNodeHost : IAsyncDisposable
     public async ValueTask DisposeAsync(){closed=true;await lifetime.CloseAsync();}
     private async Task StopIdleAsync()
     {
-        if(!closed && worker is ("provider-preview.cjs" or "office-preview.cjs" or "visual-cache.cjs") && rpc is not null) {
+        retryIdle=false;
+        if(!closed && worker is ("provider-preview.cjs" or "office-preview.cjs" or "visual-cache.cjs" or "model-runtime.cjs") && rpc is not null) {
             using var timeout=new CancellationTokenSource(TimeSpan.FromSeconds(120));var id=++sequence;
-            var reply=await rpc.RequestAsync(id.ToString(),new{version=1,id,method=worker=="visual-cache.cjs"?"releaseSourceHandles":"preview.idle",args=Array.Empty<object>()},timeout.Token);
+            var reply=await rpc.RequestAsync(id.ToString(),new{version=1,id,method=worker=="visual-cache.cjs"?"releaseSourceHandles":worker=="model-runtime.cjs"?"runtime.idle":"preview.idle",args=Array.Empty<object>()},timeout.Token);
             if(reply.TryGetProperty("error",out _))throw new IOException("preview-idle-failed");
-            if(worker!="visual-cache.cjs"&&!reply.GetProperty("result").GetBoolean())return;
+            if(worker!="visual-cache.cjs"&&!reply.GetProperty("result").GetBoolean()){retryIdle=worker=="model-runtime.cjs";return;}
         }
         await StopAsync();
     }

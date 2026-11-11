@@ -10,6 +10,7 @@ export function createLocalModelService(root:string,timings:ModelRuntimeTimings=
  return {
   async dispatch(method:unknown,args:unknown):Promise<unknown>{
    if(closed)throw Error("core-model-runtime-closed");if(!Array.isArray(args))return invalid();
+   if(method==="runtime.idle"){if(args.length)return invalid();await settings.flush();return !runtime||runtime.canRetire;}
    if(method==="modelSettings.invoke")return settings.dispatch(args);
    if(args.length!==2||typeof method!=="string"||!["runtime.state","runtime.start","runtime.stop","runtime.ready","runtime.sync","runtime.beginAI","runtime.endAI","runtime.watch","runtime.shutdown"].includes(method))return invalid();
    const [context,value]=args;
@@ -17,8 +18,7 @@ export function createLocalModelService(root:string,timings:ModelRuntimeTimings=
    settings.prepare(context);
    if(method==="runtime.shutdown"){closed=true;await runtime?.close();await settings.flush();return{closed:true};}
    const owner=runtime??=new LocalModelRuntime(root,{runtime:()=>settings.dispatch([settings.currentContext(),"runtime.settings",null]) as Promise<LlamaRuntimeSettingsResponse>,models:()=>settings.dispatch([settings.currentContext(),"models.settings",null]) as Promise<GgufModelSettingsResponse>,selected:()=>settings.dispatch([settings.currentContext(),"models.selectedRuntime",null]) as Promise<SelectedGgufModelRuntime>},timings);
-   let result:unknown;
-   switch(method){
+   let result:unknown;switch(method){
     case "runtime.state":return owner.state.capture();
     case "runtime.watch":return owner.state.wait(value.epoch,value.sequence);
     case "runtime.start":result=await owner.start(value as LlamaRuntimeStartSource);break;

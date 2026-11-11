@@ -10,13 +10,13 @@ import { startModel } from "./startup";
 import { initialState,baseUrl,modelStatus,runtimeHost,summarize } from "./policy";
 import { healthy } from "./health";
 export class LocalModelRuntime {
- readonly log:ModelRuntimeLog;readonly state:ModelRuntimeState;
- private attempt?:ModelRuntimeAttempt;private starting?:Promise<LlamaRuntimeProcessState>;private stopping?:Promise<LlamaRuntimeProcessState>;private retiring?:Promise<void>;private abort?:AbortController;
+ readonly log:ModelRuntimeLog;readonly state:ModelRuntimeState;  private attempt?:ModelRuntimeAttempt;private starting?:Promise<LlamaRuntimeProcessState>;private stopping?:Promise<LlamaRuntimeProcessState>;private retiring?:Promise<void>;private abort?:AbortController;
  private closing?:Promise<void>;private revision=0;private queuedStarts=0;private closed=false;private monitor?:NodeJS.Timeout;private monitorAbort?:AbortController;private polling=false;private healthFailures=0;
  private readonly idle:ReturnType<typeof createLlamaRuntimeIdleController>;
  constructor(root:string,private readonly settings:ModelRuntimeSettings,private readonly timings:ModelRuntimeTimings={}){this.idle=createLlamaRuntimeIdleController({idleTimeoutMs:timings.idleTimeoutMs??llamaRuntimeAiIdleTimeoutMs,onIdle:()=>this.stop("AI 搜索空闲 10 分钟")});this.log=new ModelRuntimeLog(root);this.state=new ModelRuntimeState(initialState(this.log.path));}
  get busy(){return this.queuedStarts>0||!!this.starting||!!this.stopping||!!this.retiring||!!this.attempt?.alive;}
  get canSelect(){return !this.closed&&!this.busy;}
+ get canRetire(){const idle=this.idle.getSnapshot();return this.canSelect&&idle.activeAiUseCount===0&&!idle.idleStopScheduled;}
  private current(own:number){return own===this.revision&&!this.closed&&!this.stopping;}
  private cancelled(){return{...this.state.capture().state,status:"failed" as const,port:null,pid:undefined,modelStatus:"load_failed" as const,message:t("runtime.cancelled"),modelMessage:t("runtime.cancelled"),healthUrl:""};}
  async start(source:LlamaRuntimeStartSource="manual"):Promise<LlamaRuntimeProcessState>{this.queuedStarts++;try{return await this.startAccepted(source);}finally{this.queuedStarts--;}}

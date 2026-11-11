@@ -14,6 +14,7 @@ internal static class WorkerIdleProbe
             var modelSettings=await models.RequestAsync("modelSettings.invoke",[context,"models.settings",null]);
             var state=await models.RequestAsync("runtime.state",[context,null]);
             if(!models.IsActive||state.GetProperty("state").GetProperty("status").GetString() is "running" or "starting")throw new Exception("configuration query started model service");
+            await models.RequestAsync("runtime.beginAI",[context,null]);
             var officeStats=await office.RequestAsync("cache.stats",[]);
             if(!office.IsActive)throw new Exception("office stats host did not start");
             var officeCache=Path.GetFullPath(officeStats.GetProperty("cachePaths")[0].GetString()!);
@@ -38,14 +39,18 @@ internal static class WorkerIdleProbe
             if(!host.IsActive)throw new Exception("host did not start");
             Console.WriteLine("worker active; waiting for idle retirement");
             await Task.Delay(TimeSpan.FromSeconds(68));
-            if(host.IsActive||metadata.IsActive||office.IsActive||models.IsActive)throw new Exception("idle host retained");
+            if(host.IsActive||metadata.IsActive||office.IsActive)throw new Exception("idle host retained");
             if(!unknown.IsActive)throw new Exception("unknown operation incorrectly allowed idle retirement");
             var runtimeRestored=await models.RequestAsync("modelSettings.invoke",[context,"runtime.settings",null]);
             var modelsRestored=await models.RequestAsync("modelSettings.invoke",[context,"models.settings",null]);
             if(!models.IsActive||runtimeSettings.GetRawText()!=runtimeRestored.GetRawText()||modelSettings.GetRawText()!=modelsRestored.GetRawText())throw new Exception("model configuration changed on restart");
+            if(!models.IsActive)throw new Exception("active AI reference retired model host");
+            await models.RequestAsync("runtime.endAI",[context,null]);
+            await models.RequestAsync("runtime.stop",[context,"fixture stop"]);
             if(!provider.IsActive)throw new Exception("active preview host retired");
             await provider.RequestAsync("text.cancel",[textId]);
             await Task.Delay(TimeSpan.FromSeconds(68));
+            if(models.IsActive)throw new Exception("stopped model host retained");
             if(provider.IsActive)throw new Exception("closed preview host retained");
             await provider.RequestAsync("text.read",[Guid.NewGuid().ToString(),textFile]);
             if(!provider.IsActive)throw new Exception("preview host did not restart");

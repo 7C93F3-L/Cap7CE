@@ -30,6 +30,29 @@ const assert=require('node:assert/strict'),fs=require('node:fs/promises'),os=req
  await fs.writeFile(modelFile,'{malformed');await assert.rejects(invoke('models.settings'));assert.equal(await fs.readFile(modelFile,'utf8'),'{malformed');
  assert.deepEqual(await Promise.all(sources.map(async name=>crypto.createHash('sha256').update(await fs.readFile(path.join(modelsRoot,name))).digest('hex'))),hashes);
  const english=await invoke('runtime.settings',null,{...context,language:'en-US'});assert.match(english.message,/select/i);
+ const serviceRoot=path.join(root,'service');await fs.mkdir(serviceRoot);
+ await require('./model-runtime-fixture.cjs')(serviceRoot);
+ const apiFile=path.join(root,'runtime-api.cjs');await esbuild.build({entryPoints:[path.resolve('core/node/modelRuntime/api.ts')],bundle:true,platform:'node',format:'cjs',outfile:apiFile});
+ const service=require(apiFile).createLocalModelService(path.join(serviceRoot,'profile'),{idleTimeoutMs:80,healthIntervalMs:10000});
+ const serviceContext={runtimeRoot:path.join(serviceRoot,'llama.cpp'),modelsRoot:path.join(serviceRoot,'models'),language:'zh-CN'};
+ await fs.mkdir(serviceContext.modelsRoot);for(const name of ['qwen-test-q4.gguf','mmproj-qwen-test-f16.gguf'])await fs.writeFile(path.join(serviceContext.modelsRoot,name),'generated model fixture');
+ const call=(method,value=null)=>service.dispatch(method,[serviceContext,value]),quiescent=()=>service.dispatch('runtime.idle',[]);
+ try{
+  assert.equal(await quiescent(),true);
+  await service.dispatch('modelSettings.invoke',[serviceContext,'runtime.select','b-test']);
+  await service.dispatch('modelSettings.invoke',[serviceContext,'models.select','qwen-test-q4.gguf']);
+  await call('runtime.beginAI');assert.equal(await quiescent(),false,'AI reference protects a cold model host');
+  await call('runtime.endAI');assert.equal(await quiescent(),true);
+  assert.equal((await call('runtime.start','manual')).state.status,'running');
+  await call('runtime.beginAI');await call('runtime.endAI');await new Promise(resolve=>setTimeout(resolve,180));
+  assert.equal((await call('runtime.state')).state.status,'running','manual runtime survives AI idle window');
+  assert.equal(await quiescent(),false,'live manual process blocks retirement');
+  await call('runtime.stop','fixture stop');assert.equal(await quiescent(),true);
+  await call('runtime.beginAI');assert.equal((await call('runtime.start','ai')).state.status,'running');
+  await call('runtime.endAI');assert.equal(await quiescent(),false,'AI grace period and owned process block retirement');
+  for(let n=0;n<100&&(await call('runtime.state')).state.status!=='stopped';n++)await new Promise(resolve=>setTimeout(resolve,20));
+  assert.equal((await call('runtime.state')).state.status,'stopped');assert.equal(await quiescent(),true);
+ }finally{await service.close();}
  console.log('Core model settings: passive read, existing numeric ordering/pairing, case-normalized selection, serialized writes, fixed roots, corrupt-file preservation, language parity and unchanged generated sources passed.');
  }finally{assert.equal(path.dirname(root),path.resolve(os.tmpdir()));await fs.rm(root,{recursive:true,force:true});}
 })().catch(e=>{console.error(e);process.exitCode=1;});

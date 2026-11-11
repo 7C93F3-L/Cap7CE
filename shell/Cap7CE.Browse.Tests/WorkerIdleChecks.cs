@@ -12,8 +12,14 @@ internal static class WorkerIdleChecks
         foreach(var operation in new[]{"runtime.select","models.select","models.selectedId","models.selectedRuntime","unknown"})
             if(WorkerIdleLifetime.IsAtomic("model-runtime.cjs","modelSettings.invoke",[new{},operation,null]))throw new Exception("model mutation or unknown operation can retire");
         if(!WorkerIdleLifetime.IsAtomic("model-runtime.cjs","runtime.state",[new{},null]))throw new Exception("cold runtime state cannot retire");
-        foreach(var operation in new[]{"runtime.start","runtime.stop","runtime.watch","runtime.beginAI","runtime.endAI","runtime.ready","runtime.sync","runtime.shutdown"})
+        foreach(var operation in new[]{"runtime.watch","runtime.shutdown","unknown"})
             if(WorkerIdleLifetime.IsAtomic("model-runtime.cjs",operation,[new{},null]))throw new Exception("model service lifecycle can retire");
+        foreach(var operation in new[]{"runtime.select","models.select"})
+            if(!WorkerIdleLifetime.IsAtomic("model-runtime.cjs","modelSettings.invoke",[new{},operation,"fixture"]))throw new Exception("persisted selection cannot enter domain retirement check");
+        var checks=0;var checkedTwice=new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var retrying=new WorkerIdleLifetime(()=>{if(++checks==2)checkedTwice.TrySetResult();return Task.CompletedTask;},TimeSpan.FromMilliseconds(20),_=>{},()=>checks<2);
+        await retrying.EnterAsync(true);await retrying.LeaveAsync(true);await checkedTwice.Task.WaitAsync(TimeSpan.FromSeconds(2));
+        await retrying.CloseAsync();var stoppedChecks=checks;await Task.Delay(80);if(checks!=stoppedChecks)throw new Exception("closed idle coordinator retried");
         var retired=new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);var count=0;
         var lifetime=new WorkerIdleLifetime(()=>{Interlocked.Increment(ref count);retired.TrySetResult();return Task.CompletedTask;},TimeSpan.FromMilliseconds(30),e=>throw new Exception("retire failed",e));
         await lifetime.EnterAsync(true);await lifetime.EnterAsync(true);await lifetime.LeaveAsync(true);
@@ -36,9 +42,9 @@ internal static class WorkerIdleChecks
         await office.CloseAsync();
         var modelCount=0;
         var model=new WorkerIdleLifetime(()=>{modelCount++;return Task.CompletedTask;},TimeSpan.FromMilliseconds(20),_=>{});
-        await model.EnterAsync(WorkerIdleLifetime.IsAtomic("model-runtime.cjs","runtime.start",[new{},"manual"]));await model.LeaveAsync(true);
+        await model.EnterAsync(WorkerIdleLifetime.IsAtomic("model-runtime.cjs","runtime.watch",[new{},new{}]));await model.LeaveAsync(true);
         await model.EnterAsync(WorkerIdleLifetime.IsAtomic("model-runtime.cjs","runtime.state",[new{},null]));await model.LeaveAsync(true);
-        await Task.Delay(80);if(modelCount!=0)throw new Exception("state query re-enabled model retirement after explicit start");
+        await Task.Delay(80);if(modelCount!=0)throw new Exception("state query re-enabled model retirement after subscription");
         await model.CloseAsync();
     }
 }
