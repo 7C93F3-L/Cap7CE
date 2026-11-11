@@ -313,3 +313,6 @@ assert(read('shell/Cap7CE.WinUI/Services/NativeNotifications.cs').includes('AddA
 
 const idleLifetime=read('shell/Cap7CE.WinUI/Services/WorkerIdleLifetime.cs');
 assert(idleLifetime.trimEnd().split(/\r?\n/).length<=50&&!/Process|FramedRpc|File\.|Directory\./.test(idleLifetime),'idle lifetime must stay a bounded coordinator without process or resource ownership');
+
+assert(trayOwner.includes('var state=services.Models.HasProcess?"unknown":"unloaded";')&&trayOwner.includes('if(services.Models.IsActive&&!working&&!services.ModelChanges.Busy)'), 'opening the tray menu must not start a cold model worker or assume an unknown worker stopped');
+assert(trayMenu.includes('TrayPolicy.CanStartRuntime(runtime,busy)')&&trayMenu.includes('TrayPolicy.CanStopRuntime(runtime,busy)'), 'tray runtime actions must use tested cold/unknown/busy state policy');

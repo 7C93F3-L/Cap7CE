@@ -16,6 +16,10 @@ internal static class TrayChecks
         Check(TrayPolicy.ShowOnStartup(false,true,false),"A second launch must reveal a background instance.");
         Check(TrayPolicy.ShowOnStartup(false,false,true),"Registration failure must reveal a window.");
         Check(!TrayPolicy.ShowOnStartup(false,false,false),"Background launch must not activate the window.");
+        foreach(var state in new[]{"unloaded","unknown","stopped","starting","running","stopping","failed"})foreach(var busy in new[]{false,true}){
+            Check(TrayPolicy.CanStartRuntime(state,busy)==(!busy&&(state=="unloaded"||state=="stopped")),"Only unstarted or confirmed stopped owners allow Start.");
+            Check(TrayPolicy.CanStopRuntime(state,busy)==(!busy&&state=="running"),"Unknown, unstarted and busy owners never imply a running service.");
+        }
         var folder=Path.Combine(Path.GetTempPath(),"Cap7CE-tray-check-"+Guid.NewGuid().ToString("N"));var language=AppLanguage.Session.Current;
         try{
             Directory.CreateDirectory(folder);var path=Path.Combine(folder,"prefs.json");await File.WriteAllTextAsync(path,"{\"language\":\"zh-CN\",\"notifications\":true}");

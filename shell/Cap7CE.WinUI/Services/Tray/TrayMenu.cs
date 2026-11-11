@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using System.Runtime.InteropServices;
 using Cap7CE.WinUI.Localization;
+using Cap7CE.WinUI.Models;
 namespace Cap7CE.WinUI.Services;
 // Owns an HMENU tree and a zero-size native tool owner for hidden-main-window use.
 // Windows owns tracking, placement, keyboard navigation and dismissal.
@@ -21,8 +22,8 @@ internal static class TrayMenu
                 if(!TrayNative.CheckMenuRadioItem(m,10,11,edge?11u:10u,0))throw new Win32Exception();
             });
             Submenu(menu,"ui.model.serviceTitle",m=>{
-                Item(m,20,"common.start",!busy&&runtime=="stopped"?0u:3u);
-                Item(m,21,"common.stop",!busy&&runtime=="running"?0u:3u);
+                Item(m,20,"common.start",TrayPolicy.CanStartRuntime(runtime,busy)?0u:3u);
+                Item(m,21,"common.stop",TrayPolicy.CanStopRuntime(runtime,busy)?0u:3u);
             });
             Separator(menu);Item(menu,30,"settings.launchAtLogin",login?8u:0u);
             Item(menu,31,"settings.checkForUpdates");Separator(menu);Item(menu,40,"ui.tray.exit");

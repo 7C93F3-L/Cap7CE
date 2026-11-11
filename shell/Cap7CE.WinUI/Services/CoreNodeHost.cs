@@ -22,6 +22,7 @@ internal sealed class CoreNodeHost : IAsyncDisposable
     private long sequence;
     private bool closed;
     private readonly Queue<string> errors=new();
+    public bool HasProcess=>process is not null;
     public bool IsActive {get{try{return !closed&&process is {} owner&&!owner.HasExited;}catch(InvalidOperationException){return false;}}}
     public object Diagnostics {get{lock(errors)return new{worker,active=IsActive,stderr=errors.ToArray()};}}
     private string Executable => Path.Combine(root, "native/artifacts/core-visuals/v1/Cap7CE.Core.Visuals.exe");

@@ -42,8 +42,8 @@ internal sealed class TrayController : IDisposable
         if(menuOpen||disposed)return;menuOpen=true;
         uint action;
         try{
-            var state="unknown";
-            if(!working&&!services.ModelChanges.Busy)
+            var state=services.Models.HasProcess?"unknown":"unloaded";
+            if(services.Models.IsActive&&!working&&!services.ModelChanges.Busy)
                 try{using var timeout=new CancellationTokenSource(TimeSpan.FromSeconds(2));state=(await new ModelCommandActions(services).RuntimeAsync("runtime.state",token:timeout.Token)).GetProperty("status").GetString()??state;}catch(Exception error){NativeDiagnostics.VisualFailure(error);}
             if(disposed)return;
 
