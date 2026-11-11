@@ -119,7 +119,8 @@ public sealed class CatalogJournalMonitor
             captureFileEntries ? new CatalogDirectoryEntryCapture(reader, native, true).CaptureJournalAsync : null,captureImpact:scopedPublished is not null);
     private async Task RecoverAsync(ICatalogReaderSession reader, string volumeId, CancellationToken token, string origin = "monitor-recovery")
     {
-        await synchronization.SynchronizeConnectedAsync(reader, [volumeId], true, token, origin);
+        // Automatic recovery must retain checkpoint-expiry evidence; only explicit rebuilds force invalidation.
+        await synchronization.SynchronizeConnectedAsync(reader, [volumeId], forceRebuild: false, token, origin);
         published(await catalog.ReadRevisionAsync(token));
     }
     private static bool IsContinuous(CatalogV2VolumeSnapshot volume, CatalogReaderInspection inspection) =>

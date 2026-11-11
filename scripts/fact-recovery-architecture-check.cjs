@@ -5,6 +5,7 @@ const recovery = read('core/src/Cap7CE.Core.Catalog/FileFacts/CatalogFactRecover
 const synchronization = read('core/src/Cap7CE.Core.Host/CatalogSynchronizationService.cs');
 const publication = read('core/src/Cap7CE.Core.Catalog/Snapshots/CatalogSnapshotPublication.cs');
 const client = read('core/src/Cap7CE.Core.Host/ReaderV2CatalogSession.cs');
+const monitor = read('core/src/Cap7CE.Core.Host/CatalogMaintenance/CatalogJournalMonitor.cs');
 const failures = [];
 if (recovery.split(/\r?\n/).length > 170) failures.push('Recovery staging exceeds its single-purpose size limit.');
 for (const pattern of [/DeviceIoControl|DllImport|Reader\.Host|FileStream/, /Process\.|System\.Net|HttpClient/, /ALTER TABLE|UPDATE catalog_nodes_v2|UPDATE file_fact_volumes/])
@@ -15,6 +16,11 @@ for (const anchor of ['u.usn<$checkpoint', 'fv.epoch=$epoch', 'ff.volume_epoch=$
   if (!recovery.includes(anchor)) failures.push(`Recovery is missing ${anchor}.`);
 for (const anchor of ['!forceRebuild && reason == "checkpoint-expired"', 'catalogVolume.JournalId == inspection.JournalId.ToString("X16")'])
   if (!synchronization.includes(anchor)) failures.push(`Recovery activation is missing ${anchor}.`);
+if (!monitor.includes('SynchronizeConnectedAsync(reader, [volumeId], forceRebuild: false, token, origin)'))
+  failures.push('Automatic monitor recovery must not bypass verified fact retention by forcing an explicit rebuild.');
+if (!synchronization.includes('CaptureFactRecoveryAsync(current, inspection, reason, false, token)')
+    || !synchronization.includes('true, activity, reason, token, factRecovery)'))
+  failures.push('Catch-up discontinuity recovery must preserve verified facts through the same snapshot publication owner.');
 if (!client.includes('hello.Capabilities.HasFlag(ReaderCapabilities.SnapshotFileUsn)') || !client.includes('response.Payload.Span, supportsSnapshotFileUsn'))
   failures.push('Snapshot USNs must use explicit capability negotiation.');
 if (publication.indexOf('factRecovery.RestoreAsync') > publication.indexOf('INSERT INTO catalog_nodes_v2')

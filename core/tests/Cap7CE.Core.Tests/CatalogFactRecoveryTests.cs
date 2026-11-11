@@ -1,6 +1,8 @@
 using Cap7CE.Core.Catalog;
 using Cap7CE.Core.Catalog.FileFacts;
 using Cap7CE.Core.Host;
+using Cap7CE.Core.Host.CatalogMaintenance;
+using Cap7CE.Core.Host.MetadataExtraction;
 using Cap7CE.Core.Reader.Protocol;
 using Microsoft.Data.Sqlite;
 
@@ -19,10 +21,21 @@ internal static class CatalogFactRecoveryTests
         await RunScenarioAsync(publicationFailure: true);
         await RunScenarioAsync(changedDuringBuild: true);
         await RunScenarioAsync(journalLostDuringBuild: true);
-        Console.WriteLine("Checkpoint-expiry fact retention, freshness rejection, evidence, fallback and cancellation passed.");
+        foreach (var route in new[] { "monitor-startup", "monitor-recovery", "catch-up-retry" })
+        {
+            await RunScenarioAsync(route: route);
+            await RunScenarioAsync(route: route, replacedJournal: true);
+            await RunScenarioAsync(route: route, cancelled: true);
+            await RunScenarioAsync(route: route, noUsn: true);
+            await RunScenarioAsync(route: route, publicationFailure: true);
+            await RunScenarioAsync(route: route, changedDuringBuild: true);
+            await RunScenarioAsync(route: route, journalLostDuringBuild: true);
+        }
+        await RunScenarioAsync(route: "monitor-startup", interrupted: true);
+        Console.WriteLine("Checkpoint-expiry fact retention: direct, monitor startup/live recovery and catch-up retry preserve verified facts/search/colors; freshness, failure and cancellation guards passed.");
     }
 
-    private static async Task RunScenarioAsync(bool replacedJournal = false, bool force = false, bool interrupted = false, bool cancelled = false, bool noUsn = false, bool publicationFailure = false, bool changedDuringBuild = false, bool journalLostDuringBuild = false)
+    private static async Task RunScenarioAsync(bool replacedJournal = false, bool force = false, bool interrupted = false, bool cancelled = false, bool noUsn = false, bool publicationFailure = false, bool changedDuringBuild = false, bool journalLostDuringBuild = false, string? route = null)
     {
         using var fixture = new TemporaryCatalogFixture();
         var catalog = new CatalogV2Database(fixture.DatabasePath); await catalog.InitializeAsync();
@@ -52,7 +65,10 @@ internal static class CatalogFactRecoveryTests
             command.CommandText = "UPDATE file_facts SET volume_epoch=99 WHERE file_reference='0000000000000016';";
             await command.ExecuteNonQueryAsync();
         }
-        if (interrupted) { await catalog.MarkNeedsRebuildAsync("recovery"); await catalog.BeginBuildAsync("recovery", "0000000000000001", 200, 150, 0, null, true); }
+        if (interrupted) {
+            await catalog.MarkNeedsRebuildAsync("recovery");
+            if (route is null) await catalog.BeginBuildAsync("recovery", "0000000000000001", 200, 150, 0, null, true);
+        }
         async Task BeforeRead()
         {
             if (changedDuringBuild) await facts.InvalidateContentAsync(Id(16));
@@ -65,7 +81,9 @@ internal static class CatalogFactRecoveryTests
         var reader = new RecoveryReader(replacedJournal ? 2UL : 1UL, cancelled, noUsn, BeforeRead, journalLostDuringBuild);
         try
         {
-            await new CatalogSynchronizationService(catalog, reader).SynchronizeAsync(["recovery"], force);
+            if (route == "catch-up-retry") reader.Expired = false;
+            if (route is null or "catch-up-retry") await new CatalogSynchronizationService(catalog, reader).SynchronizeAsync(["recovery"], force);
+            else await RunMonitorAsync(catalog, reader, route == "monitor-recovery");
             TestAssert.False(cancelled || publicationFailure || journalLostDuringBuild, "cancelled or superseded snapshot must fail");
         }
         catch (OperationCanceledException) when (cancelled) { }
@@ -74,23 +92,54 @@ internal static class CatalogFactRecoveryTests
         var query = new CatalogV2Query("", [], CatalogQueryScope.AllVolumes(), null, CatalogEntryType.File, 100, null,
             new(FileFactKind.ImageDimensions, 3));
         var expected = replacedJournal || force || interrupted || cancelled || noUsn || publicationFailure || changedDuringBuild || journalLostDuringBuild ? 0 : 1;
-        TestAssert.Equal(expected, (await catalog.QueryAsync(query)).Items.Count, "only proven unchanged, formerly current facts survive");
+        TestAssert.Equal(expected, (await catalog.QueryAsync(query)).Items.Count, $"{route ?? "direct"}: only proven unchanged, formerly current facts survive");
         TestAssert.Equal(expected, (await catalog.QueryAsync(query with { Query = "retainedprompt", TextTarget = CatalogQueryTextTarget.NamePathOrKeywords })).Items.Count, "search evidence follows recovered facts");
         TestAssert.Equal(expected, (await catalog.QueryAsync(query with { Facts = query.Facts! with { VisualGroups = [new([[new("brightnessMean", "<=", 10000)]])] } })).Items.Count, "colors survive with source guards");
         TestAssert.Equal(0, Directory.GetFiles(System.IO.Path.GetDirectoryName(fixture.DatabasePath)!, "*.snapshot-*.db").Length, "all recovery staging files are retired");
     }
 
+    private static async Task RunMonitorAsync(CatalogV2Database catalog, RecoveryReader source, bool live)
+    {
+        source.Expired = !live;
+        var reader = new WaitingCatalogReader(source);
+        using var cancellation = new CancellationTokenSource();
+        var monitor = new CatalogJournalMonitor(catalog, reader,
+            (_, _) => Task.FromResult<IReadOnlyList<FileFactOwnedStorageRoot>>([]), _ => { });
+        var work = monitor.RunAsync(cancellation.Token);
+        async Task WaitAsync()
+        {
+            var wait = reader.Waits.Reader.ReadAsync(cancellation.Token).AsTask();
+            if (await Task.WhenAny(work, wait).WaitAsync(TimeSpan.FromSeconds(10)) == work) await work;
+            else await wait;
+        }
+        try
+        {
+            await WaitAsync();
+            if (live) { source.Expired = true; reader.Pulses.Writer.TryWrite(false); await WaitAsync(); }
+            TestAssert.Equal(1, reader.Connects, "automatic recovery reuses its authenticated Reader session");
+        }
+        finally
+        {
+            cancellation.Cancel();
+            try { await work; } catch (OperationCanceledException) when (cancellation.IsCancellationRequested) { }
+        }
+        TestAssert.Equal(0, reader.Active, "monitor recovery retires its Reader before fixture cleanup");
+    }
+
     private sealed class RecoveryReader(ulong journal, bool cancelled, bool noUsn, Func<Task> beforeRead, bool journalLostDuringBuild) : ICatalogReaderSessionFactory, ICatalogReaderSession
     {
-        private int inspections;
+        private bool snapshotOpened;
+        public bool Expired { get; set; } = true;
         private static readonly CatalogReaderVolume Volume = new(new(1, 5), "recovery", "E:", true);
         public Task<ICatalogReaderSession> ConnectAsync(CancellationToken token) => Task.FromResult<ICatalogReaderSession>(this);
         public ValueTask DisposeAsync() => ValueTask.CompletedTask;
         public Task<IReadOnlyList<CatalogReaderVolume>> ListVolumesAsync(CancellationToken token) => Task.FromResult<IReadOnlyList<CatalogReaderVolume>>([Volume]);
-        public Task<CatalogReaderInspection> InspectAsync(CatalogReaderVolume volume, CancellationToken token) => Task.FromResult(new CatalogReaderInspection(14, journalLostDuringBuild && ++inspections > 1 ? journal + 1 : journal, 150, 0, 200));
-        public Task<CatalogReaderSnapshot> OpenSnapshotAsync(CatalogReaderVolume volume, CancellationToken token) => Task.FromResult(new CatalogReaderSnapshot(new(1, 2), 14, journal, 200));
+        public Task<CatalogReaderInspection> InspectAsync(CatalogReaderVolume volume, CancellationToken token) => Task.FromResult(new CatalogReaderInspection(14, !Expired ? 1 : journalLostDuringBuild && snapshotOpened ? journal + 1 : journal, Expired ? 150 : 0, 0, Expired ? 200 : 101));
+        public Task<CatalogReaderSnapshot> OpenSnapshotAsync(CatalogReaderVolume volume, CancellationToken token)
+        { snapshotOpened = true; return Task.FromResult(new CatalogReaderSnapshot(new(1, 2), 14, journal, 200)); }
         public Task CloseSnapshotAsync(ReaderOpaqueId snapshot, CancellationToken token) => Task.CompletedTask;
-        public Task<CatalogReaderJournalPage> ReadJournalPageAsync(CatalogReaderVolume volume, ulong id, long start, uint limit, CancellationToken token) => throw new NotSupportedException();
+        public Task<CatalogReaderJournalPage> ReadJournalPageAsync(CatalogReaderVolume volume, ulong id, long start, uint limit, CancellationToken token)
+        { Expired = true; throw new CatalogReaderDiscontinuityException(); }
         public async Task<CatalogReaderSnapshotPage> ReadSnapshotPageAsync(ReaderOpaqueId snapshot, ulong cursor, uint limit, CancellationToken token)
         {
             if (cancelled) throw new OperationCanceledException();

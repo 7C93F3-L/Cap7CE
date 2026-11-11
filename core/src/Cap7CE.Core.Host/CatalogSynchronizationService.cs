@@ -116,10 +116,7 @@ public sealed class CatalogSynchronizationService
         var reason = catalogVolume.State == CatalogV2VolumeState.Building ? "interrupted-build"
             : CatalogPreparationDiagnostics.RebuildReason(catalogVolume, inspection)
                 ?? (forceRebuild ? "explicit-rebuild" : "marked-for-rebuild");
-        await using var factRecovery = !forceRebuild && reason == "checkpoint-expired"
-            && catalogVolume.CheckpointUsn >= inspection.LowestValidUsn
-            && catalogVolume.JournalId == inspection.JournalId.ToString("X16")
-            ? await Cap7CE.Core.Catalog.FileFacts.CatalogFactRecovery.CaptureAsync(catalog, catalogVolume, token) : null;
+        await using var factRecovery = await CaptureFactRecoveryAsync(catalogVolume, inspection, reason, forceRebuild, token);
         if (forceRebuild && catalogVolume.State is not (CatalogV2VolumeState.Disabled or CatalogV2VolumeState.NeedsRebuild))
         {
             catalogVolume = await catalog.MarkNeedsRebuildAsync(catalogVolume.VolumeId, token);
@@ -183,9 +180,19 @@ public sealed class CatalogSynchronizationService
                 inspection = await reader.InspectAsync(readerVolume, token);
             }
         }
+        var reason = CatalogPreparationDiagnostics.RebuildReason(current, inspection) ?? "journal-discontinuity";
+        await using var factRecovery = await CaptureFactRecoveryAsync(current, inspection, reason, false, token);
         current = await catalog.MarkNeedsRebuildAsync(current.VolumeId, token);
-        return await BuildSnapshotAsync(reader, readerVolume, current, inspection, true, activity, CatalogPreparationDiagnostics.RebuildReason(current, inspection) ?? "journal-discontinuity", token);
+        return await BuildSnapshotAsync(reader, readerVolume, current, inspection, true, activity, reason, token, factRecovery);
     }
+
+    private Task<Cap7CE.Core.Catalog.FileFacts.CatalogFactRecovery?> CaptureFactRecoveryAsync(
+        CatalogV2VolumeSnapshot catalogVolume, CatalogReaderInspection inspection, string reason, bool forceRebuild, CancellationToken token) =>
+        !forceRebuild && reason == "checkpoint-expired"
+            && catalogVolume.CheckpointUsn >= inspection.LowestValidUsn
+            && catalogVolume.JournalId == inspection.JournalId.ToString("X16")
+            ? Cap7CE.Core.Catalog.FileFacts.CatalogFactRecovery.CaptureAsync(catalog, catalogVolume, token)
+            : Task.FromResult<Cap7CE.Core.Catalog.FileFacts.CatalogFactRecovery?>(null);
 
     private static bool CanResumeCatchUp(
         CatalogV2VolumeSnapshot volume,
