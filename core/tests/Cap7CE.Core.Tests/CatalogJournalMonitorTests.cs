@@ -32,11 +32,13 @@ internal static class CatalogJournalMonitorTests
             async Task Wait() => await reader.Waits.Reader.ReadAsync().AsTask().WaitAsync(TimeSpan.FromSeconds(10));
             async Task Publication() => await publications.Reader.ReadAsync().AsTask().WaitAsync(TimeSpan.FromSeconds(10));
             await Wait(); var baseline = await catalog.ReadRevisionAsync(); var initialInspections = reader.Inspections;
+            var startupDiagnostics=diagnostics.Count;
+            TestAssert.True(startupDiagnostics>0&&diagnostics.All(item=>item.Name.StartsWith("monitor-stage-",StringComparison.Ordinal)),"startup emits only bounded stage diagnostics");
             reader.Pulses.Writer.TryWrite(true); await Wait();
             TestAssert.Equal(baseline, await catalog.ReadRevisionAsync(), "quiet timeout has no Catalog writes or notifications");
             TestAssert.Equal(initialInspections, reader.Inspections, "quiet timeout cannot start inspection polling");
             TestAssert.Equal(1, resolves, "quiet timeout cannot query owned directories again");
-            TestAssert.Equal(0, diagnostics.Count, "quiet waits produce no diagnostic traffic");
+            TestAssert.Equal(startupDiagnostics, diagnostics.Count, "quiet waits produce no additional diagnostic traffic");
             TestAssert.Equal(0, reader.PageOrder.Count, "quiet timeout never reads USN pages");
             for (var index = 0; index < 50; index++) synthetic.RenameAndMove("A:", 11, 10, "a-" + index + ".png");
             for (var index = 0; index < 4; index++) synthetic.RenameAndMove("B:", 20, 5, "b-" + index + ".jpg");

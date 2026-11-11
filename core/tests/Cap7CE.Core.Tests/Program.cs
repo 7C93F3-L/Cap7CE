@@ -18,7 +18,7 @@ if (args is ["--catalog-throughput-probe"]) { await CatalogSnapshotDeltaTests.Pr
 if (args is ["--metadata-throughput-probe"]) { await MetadataBuildSweepTests.ProbeAsync(); return 0; }
 if (args is ["--catalog-delta-tests"]) { await CatalogSnapshotDeltaTests.RunAsync(); return 0; }
 if (args is ["--catalog-recovery-tests"]) { await CatalogInterruptedBuildTests.RunAsync(); await CatalogPreparationDiagnosticsTests.RunAsync(); await CatalogJournalMonitorTests.RunAsync(); await CatalogKeywordTests.RunAsync(); Console.WriteLine("Catalog recovery and retained-identity keyword regressions passed."); return 0; }
-if (args is ["--catalog-diagnostics-tests"]) { await CatalogPreparationDiagnosticsTests.RunAsync(); Console.WriteLine("Catalog preparation diagnostics passed."); return 0; }
+if (args is ["--catalog-diagnostics-tests"]) { await CatalogMonitorTimingTests.RunAsync(); await CatalogPreparationDiagnosticsTests.RunAsync(); Console.WriteLine("Catalog preparation diagnostics passed."); return 0; }
 if (args is ["--catalog-natural-order-tests"]) { await CatalogNaturalOrderingTests.RunAsync(); return 0; }
 if (args is ["--catalog-impact-tests"]) {await CatalogChangeImpactTests.RunAsync();await CatalogChangeSignalTests.RunAsync();await CatalogDirectoryPathChangesTests.RunAsync();await CatalogLeafDirectoryScaleTests.RunAsync();await CatalogJournalMonitorTests.RunAsync();return 0;}
 if (args is ["--catalog-interrupted-build-tests"]) { await CatalogInterruptedBuildTests.RunAsync(); await CatalogPreparationProgressTests.RunAsync(); await CatalogEntrySnapshotFenceTests.RunAsync(); return 0; }
@@ -162,6 +162,7 @@ await CatalogOwnedDirectoryStageTests.RunAsync();
 await CatalogJournalPageOwnerTests.RunAsync();
 await CatalogReaderOwnershipTests.RunAsync();
 await CatalogJournalMonitorTests.RunAsync();
+await CatalogMonitorTimingTests.RunAsync();
 await CatalogPreparationDiagnosticsTests.RunAsync();
 await CatalogChangeSignalTests.RunAsync();
 await FileFactOwnedPolicyTests.RunAsync();

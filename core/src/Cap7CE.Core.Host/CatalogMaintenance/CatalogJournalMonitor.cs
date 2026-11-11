@@ -8,6 +8,7 @@ namespace Cap7CE.Core.Host.CatalogMaintenance;
 // bounded round-robin page work; quiet timeouts perform no Catalog queries.
 public sealed class CatalogJournalMonitor
 {
+    private readonly CatalogMonitorTiming timing;
     private const int MaximumPagesPerTurn = 16;
     private readonly CatalogV2Database catalog;
     private readonly ICatalogReaderSessionFactory factory;
@@ -22,6 +23,7 @@ public sealed class CatalogJournalMonitor
         Func<IReadOnlyList<CatalogV2VolumeSnapshot>, CancellationToken, Task<IReadOnlyList<FileFactOwnedStorageRoot>>> resolveRoots,
         Action<long> published, TimeProvider? time = null, Action? listening = null, CatalogPreparationDiagnostics? diagnostics = null, bool captureFileEntries = false,Action<CatalogDirectoryImpact>? scopedPublished=null)
     {
+        timing=new(diagnostics);
         this.catalog = catalog; this.factory = factory; synchronization = new(catalog, factory, diagnostics, captureFileEntries);
         this.captureFileEntries = captureFileEntries;this.scopedPublished=scopedPublished;
         this.resolveRoots = resolveRoots; this.published = published; this.time = time ?? TimeProvider.System;
@@ -36,27 +38,27 @@ public sealed class CatalogJournalMonitor
             token.ThrowIfCancellationRequested();
             var ready = await ReadReadyAsync(token,recoverInterrupted);recoverInterrupted=false;
             if (ready.Count == 0) return; // restarted by explicit selection/build; no idle discovery loop
-            await using var reader = await factory.ConnectAsync(token);
+            await using var reader = await timing.RunAsync(CatalogMonitorStage.ReaderConnect,null,()=>factory.ConnectAsync(token));
             if (!reader.SupportsJournalChangeWait) throw new NotSupportedException("reader-journal-wait-unavailable");
             if (captureFileEntries && !reader.SupportsFileEntryNames) throw new NotSupportedException("reader-entry-names-unavailable");
             var started = time.GetTimestamp();
-            var native = (await reader.ListVolumesAsync(token)).Where(volume => volume.JournalAvailable)
+            var native = (await timing.RunAsync(CatalogMonitorStage.VolumeList,null,()=>reader.ListVolumesAsync(token))).Where(volume => volume.JournalAvailable)
                 .ToDictionary(volume => volume.CatalogId, StringComparer.Ordinal);
             foreach (var volume in ready) {
                 if (!native.TryGetValue(volume.VolumeId, out var available)) {
                     await catalog.MarkOfflineAsync(volume.VolumeId, token); published(await catalog.ReadRevisionAsync(token));
                     continue;
                 }
-                var inspection = await reader.InspectAsync(available, token);
+                var inspection = await timing.RunAsync(CatalogMonitorStage.Inspect,volume.DisplayName,()=>reader.InspectAsync(available, token));
                 if (volume.State==CatalogV2VolumeState.NeedsRebuild || !IsContinuous(volume, inspection)) await RecoverAsync(reader, volume.VolumeId, token, volume.State==CatalogV2VolumeState.NeedsRebuild?"monitor-resume":"monitor-startup");
             }
             ready = await ReadReadyAsync(token);
-            var roots = await resolveRoots(ready, token);
+            var roots = await timing.RunAsync(CatalogMonitorStage.OwnedRoots,null,()=>resolveRoots(ready, token));
             var owners = new Dictionary<string, CatalogJournalPageOwner>(StringComparer.Ordinal);
             var entryRetries = new Dictionary<string, CatalogDirectoryEntryRetryOwner>(StringComparer.Ordinal);
             foreach (var volume in ready.Where(volume => native.ContainsKey(volume.VolumeId)))
             {
-                owners.Add(volume.VolumeId, await CreateOwnerAsync(reader, native[volume.VolumeId], volume, roots, token));
+                owners.Add(volume.VolumeId, await timing.RunAsync(CatalogMonitorStage.OwnedIndex,volume.DisplayName,()=>CreateOwnerAsync(reader, native[volume.VolumeId], volume, roots, token)));
                 if (captureFileEntries) entryRetries.Add(volume.VolumeId, new(catalog, reader, native[volume.VolumeId], time));
             }
             if (owners.Count == 0) return;
@@ -65,7 +67,7 @@ public sealed class CatalogJournalMonitor
             var recoveries = 0;
             while (time.GetElapsedTime(started) < TimeSpan.FromMinutes(25)) {
                 token.ThrowIfCancellationRequested();
-                foreach (var retry in entryRetries.Values) if (await retry.StepAsync(token) is { } retryRevision) published(retryRevision);
+                foreach (var retry in entryRetries.Values) if (await timing.RunAsync(CatalogMonitorStage.Retry,null,()=>retry.StepAsync(token),true) is { } retryRevision) published(retryRevision);
                 if (pending.Count == 0) {
                     var cursors = owners.Select(item => new ReaderJournalWaitCursor(native[item.Key].ReaderId,
                         ParseJournal(ready.Single(volume => volume.VolumeId == item.Key).JournalId!), item.Value.NextReadUsn)).ToArray();
@@ -85,7 +87,7 @@ public sealed class CatalogJournalMonitor
                     try {
                         var page = await reader.ReadJournalPageAsync(native[key], ParseJournal(ready.Single(volume => volume.VolumeId == key).JournalId!),
                             owners[key].NextReadUsn, ReaderProtocol.MaximumRecordsPerPage, token);
-                        var result = await owners[key].ProcessAsync(page, token);
+                        var result = await timing.RunAsync(CatalogMonitorStage.JournalPublish,ready.Single(v=>v.VolumeId==key).DisplayName,()=>owners[key].ProcessAsync(page, token),true);
                         if (entryRetries.TryGetValue(key, out var retryOwner) && result.Published) retryOwner.NotifyJournalChange();
                         if (result.Published) {if(result.Impact is {} impact&&scopedPublished is not null)scopedPublished(impact);else published(result.CatalogRevision);}
                         if (!page.EndOfStream && queued.Add(key)) pending.Enqueue(key);

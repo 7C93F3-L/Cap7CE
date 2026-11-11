@@ -12,6 +12,8 @@ module.exports = (root, sourceFiles, failures) => {
   const diagnostic = fs.readFileSync(path.join(root, "core/src/Cap7CE.Core.Host/CatalogPreparationDiagnostics.cs"), "utf8");
   if (/PeriodicTimer|Task\.Delay|new\s+(?:System\.)?Timer|Exception\.Message|error\.Message|error\.StackTrace/.test(diagnostic) || diagnostic.split(/\r?\n/).length > 100)
     failures.push("Catalog diagnostics must remain small, path-free and timer-free.");
+  const timing=fs.readFileSync(path.join(directory,"CatalogMonitorTiming.cs"),"utf8");
+  if(timing.trimEnd().split(/\r?\n/).length>40||/Task\.Delay|Timer|Sqlite|Exception\.Message|error\.Message|StackTrace/.test(timing)||!timing.includes('watch.ElapsedMilliseconds>=250')) failures.push("Monitor timing must stay bounded, passive, path-free and quiet for fast recurring operations.");
   const read = (name) => fs.readFileSync(path.join(directory, name), "utf8");
   const checks = new Map([
     ["CatalogJournalMonitor.cs", ["MaximumPagesPerTurn = 16", "if (wake.TimedOut) continue;", "reader.WaitForChangesAsync", "TimeSpan.FromMinutes(25)", "SynchronizeConnectedAsync(reader", "CatalogJournalPageOwner.CreateAsync"]],
