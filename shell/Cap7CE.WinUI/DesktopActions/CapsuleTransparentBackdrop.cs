@@ -7,6 +7,11 @@ internal sealed partial class CapsuleTransparentBackdrop : SystemBackdrop
 {
     private Windows.UI.Composition.Compositor? compositor;
     private Windows.UI.Composition.CompositionColorBrush? brush;
+    protected override void OnDefaultSystemBackdropConfigurationChanged(ICompositionSupportsSystemBackdrop target,XamlRoot root)
+    {
+        // This transparent brush has no material controller or theme configuration to update.
+        // Do not call the base material callback for this custom composition target.
+    }
     protected override void OnTargetConnected(ICompositionSupportsSystemBackdrop target,XamlRoot root)
     {
         base.OnTargetConnected(target,root);

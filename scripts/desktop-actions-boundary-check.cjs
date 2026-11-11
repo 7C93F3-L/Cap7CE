@@ -29,6 +29,7 @@ module.exports = read => {
     && frame.includes('args.DidPositionChange') && frame.includes('CapsuleShape.Contains') && frame.includes('CapsuleTransparency.Clear') && frame.includes('message==0x83') && frame.includes('message==0x24') && frame.includes('RemoveWindowSubclass') && frame.includes('window.AppWindow.Changed-=Changed'), 'capsule frame must own small-window sizing, decoration suppression, shape refresh and teardown');
   assert(!frame.includes('SetWindowRgn') && !frame.includes('CreateRoundRectRgn'), 'capsule edges must retain compositor antialiasing rather than integer region clipping');
   const backdrop = read(base + 'CapsuleTransparentBackdrop.cs');
+  assert(backdrop.includes('override void OnDefaultSystemBackdropConfigurationChanged') && !backdrop.includes('base.OnDefaultSystemBackdropConfigurationChanged'), 'capsule transparent brush must explicitly handle theme notifications without invoking the default material controller callback');
   assert(backdrop.includes('Colors.Transparent') && backdrop.includes('target.SystemBackdrop=null') && backdrop.includes('compositor?.Dispose()'), 'capsule transparent surface must own and release its brush and compositor');
   assert(read(base + 'CapsuleWindow.cs').includes('CapsuleShape.RadiusPixels(width,height)/scale'), 'capsule drawing must use the same physical geometry as hit testing');
   assert(!read(base + 'CapsuleWindow.cs').includes('ThemeService.Apply('), 'capsule cannot acquire the main-window caption wrapper');
