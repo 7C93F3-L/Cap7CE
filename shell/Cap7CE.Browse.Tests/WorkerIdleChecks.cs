@@ -1,0 +1,21 @@
+using Cap7CE.WinUI.Services;
+internal static class WorkerIdleChecks
+{
+    public static async Task RunAsync()
+    {
+        var retired=new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);var count=0;
+        var lifetime=new WorkerIdleLifetime(()=>{Interlocked.Increment(ref count);retired.TrySetResult();return Task.CompletedTask;},TimeSpan.FromMilliseconds(30),e=>throw new Exception("retire failed",e));
+        await lifetime.EnterAsync(true);await lifetime.EnterAsync(true);await lifetime.LeaveAsync(true);
+        await Task.Delay(80);if(count!=0)throw new Exception("active request retired");
+        await lifetime.LeaveAsync(true);await retired.Task.WaitAsync(TimeSpan.FromSeconds(2));
+        await lifetime.EnterAsync(false);await lifetime.LeaveAsync(true);await Task.Delay(80);
+        if(count!=1)throw new Exception("session request retired");
+        await lifetime.CloseAsync();await lifetime.CloseAsync();if(count!=2)throw new Exception("duplicate close");
+        try{await lifetime.EnterAsync(true);throw new Exception("closed lifetime accepted request");}catch(ObjectDisposedException){}
+        var started=new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);var finish=new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var blocked=new WorkerIdleLifetime(async()=>{started.TrySetResult();await finish.Task;},TimeSpan.FromMilliseconds(20),_=>{});
+        await blocked.EnterAsync(true);await blocked.LeaveAsync(true);await started.Task.WaitAsync(TimeSpan.FromSeconds(2));
+        var next=blocked.EnterAsync(true);await Task.Delay(30);if(next.IsCompleted)throw new Exception("request raced retirement");
+        finish.SetResult();await next;await blocked.LeaveAsync(false);await blocked.CloseAsync();
+    }
+}

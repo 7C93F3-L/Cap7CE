@@ -160,3 +160,7 @@ KeywordEditDialog仅承载右键关键词编辑会话，复用DetailsKeywordEdit
 WorkspaceNotice统一主窗口底部普通提示、查询、AI、索引、元数据和命令确认/执行的展示，使用固定高度及独立全宽进度行。各领域控制器继续拥有任务观察和取消；浮层只拥有提示显示优先级及隐藏计时，提示实际展示且鼠标未悬停时计时，任务遮挡或卸载时停止，移出后重新计时，不改变任务执行。
 
 2.0.4保持当前安装与数据所有者边界，不新增旧版本兼容迁移。发布目录携带LICENSE、NOTICE和THIRD_PARTY_NOTICES；sharp固定为0.35.5，所有运行库仍由锁文件和现有复制脚本生成。介绍文档沿用2.0.0演示截图，素材来源记录在docs/assets/screenshots/ASSET_SOURCES.md。
+
+## 辅助工作宿主空闲退役
+
+CoreNodeHost仍是进程、FramedRpc与原生Job停止信号的唯一拥有者；WorkerIdleLifetime只协调请求租约与60秒空闲退役。首轮仅允许visual-cache.cjs的ensure、ensureShell、sourceDimensions、stats、skimStats、storedMetadata、previewMetadata及cancelPreviewMetadata原子操作触发退役。请求进入时停用定时器，全部请求成功返回后开始计时；未知/会话/临时图像操作以及任何异常或取消使本代宿主永久失去自动退役资格，直到正常关闭。不会因取消已返回便假定底层任务已经结束。退役与新租约、应用关闭共用异步门；退役期间新请求等待，清理结束后重新启动进程及RPC，不重放失败请求。原生包装进程继续拥有Job、父进程监视和临时目录回收；未合并不同数据根的宿主，不删除持久缓存。Office、Provider及模型宿主未启用闲置退役，活动预览会话不受影响。WorkerIdleChecks守护在途任务、保守禁用、退役竞争和幂等关闭；Smoke的--worker-idle-probe在隔离临时目录验证真实工作宿主闲置退出及重新请求恢复。

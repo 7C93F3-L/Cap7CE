@@ -3,6 +3,7 @@ using Cap7CE.WinUI.Controllers;
 using Cap7CE.WinUI.Services;
 
 Environment.SetEnvironmentVariable("CAP7CE_BROWSE_TIMING",null);
+await WorkerIdleChecks.RunAsync();
 await DesktopActionChecks.RunAsync();
 ScopedSearchHistoryChecks.Run();
 await NativeSnapChecks.RunAsync();

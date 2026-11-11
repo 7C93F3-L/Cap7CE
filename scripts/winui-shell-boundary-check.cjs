@@ -310,3 +310,6 @@ assert(read('shell/Cap7CE.WinUI/MainWindow.xaml.cs').includes('services.Updates.
 const automaticUpdates=read('shell/Cap7CE.WinUI/Services/AutomaticUpdateCheck.cs');
 assert(automaticUpdates.split(/\r?\n/).length<=70 && !/Task\.Delay|Timer|HttpClient|Process\.|DownloadAsync|InstallAsync/.test(automaticUpdates), 'automatic update owner must stay bounded, startup-only and free of download/install or system scheduling');
 assert(read('shell/Cap7CE.WinUI/Services/NativeNotifications.cs').includes('AddArgument("action","updates")') && read('shell/Cap7CE.WinUI/MainWindow.xaml.cs').includes('UpdateInvoked+=UpdateNotificationInvoked'), 'update notifications require a dedicated settings destination');
+
+const idleLifetime=read('shell/Cap7CE.WinUI/Services/WorkerIdleLifetime.cs');
+assert(idleLifetime.trimEnd().split(/\r?\n/).length<=50&&!/Process|FramedRpc|File\.|Directory\./.test(idleLifetime),'idle lifetime must stay a bounded coordinator without process or resource ownership');

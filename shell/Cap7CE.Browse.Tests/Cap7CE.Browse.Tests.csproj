@@ -17,4 +17,5 @@
   <ItemGroup><Compile Include="../Cap7CE.WinUI/Services/DiagnosticJournal.cs;../Cap7CE.WinUI/Services/SessionDiagnostics.cs" Link="%(Filename)%(Extension)" /></ItemGroup>
   <ItemGroup><Compile Include="../Cap7CE.WinUI/DesktopActions/ScopedSearchHistory.cs" Link="%(Filename)%(Extension)" /></ItemGroup>
   <ItemGroup><Compile Include="../Cap7CE.WinUI/DesktopActions/CapsuleShadowTexture.cs;../Cap7CE.WinUI/DesktopActions/CapsuleGlowTexture.cs;../Cap7CE.WinUI/DesktopActions/CapsuleShape.cs;../Cap7CE.WinUI/DesktopActions/NativeSnapSequence.cs;../Cap7CE.WinUI/DesktopActions/NativeSnapInput.cs;../Cap7CE.WinUI/DesktopActions/DesktopActionStore.cs;../Cap7CE.WinUI/Services/FramedRpc.cs" Link="%(Filename)%(Extension)" /></ItemGroup>
+  <ItemGroup><Compile Include="../Cap7CE.WinUI/Services/WorkerIdleLifetime.cs" Link="WorkerIdleLifetime.cs" /></ItemGroup>
 </Project>

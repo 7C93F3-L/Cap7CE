@@ -3,6 +3,7 @@ using Cap7CE.Core.Protocol;
 using Cap7CE.WinUI.Services;
 using Microsoft.Data.Sqlite;
 
+if(args.Length==2&&args[0]=="--worker-idle-probe"){await WorkerIdleProbe.RunAsync(args[1]);return;}
 var root = Path.GetFullPath(args.Single());
 NativeEntryPointProbe.Run(root);
 var temporary = Path.Combine(Path.GetTempPath(), "Cap7CE-PhaseF-" + Guid.NewGuid().ToString("N"));

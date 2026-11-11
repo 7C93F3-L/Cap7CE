@@ -5,8 +5,16 @@ using System.Text.Json;
 
 namespace Cap7CE.WinUI.Services;
 // Shared owner for existing Node/Job hosts: lazy startup, no automatic replay.
-internal sealed class CoreNodeHost(string root, string worker, string dataRoot) : IAsyncDisposable
+internal sealed class CoreNodeHost : IAsyncDisposable
 {
+    private readonly string root,worker,dataRoot;
+    private readonly WorkerIdleLifetime lifetime;
+    public CoreNodeHost(string root,string worker,string dataRoot)
+    {
+        this.root=root;this.worker=worker;this.dataRoot=dataRoot;
+        lifetime=new(StopAsync,TimeSpan.FromSeconds(60),error=>SessionDiagnostics.Record("worker.idle.failed",new{worker,type=error.GetType().Name}));
+    }
+    private bool Atomic(string method)=>worker=="visual-cache.cjs"&&method is ( "ensure" or "ensureShell" or "sourceDimensions" or "stats" or "skimStats" or "storedMetadata" or "previewMetadata" or "cancelPreviewMetadata");
     private Process? process;
     private FramedRpc? rpc;
     private readonly SemaphoreSlim starting = new(1), sending = new(1);
@@ -14,7 +22,7 @@ internal sealed class CoreNodeHost(string root, string worker, string dataRoot) 
     private long sequence;
     private bool closed;
     private readonly Queue<string> errors=new();
-    public bool IsActive => !closed&&process is {} owner&&!owner.HasExited;
+    public bool IsActive {get{try{return !closed&&process is {} owner&&!owner.HasExited;}catch(InvalidOperationException){return false;}}}
     public object Diagnostics {get{lock(errors)return new{worker,active=IsActive,stderr=errors.ToArray()};}}
     private string Executable => Path.Combine(root, "native/artifacts/core-visuals/v1/Cap7CE.Core.Visuals.exe");
     private async Task StartAsync()
@@ -46,6 +54,7 @@ internal sealed class CoreNodeHost(string root, string worker, string dataRoot) 
     }
     public async Task<JsonElement> RequestAsync(string method, object?[] args, CancellationToken token = default)
     {
+        await lifetime.EnterAsync(Atomic(method));var success=false;
         using var trace=worker=="model-runtime.cjs"?SessionDiagnostics.Begin("ai.request",new{method,operation=method=="modelSettings.invoke"?args.ElementAtOrDefault(1) as string:null}):null;
         try {
         await StartAsync();
@@ -64,15 +73,16 @@ internal sealed class CoreNodeHost(string root, string worker, string dataRoot) 
             if(error.TryGetProperty("message",out var message))failure.Data["CoreMessage"]=message.GetString();
             throw failure;
         }
-        return value.GetProperty("result").Clone();
+        var result=value.GetProperty("result").Clone();success=true;return result;
         }catch(Exception error){trace?.Fail(error);throw;}
+        finally{await lifetime.LeaveAsync(success);}
     }
     public async Task ReleaseAsync() { if (IsActive) await RequestAsync("releaseSourceHandles", []); }
-    public async ValueTask DisposeAsync()
+    public async ValueTask DisposeAsync(){closed=true;await lifetime.CloseAsync();}
+    private async Task StopAsync()
     {
         await starting.WaitAsync();
-        try { if (closed) return; closed = true; }
-        finally { starting.Release(); }
+        try{
         if (process is null) return;
         try
         {
@@ -90,7 +100,8 @@ internal sealed class CoreNodeHost(string root, string worker, string dataRoot) 
             if (rpc is not null) await rpc.DisposeAsync();
             try { await process.WaitForExitAsync().WaitAsync(TimeSpan.FromSeconds(5)); }
             catch (TimeoutException) { if (!process.HasExited) process.Kill(true); }
-            process.Dispose();
+            process.Dispose();process=null;rpc=null;
         }
+        }finally{starting.Release();}
     }
 }

@@ -16,4 +16,5 @@
     <Compile Include="../Cap7CE.WinUI/Models/FormatRegistry.cs;../Cap7CE.WinUI/Models/FileFormat.cs" Link="%(Filename)%(Extension)" />
     <None Include="../artifacts/assets/formats.json;../artifacts/assets/extractors.json" Link="Assets/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
+  <ItemGroup><Compile Include="../Cap7CE.WinUI/Services/WorkerIdleLifetime.cs" Link="WorkerIdleLifetime.cs" /></ItemGroup>
 </Project>
