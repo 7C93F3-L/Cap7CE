@@ -7,6 +7,13 @@ internal static class WorkerIdleChecks
         foreach(var method in new[]{"office.open","office.close","office.prepare","cache.acquire","cache.release","cache.clear","releaseSourceHandles","unknown"})
             if(WorkerIdleLifetime.IsAtomic("office-preview.cjs",method))throw new Exception("Office session or lease classified as atomic");
         if(WorkerIdleLifetime.IsAtomic("provider-preview.cjs","cache.stats")||WorkerIdleLifetime.IsAtomic("model-runtime.cjs","cache.stats"))throw new Exception("unrelated host retirement enabled");
+        foreach(var operation in new[]{"runtime.settings","models.settings"})
+            if(!WorkerIdleLifetime.IsAtomic("model-runtime.cjs","modelSettings.invoke",[new{},operation,null]))throw new Exception("model configuration query cannot retire");
+        foreach(var operation in new[]{"runtime.select","models.select","models.selectedId","models.selectedRuntime","unknown"})
+            if(WorkerIdleLifetime.IsAtomic("model-runtime.cjs","modelSettings.invoke",[new{},operation,null]))throw new Exception("model mutation or unknown operation can retire");
+        if(!WorkerIdleLifetime.IsAtomic("model-runtime.cjs","runtime.state",[new{},null]))throw new Exception("cold runtime state cannot retire");
+        foreach(var operation in new[]{"runtime.start","runtime.stop","runtime.watch","runtime.beginAI","runtime.endAI","runtime.ready","runtime.sync","runtime.shutdown"})
+            if(WorkerIdleLifetime.IsAtomic("model-runtime.cjs",operation,[new{},null]))throw new Exception("model service lifecycle can retire");
         var retired=new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);var count=0;
         var lifetime=new WorkerIdleLifetime(()=>{Interlocked.Increment(ref count);retired.TrySetResult();return Task.CompletedTask;},TimeSpan.FromMilliseconds(30),e=>throw new Exception("retire failed",e));
         await lifetime.EnterAsync(true);await lifetime.EnterAsync(true);await lifetime.LeaveAsync(true);
@@ -27,5 +34,11 @@ internal static class WorkerIdleChecks
         await office.EnterAsync(WorkerIdleLifetime.IsAtomic("office-preview.cjs","cache.stats"));await office.LeaveAsync(true);
         await Task.Delay(80);if(officeCount!=0)throw new Exception("stats re-enabled retirement after Office session");
         await office.CloseAsync();
+        var modelCount=0;
+        var model=new WorkerIdleLifetime(()=>{modelCount++;return Task.CompletedTask;},TimeSpan.FromMilliseconds(20),_=>{});
+        await model.EnterAsync(WorkerIdleLifetime.IsAtomic("model-runtime.cjs","runtime.start",[new{},"manual"]));await model.LeaveAsync(true);
+        await model.EnterAsync(WorkerIdleLifetime.IsAtomic("model-runtime.cjs","runtime.state",[new{},null]));await model.LeaveAsync(true);
+        await Task.Delay(80);if(modelCount!=0)throw new Exception("state query re-enabled model retirement after explicit start");
+        await model.CloseAsync();
     }
 }

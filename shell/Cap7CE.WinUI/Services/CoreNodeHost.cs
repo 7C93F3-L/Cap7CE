@@ -14,7 +14,7 @@ internal sealed class CoreNodeHost : IAsyncDisposable
         this.root=root;this.worker=worker;this.dataRoot=dataRoot;
         lifetime=new(StopAsync,TimeSpan.FromSeconds(60),error=>SessionDiagnostics.Record("worker.idle.failed",new{worker,type=error.GetType().Name}));
     }
-    private bool Atomic(string method)=>WorkerIdleLifetime.IsAtomic(worker,method);
+    private bool Atomic(string method,object?[] args)=>WorkerIdleLifetime.IsAtomic(worker,method,args);
     private Process? process;
     private FramedRpc? rpc;
     private readonly SemaphoreSlim starting = new(1), sending = new(1);
@@ -55,7 +55,7 @@ internal sealed class CoreNodeHost : IAsyncDisposable
     }
     public async Task<JsonElement> RequestAsync(string method, object?[] args, CancellationToken token = default)
     {
-        await lifetime.EnterAsync(Atomic(method));var success=false;
+        await lifetime.EnterAsync(Atomic(method,args));var success=false;
         using var trace=worker=="model-runtime.cjs"?SessionDiagnostics.Begin("ai.request",new{method,operation=method=="modelSettings.invoke"?args.ElementAtOrDefault(1) as string:null}):null;
         try {
         await StartAsync();

@@ -8,6 +8,12 @@ internal static class WorkerIdleProbe
             await using var host=new CoreNodeHost(root,"visual-cache.cjs",data);
             await using var metadata=new CoreNodeHost(root,"visual-cache.cjs",Path.Combine(data,"metadata"));
             await using var office=new CoreNodeHost(root,"office-preview.cjs",Path.Combine(data,"office"));
+            await using var models=new CoreNodeHost(root,"model-runtime.cjs",Path.Combine(data,"model-data"));
+            var context=new{runtimeRoot=Path.Combine(data,"runtimes"),modelsRoot=Path.Combine(data,"models"),language="zh-CN"};
+            var runtimeSettings=await models.RequestAsync("modelSettings.invoke",[context,"runtime.settings",null]);
+            var modelSettings=await models.RequestAsync("modelSettings.invoke",[context,"models.settings",null]);
+            var state=await models.RequestAsync("runtime.state",[context,null]);
+            if(!models.IsActive||state.GetProperty("state").GetProperty("status").GetString() is "running" or "starting")throw new Exception("configuration query started model service");
             var officeStats=await office.RequestAsync("cache.stats",[]);
             if(!office.IsActive)throw new Exception("office stats host did not start");
             var officeCache=Path.GetFullPath(officeStats.GetProperty("cachePaths")[0].GetString()!);
@@ -24,7 +30,10 @@ internal static class WorkerIdleProbe
             if(!host.IsActive)throw new Exception("host did not start");
             Console.WriteLine("worker active; waiting for idle retirement");
             await Task.Delay(TimeSpan.FromSeconds(68));
-            if(host.IsActive||metadata.IsActive||office.IsActive)throw new Exception("idle host retained");
+            if(host.IsActive||metadata.IsActive||office.IsActive||models.IsActive)throw new Exception("idle host retained");
+            var runtimeRestored=await models.RequestAsync("modelSettings.invoke",[context,"runtime.settings",null]);
+            var modelsRestored=await models.RequestAsync("modelSettings.invoke",[context,"models.settings",null]);
+            if(!models.IsActive||runtimeSettings.GetRawText()!=runtimeRestored.GetRawText()||modelSettings.GetRawText()!=modelsRestored.GetRawText())throw new Exception("model configuration changed on restart");
             var officeRestored=await office.RequestAsync("cache.stats",[]);
             if(!office.IsActive||officeStats.GetRawText()!=officeRestored.GetRawText())throw new Exception("office stats did not survive restart");
             await host.RequestAsync("stats",[]);if(!host.IsActive)throw new Exception("host did not restart");
@@ -32,7 +41,7 @@ internal static class WorkerIdleProbe
             if(!metadata.IsActive)throw new Exception("metadata did not restart");
             var restored=await host.RequestAsync("ensure",[image,"skim-thumbnail"]);
             if(!File.Exists(restored.GetProperty("imagePath").GetString()))throw new Exception("cache lost on restart");
-            Console.WriteLine("thumbnail, metadata and Office stats idle retirement, restart and cache reuse passed");
+            Console.WriteLine("thumbnail, metadata, Office stats and model configuration idle retirement/restart passed");
         }finally{Directory.Delete(data,true);}
     }
 }
