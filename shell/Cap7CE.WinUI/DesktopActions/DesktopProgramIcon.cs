@@ -1,3 +1,4 @@
+using Cap7CE.WinUI.Services;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media.Imaging;
 using Windows.Storage;
@@ -7,10 +8,17 @@ internal static class DesktopProgramIcon
 {
     public static async Task LoadAsync(Button button,string path)
     {
-        button.Tag=path;
-        try{var file=await StorageFile.GetFileFromPathAsync(path);using var thumbnail=await file.GetThumbnailAsync(ThumbnailMode.SingleItem,32,ThumbnailOptions.UseCurrentScale);
-            if(thumbnail is null)return;var bitmap=new BitmapImage();await bitmap.SetSourceAsync(thumbnail);
-            if(Equals(button.Tag,path))button.Content=new Image{Source=bitmap,Width=28,Height=28};
-        }catch(Exception){/* Retain the fallback glyph for absent files or unavailable icons. */}
+        var request=new object();button.Tag=request;
+        for(var attempt=0;attempt<2&&button.IsLoaded&&ReferenceEquals(button.Tag,request);attempt++){
+            try{
+                var file=await StorageFile.GetFileFromPathAsync(path);
+                using var thumbnail=await file.GetThumbnailAsync(ThumbnailMode.SingleItem,32,ThumbnailOptions.UseCurrentScale);
+                if(thumbnail is null||thumbnail.Size==0)throw new IOException("Empty application icon stream.");
+                var bitmap=new BitmapImage();await bitmap.SetSourceAsync(thumbnail);
+                if(button.IsLoaded&&ReferenceEquals(button.Tag,request))button.Content=new Image{Source=bitmap,Width=28,Height=28};
+                return;
+            }catch(Exception error){SessionDiagnostics.Record("desktop.icon.failed",new{attempt=attempt+1,type=error.GetType().Name,hresult=$"0x{error.HResult:X8}"});}
+            if(attempt==0)await Task.Delay(150);
+        }
     }
 }
