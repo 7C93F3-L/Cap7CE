@@ -101,7 +101,13 @@ internal sealed class CapsuleWindow : Window
             configure.Click+=(_,_)=>{menu?.Hide();settings();};context.Items.Add(configure);
             var hide=new MenuFlyoutItem{Text=AppLanguage.Text("ui.desktop.hide")};
             hide.Click+=async(_,_)=>{menu?.Hide();try{await services.DesktopActions.UpdateAsync(v=>v with{Enabled=false});}catch(Exception error){failure(error);}};context.Items.Add(hide);next=context;
-        }else next=ThemeService.Flyout(new CapsuleMenu(services.DesktopActions.Current,item=>{menu?.Hide();replay(item);},(app,layout)=>{menu?.Hide();run(app,layout);}));
+        }else{
+            var flyout=ThemeService.Flyout(new CapsuleMenu(services.DesktopActions.Current,item=>{menu?.Hide();replay(item);},(app,layout)=>{menu?.Hide();run(app,layout);}));
+            var style=new Style(typeof(FlyoutPresenter));style.Setters.Add(new Setter(Control.PaddingProperty,new Thickness(0)));
+            style.Setters.Add(new Setter(Control.BackgroundProperty,Application.Current.Resources["CapFlyoutSurfaceBrush"]));
+            style.Setters.Add(new Setter(Control.CornerRadiusProperty,Application.Current.Resources["CapPanelRadius"]));
+            flyout.FlyoutPresenterStyle=style;next=flyout;
+        }
         menu?.Hide();menu=next;
         next.Opened+=(_,_)=>{if(!closed&&ReferenceEquals(menu,next))pill.SetExpanded(true);};
         next.Closed+=(_,_)=>{

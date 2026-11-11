@@ -9,7 +9,7 @@ internal sealed class CapsuleMenu : UserControl
 {
     public CapsuleMenu(DesktopActionOptions options,Action<DesktopSearch> replay,Action<DesktopProgram,int> run)
     {
-        var body=Ui.Column();body.Width=300;
+        var body=Ui.Column();body.Width=260;body.Margin=new(12);
         if(options.RecordHistory){
             body.Children.Add(Ui.Text(AppLanguage.Text("ui.desktop.recent"),true));
             foreach(var item in options.History.Take(options.HistoryCount)){
@@ -23,7 +23,8 @@ internal sealed class CapsuleMenu : UserControl
         body.Children.Add(Ui.Text(AppLanguage.Text("ui.desktop.apps"),true));
         foreach(var app in options.Programs)body.Children.Add(ProgramRow(app,run));
         if(options.Programs.Length==0)body.Children.Add(Description("ui.desktop.appsEmpty"));
-        Content=new ScrollViewer{Content=body,MaxHeight=520,HorizontalScrollBarVisibility=ScrollBarVisibility.Disabled};
+        var scroll=new ScrollViewer{Content=body,Width=284,MaxHeight=544,VerticalScrollBarVisibility=ScrollBarVisibility.Auto,HorizontalScrollBarVisibility=ScrollBarVisibility.Disabled};
+        IdleScrollBars.Attach(scroll);Content=scroll;
     }
     private static TextBlock Description(string key)
     {
@@ -40,12 +41,11 @@ internal sealed class CapsuleMenu : UserControl
         var name=new TextBlock{Text=app.Name,VerticalAlignment=VerticalAlignment.Center,TextTrimming=TextTrimming.CharacterEllipsis,IsHitTestVisible=false};
         var layouts=Ui.Row();layouts.Visibility=Visibility.Collapsed;
         string[] labels=["ui.desktop.nativeLeft","ui.desktop.nativeRight","ui.desktop.nativeTop","ui.desktop.nativeBottom"];
+        // Lucide panel SVG geometry; originals and license are in resources/icons/lucide-*.
+        const string frame="M5 3H19A2 2 0 0 1 21 5V19A2 2 0 0 1 19 21H5A2 2 0 0 1 3 19V5A2 2 0 0 1 5 3Z";
+        string[] dividers=["M9 3V21","M15 3V21","M3 9H21","M3 15H21"];
         for(var i=0;i<4;i++){
-            var layout=i;var graphic=new Grid{Width=34,Height=22,IsHitTestVisible=false};var right=i%2==1;var vertical=i>=2;var fraction=.5;
-            if(vertical){graphic.RowDefinitions.Add(new(){Height=new(1,GridUnitType.Star)});graphic.RowDefinitions.Add(new(){Height=new(1,GridUnitType.Star)});}
-            else{graphic.ColumnDefinitions.Add(new(){Width=new(right?1-fraction:fraction,GridUnitType.Star)});graphic.ColumnDefinitions.Add(new(){Width=new(right?fraction:1-fraction,GridUnitType.Star)});}
-            for(var side=0;side<2;side++){var shape=new Border{BorderThickness=new(1),CornerRadius=new(2),Margin=new(1),BorderBrush=(Microsoft.UI.Xaml.Media.Brush)Application.Current.Resources["TextFillColorSecondaryBrush"]};
-                if(side==(right?1:0))shape.Background=(Microsoft.UI.Xaml.Media.Brush)Application.Current.Resources["CapAccentBrush"];if(vertical)Grid.SetRow(shape,side);else Grid.SetColumn(shape,side);graphic.Children.Add(shape);}
+            var layout=i;var graphic=new SidebarIcon{Width=24,Height=24,OutlinePath=frame+dividers[i]};
             var button=Ui.Button("",()=>run(app,layout));button.Content=graphic;button.Padding=new(4);button.MinWidth=0;
             ToolTipService.SetToolTip(button,AppLanguage.Text(labels[i]));Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(button,AppLanguage.Text(labels[i]));layouts.Children.Add(button);
         }

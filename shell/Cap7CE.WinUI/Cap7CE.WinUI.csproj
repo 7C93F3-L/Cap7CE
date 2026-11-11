@@ -22,6 +22,7 @@
     <Content Include="../../third_party/fluentui-system-icons/LICENSE" Link="Assets/fluentui-system-icons-LICENSE.txt" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="Localization/settings-help.json" Link="Assets/settings-help.json" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="../../resources/icons/skim-location-desktop.svg;../../resources/icons/skim-location-documents.svg;../../resources/icons/skim-location-downloads.svg;../../resources/icons/skim-location-pictures.svg;../../resources/icons/skim-location-music.svg;../../resources/icons/skim-location-videos.svg" Link="Assets/Icons/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest"/>
+    <Content Include="../../resources/icons/lucide-*.svg;../../resources/icons/lucide-LICENSE.txt" Link="Assets/Icons/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="../../resources/icons/format-*.svg;../../resources/icons/skim-folder.svg;../../resources/icons/skim-file.svg;../../resources/icons/skim-disk.svg;../../resources/icons/logo-cap7ce.svg" Link="Assets/Icons/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="../artifacts/assets/*.json" Link="Assets/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="../artifacts/model-preview/**/*" Link="Assets/ModelPreview/%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
