@@ -14,7 +14,7 @@ internal sealed class CoreNodeHost : IAsyncDisposable
         this.root=root;this.worker=worker;this.dataRoot=dataRoot;
         lifetime=new(StopAsync,TimeSpan.FromSeconds(60),error=>SessionDiagnostics.Record("worker.idle.failed",new{worker,type=error.GetType().Name}));
     }
-    private bool Atomic(string method)=>worker=="visual-cache.cjs"&&method is ( "ensure" or "ensureShell" or "sourceDimensions" or "stats" or "skimStats" or "storedMetadata" or "previewMetadata" or "cancelPreviewMetadata");
+    private bool Atomic(string method)=>WorkerIdleLifetime.IsAtomic(worker,method);
     private Process? process;
     private FramedRpc? rpc;
     private readonly SemaphoreSlim starting = new(1), sending = new(1);

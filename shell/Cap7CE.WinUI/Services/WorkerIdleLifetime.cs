@@ -2,6 +2,11 @@ namespace Cap7CE.WinUI.Services;
 // Coordinates requests and retirement only; process and RPC ownership stays in CoreNodeHost.
 internal sealed class WorkerIdleLifetime(Func<Task> retire,TimeSpan delay,Action<Exception> failure)
 {
+    internal static bool IsAtomic(string worker,string method)=>worker switch {
+        "visual-cache.cjs"=>method is "ensure" or "ensureShell" or "sourceDimensions" or "stats" or "skimStats" or "storedMetadata" or "previewMetadata" or "cancelPreviewMetadata",
+        "office-preview.cjs"=>method=="cache.stats",
+        _=>false
+    };
     private readonly SemaphoreSlim gate=new(1);
     private Timer? timer;
     private int active;
