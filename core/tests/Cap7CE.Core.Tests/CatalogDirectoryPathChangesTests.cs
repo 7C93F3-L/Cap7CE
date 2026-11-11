@@ -30,11 +30,11 @@ internal static class CatalogDirectoryPathChangesTests
                 """);
             CatalogV2NodeRecord Directory(int id, int parent, string name, bool exists = true) =>
                 new(new("fixture", id.ToString("X16")), parent.ToString("X16"), name, "", true, 16, exists, 0, 1, 2);
-            async Task Apply(CatalogV2NodeRecord node)
+            async Task Apply(params CatalogV2NodeRecord[] nodes)
             {
                 var volume = (await database.ReadVolumeAsync("fixture"))!;
                 await database.ApplyMaintenanceBatchAsync(new("fixture", volume.JournalId, volume.CheckpointUsn,
-                    await database.ReadRevisionAsync(), volume.CheckpointUsn!.Value + 1, 0, 0, [node]));
+                    await database.ReadRevisionAsync(), volume.CheckpointUsn!.Value + 1, 0, 0, nodes));
             }
             async Task<long> Deleted() => Convert.ToInt64(await ScalarAsync(path, "SELECT total FROM path_delete_audit;"));
             await Apply(Directory(2, 1, "folder"));
@@ -97,6 +97,37 @@ internal static class CatalogDirectoryPathChangesTests
             TestAssert.True(await Deleted() > deleted, "new directory with existing child uses full resolver");
             TestAssert.Equal("renamed\\restored\\orphan", (string)(await ScalarAsync(path,
                 "SELECT relative_path FROM catalog_directory_paths_v2 WHERE file_reference='0000000000000008';"))!, "late parent updates its existing child");
+            deleted = await Deleted();
+            await Apply(Directory(100,1,"one"),Directory(101,1,"two"));
+            await Apply(Directory(100,2,"moved"),Directory(101,1,"renamed-two"));
+            TestAssert.Equal(deleted,await Deleted(),"independent leaf create/move/rename never deletes unrelated paths");
+            TestAssert.Equal("renamed\\moved",(string)(await ScalarAsync(path,"SELECT relative_path FROM catalog_directory_paths_v2 WHERE file_reference='0000000000000064';"))!,"batch move follows unchanged parent");
+            await ScalarAsync(path,"CREATE TRIGGER reject_batch_path BEFORE INSERT ON catalog_directory_paths_v2 WHEN NEW.file_reference='0000000000000067' BEGIN SELECT RAISE(ABORT,'batch rollback'); END;");
+            before=(await database.ReadVolumeAsync("fixture"))!;revision=await database.ReadRevisionAsync();
+            try{await Apply(Directory(100,1,"rolled-back"),Directory(103,1,"rejected"));throw new Exception("batch failure accepted");}catch(SqliteException){}
+            TestAssert.Equal(before,(await database.ReadVolumeAsync("fixture"))!,"batch failure rolls back checkpoint and volume");
+            TestAssert.Equal(revision,await database.ReadRevisionAsync(),"batch failure rolls back revision");
+            TestAssert.Equal("renamed\\moved",(string)(await ScalarAsync(path,"SELECT relative_path FROM catalog_directory_paths_v2 WHERE file_reference='0000000000000064';"))!,"later failure rolls back earlier path update");
+            TestAssert.Equal(0L,Convert.ToInt64(await ScalarAsync(path,"SELECT count(*) FROM catalog_nodes_v2 WHERE file_reference='0000000000000067';")),"failed batch leaves no new node");
+            await ScalarAsync(path,"DROP TRIGGER reject_batch_path;");
+            await Apply(Directory(100,2,"moved",false),Directory(101,1,"renamed-two",false));
+            TestAssert.Equal(deleted+2,await Deleted(),"batch deletion removes exactly its two paths");
+            deleted=await Deleted();
+            await Apply(Enumerable.Range(1000,33).Select(id=>Directory(id,1,"overflow-"+id)).ToArray());
+            TestAssert.True(await Deleted()>deleted,"33 directory changes keep complete rebuild fallback");
+            await ScalarAsync(path,"CREATE TABLE path_insert_audit(total INTEGER NOT NULL); INSERT INTO path_insert_audit VALUES(0); CREATE TRIGGER audit_preflight AFTER INSERT ON catalog_directory_paths_v2 WHEN NEW.file_reference='00000000000000C8' BEGIN UPDATE path_insert_audit SET total=total+1; END;");
+            await Apply(Directory(200,1,"safe-first"),Directory(201,9999,"missing-parent"));
+            TestAssert.Equal(1L,Convert.ToInt64(await ScalarAsync(path,"SELECT total FROM path_insert_audit;")),"failed preflight does not partially write before fallback rebuild");
+            before=(await database.ReadVolumeAsync("fixture"))!;revision=await database.ReadRevisionAsync();
+            using(var cancelled=new CancellationTokenSource()){
+                cancelled.Cancel();
+                await TestAssert.ThrowsAsync<OperationCanceledException>(()=>database.ApplyMaintenanceBatchAsync(new("fixture",before.JournalId,before.CheckpointUsn,revision,before.CheckpointUsn!.Value+1,0,0,[Directory(202,1,"cancelled"),Directory(203,1,"cancelled-two")]),cancelled.Token),"cancelled batch is not published");
+            }
+            TestAssert.Equal(revision,await database.ReadRevisionAsync(),"cancellation preserves revision");
+            TestAssert.Equal(before,(await database.ReadVolumeAsync("fixture"))!,"cancellation preserves checkpoint");
+            deleted=await Deleted();
+            await Apply(Directory(1,1,"."));
+            TestAssert.True(await Deleted()>deleted,"changed root identity keeps complete rebuild fallback");
             TestAssert.True(await database.CheckIntegrityAsync(), "path changes preserve integrity");
         }
         finally { SqliteConnection.ClearAllPools(); Directory.Delete(root, true); }

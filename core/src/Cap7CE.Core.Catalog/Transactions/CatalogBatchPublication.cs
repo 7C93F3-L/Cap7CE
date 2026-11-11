@@ -53,8 +53,7 @@ public sealed partial class CatalogV2Database
         await DirectoryEntries.CatalogFileEntryPendingPublication.ApplyAsync(connection, transaction, batch, token);
         if (maintenance || volume.State == CatalogV2VolumeState.CatchingUp)
             await FileFacts.FileFactChangeLog.RecordAsync(connection, transaction, batch.Nodes, token);
-        if (pathChanges.Count > 0 && (pathChanges.Count != 1
-            || !await TryUpdateLeafDirectoryPathAsync(connection, transaction, pathChanges[0], token)))
+        if (pathChanges.Count > 0 && !await TryUpdateLeafDirectoryPathsAsync(connection, transaction, pathChanges, token))
         {
             await RebuildDirectoryPathsAsync(connection, transaction, batch.VolumeId, token);
         }

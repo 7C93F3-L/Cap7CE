@@ -27,19 +27,19 @@ internal static class CatalogLeafDirectoryScaleTests
             var allocated = GC.GetTotalAllocatedBytes(true);
             foreach (var exists in new[] { true, false }) {
                 var volume = (await database.ReadVolumeAsync("scale"))!;
-                var node = new CatalogV2NodeRecord(new("scale", "0000000000030D40"), "0000000000000001", "new-leaf", "", true, 16, exists, 0, 1, 2);
+                var nodes = Enumerable.Range(200000,32).Select(id=>new CatalogV2NodeRecord(new("scale",id.ToString("X16")), "0000000000000001", "new-leaf-"+id, "", true, 16, exists, 0, 1, 2)).ToArray();
                 await database.ApplyMaintenanceBatchAsync(new("scale", volume.JournalId, volume.CheckpointUsn,
-                    await database.ReadRevisionAsync(), volume.CheckpointUsn!.Value + 1, 0, 0, [node]));
+                    await database.ReadRevisionAsync(), volume.CheckpointUsn!.Value + 1, 0, 0, nodes));
             }
             var bytes = GC.GetTotalAllocatedBytes(true) - allocated;
-            TestAssert.True(bytes < 20 * 1024 * 1024, "single leaf changes must not materialize the 100,000 unrelated directory paths");
+            TestAssert.True(bytes < 20 * 1024 * 1024, "bounded leaf batches must not materialize the 100,000 unrelated directory paths");
             await using var check = new SqliteConnection($"Data Source={path};Pooling=False"); await check.OpenAsync();
             using var query = check.CreateCommand();
             query.CommandText = "SELECT count(*) FROM catalog_directory_paths_v2;";
             TestAssert.Equal(100001L, Convert.ToInt64(await query.ExecuteScalarAsync()), "scale leaf removal preserves all unrelated paths");
             query.CommandText = "SELECT relative_path FROM catalog_directory_paths_v2 WHERE file_reference='00000000000186A1';";
             TestAssert.Equal("dir-100001", (string)(await query.ExecuteScalarAsync())!, "unrelated path content retained");
-            Console.WriteLine($"Leaf directory scale passed: 100,000 unrelated directories, {bytes:N0} allocated bytes, create/delete intact.");
+            Console.WriteLine($"32-leaf directory batch scale passed: 100,000 unrelated directories, {bytes:N0} allocated bytes, create/delete intact.");
         }
         finally { SqliteConnection.ClearAllPools(); Directory.Delete(root, true); }
     }

@@ -78,6 +78,9 @@ module.exports = (root, sourceFiles, failures) => {
   const textCandidates = fs.readFileSync(path.join(root, "core/src/Cap7CE.Core.Catalog/Queries/CatalogTextCandidateSql.cs"), "utf8");
   if (/OpenAsync|Execute\w*Async|File\.|Directory\.|FileStream|Reader\.Host|System\.Net/.test(textCandidates))
     failures.push("Text candidate SQL must not own connections, execution, discovery or source IO.");
+  const leafBatch=fs.readFileSync(path.join(root,"core/src/Cap7CE.Core.Catalog/Transactions/CatalogLeafDirectoryPaths.cs"),"utf8");
+  const pathChanges=fs.readFileSync(path.join(root,"core/src/Cap7CE.Core.Catalog/CatalogDirectoryPathChanges.cs"),"utf8");
+  if(!pathChanges.includes('MaximumLocalChanges = 32')||!pathChanges.includes('changed.Count > MaximumLocalChanges')||!leafBatch.includes('changed.Contains(reader.GetString(2))')||!leafBatch.includes('token, true, changed')||!leafBatch.includes('token, false, changed')||leafBatch.indexOf('token, true, changed')>leafBatch.indexOf('token, false, changed')) failures.push("Local path batches require a fixed bound, overflow detection, unchanged parents and whole-batch preflight before writes.");
   for (const [file, cap] of Object.entries({
     "core/src/Cap7CE.Core.Reader.Protocol/ReaderFileEntryCodec.cs": 110,
     "core/src/Cap7CE.Core.Host/DirectoryEntries/ReaderFileEntryClient.cs": 55,
