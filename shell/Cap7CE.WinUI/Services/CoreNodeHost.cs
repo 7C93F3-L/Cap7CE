@@ -12,7 +12,7 @@ internal sealed class CoreNodeHost : IAsyncDisposable
     public CoreNodeHost(string root,string worker,string dataRoot)
     {
         this.root=root;this.worker=worker;this.dataRoot=dataRoot;
-        lifetime=new(StopAsync,TimeSpan.FromSeconds(60),error=>SessionDiagnostics.Record("worker.idle.failed",new{worker,type=error.GetType().Name}));
+        lifetime=new(StopIdleAsync,TimeSpan.FromSeconds(60),error=>SessionDiagnostics.Record("worker.idle.failed",new{worker,type=error.GetType().Name}));
     }
     private bool Atomic(string method,object?[] args)=>WorkerIdleLifetime.IsAtomic(worker,method,args);
     private Process? process;
@@ -80,6 +80,16 @@ internal sealed class CoreNodeHost : IAsyncDisposable
     }
     public async Task ReleaseAsync() { if (IsActive) await RequestAsync("releaseSourceHandles", []); }
     public async ValueTask DisposeAsync(){closed=true;await lifetime.CloseAsync();}
+    private async Task StopIdleAsync()
+    {
+        if(!closed && worker is ("provider-preview.cjs" or "office-preview.cjs") && rpc is not null) {
+            using var timeout=new CancellationTokenSource(TimeSpan.FromSeconds(120));var id=++sequence;
+            var reply=await rpc.RequestAsync(id.ToString(),new{version=1,id,method="preview.idle",args=Array.Empty<object>()},timeout.Token);
+            if(reply.TryGetProperty("error",out _))throw new IOException("preview-idle-failed");
+            if(!reply.GetProperty("result").GetBoolean())return;
+        }
+        await StopAsync();
+    }
     private async Task StopAsync()
     {
         await starting.WaitAsync();

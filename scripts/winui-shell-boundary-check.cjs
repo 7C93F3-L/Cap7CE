@@ -312,8 +312,12 @@ assert(automaticUpdates.split(/\r?\n/).length<=70 && !/Task\.Delay|Timer|HttpCli
 assert(read('shell/Cap7CE.WinUI/Services/NativeNotifications.cs').includes('AddArgument("action","updates")') && read('shell/Cap7CE.WinUI/MainWindow.xaml.cs').includes('UpdateInvoked+=UpdateNotificationInvoked'), 'update notifications require a dedicated settings destination');
 
 const idleLifetime=read('shell/Cap7CE.WinUI/Services/WorkerIdleLifetime.cs');
-assert(idleLifetime.includes('"office-preview.cjs"=>method=="cache.stats"')&&read('shell/Cap7CE.WinUI/Services/CoreNodeHost.cs').includes('WorkerIdleLifetime.IsAtomic(worker,method,args)'), 'Office idle retirement must remain limited to stats-only generations and use the shared lease coordinator');
+assert(idleLifetime.includes('"office-preview.cjs"=>method is "cache.stats" or "office.open" or "office.close"')&&read('shell/Cap7CE.WinUI/Services/CoreNodeHost.cs').includes('WorkerIdleLifetime.IsAtomic(worker,method,args)'), 'Office preview retirement requires explicit domain quiescence and the shared lease coordinator');
 assert(idleLifetime.trimEnd().split(/\r?\n/).length<=50&&!/Process|FramedRpc|File\.|Directory\./.test(idleLifetime),'idle lifetime must stay a bounded coordinator without process or resource ownership');
 
 assert(trayOwner.includes('var state=services.Models.HasProcess?"unknown":"unloaded";')&&trayOwner.includes('if(services.Models.IsActive&&!working&&!services.ModelChanges.Busy)'), 'opening the tray menu must not start a cold model worker or assume an unknown worker stopped');
 assert(trayMenu.includes('TrayPolicy.CanStartRuntime(runtime,busy)')&&trayMenu.includes('TrayPolicy.CanStopRuntime(runtime,busy)'), 'tray runtime actions must use tested cold/unknown/busy state policy');
+
+assert(read('shell/Cap7CE.WinUI/Services/CoreNodeHost.cs').includes('method="preview.idle"'), "Preview workers require a domain quiescence acknowledgement before idle exit");
+
+assert(read('core/node/providerPreview/api.ts').includes('!('+'idle.idle'+')') && read('core/node/officePreview/api.ts').includes('idle.idle && leases.size === 0'), 'Preview idle acknowledgement must guard domain sessions and Office cache leases');

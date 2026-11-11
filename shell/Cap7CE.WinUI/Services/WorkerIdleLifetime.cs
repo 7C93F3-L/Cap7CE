@@ -1,10 +1,10 @@
 namespace Cap7CE.WinUI.Services;
-// Coordinates requests and retirement only; process and RPC ownership stays in CoreNodeHost.
 internal sealed class WorkerIdleLifetime(Func<Task> retire,TimeSpan delay,Action<Exception> failure)
 {
     internal static bool IsAtomic(string worker,string method,object?[]? args=null)=>worker switch {
         "visual-cache.cjs"=>method is "ensure" or "ensureShell" or "sourceDimensions" or "stats" or "skimStats" or "storedMetadata" or "previewMetadata" or "cancelPreviewMetadata",
-        "office-preview.cjs"=>method=="cache.stats",
+        "office-preview.cjs"=>method is "cache.stats" or "office.open" or "office.close",
+        "provider-preview.cjs"=>method is "text.read" or "text.cancel" or "font.open" or "font.close" or "epub.open" or "epub.close" or "mobi.open" or "mobi.close" or "archive.open" or "archive.close" or "psd.open" or "psd.render" or "psd.close",
         "model-runtime.cjs"=>(method,args) is ("runtime.state",[_,null]) or ("modelSettings.invoke",[_,"runtime.settings" or "models.settings",null]),
         _=>false
     };

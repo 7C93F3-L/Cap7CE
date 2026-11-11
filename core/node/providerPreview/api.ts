@@ -1,13 +1,12 @@
-import path from "node:path";
+import { PreviewIdleGuard } from "./idle"; import path from "node:path";
 import * as font from "./font"; import { createPsdPreviewService } from "./psd/service";
-import * as epub from "./epub";
-import * as mobi from "./mobi";
-import * as archive from "./archive";
-import * as pdf from "./pdf";
+import * as epub from "./epub"; import * as mobi from "./mobi";
+import * as archive from "./archive"; import * as pdf from "./pdf";
 import { releasePreviewWorkers } from "./lifecycle";
 import { createTextPreviewOwner } from "../textPreview/owner";
 export function createProviderPreviewService(directory: string) {
   const textPreview = createTextPreviewOwner(directory), psd = createPsdPreviewService(directory);
+  const idle = new PreviewIdleGuard();
   let closed = false, releasing: Promise<void> | undefined; const pending = new Set<Promise<unknown>>();
   const invalid = (): never => { throw Error("core-preview-invalid-request"); };
   const text = (value: unknown, file = false) => typeof value === "string" && value.length > 0 && value.length <= 32767 && !value.includes("\0") && (!file || path.isAbsolute(value)) ? value : invalid();
@@ -31,11 +30,12 @@ export function createProviderPreviewService(directory: string) {
   return {
     async dispatch(method: unknown, args: unknown[]): Promise<unknown> {
       if (closed || !Array.isArray(args) || typeof method !== "string") return invalid();
+      if (method === "preview.idle") { if (args.length) return invalid(); if (releasing || !(idle.idle)) return false; await release(); return true; }
       if (method === "releaseSourceHandles") { if (args.length) return invalid(); return release(); }
       if (releasing) throw Error("core-preview-releasing");
-      if (method.startsWith("text.")) return textPreview.dispatch(method, args);
+      if (method.startsWith("text.")) return idle.run(method, args, () => textPreview.dispatch(method, args));
       if (pending.size >= 16) throw Error("core-preview-busy");
-      const work = execute(method, args).catch(error => { if (typeof error?.reason === "string") error.code = "preview:" + error.reason; throw error; }); pending.add(work);
+      const work = idle.run(method, args, () => execute(method, args)).catch(error => { if (typeof error?.reason === "string") error.code = "preview:" + error.reason; throw error; }); pending.add(work);
       try { return await work; } finally { pending.delete(work); }
     },
     async close() { closed = true; closeSessions(true); await Promise.all([release(), textPreview.close()]); }

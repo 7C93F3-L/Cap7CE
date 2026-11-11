@@ -22,6 +22,9 @@ internal static class WorkerIdleProbe
             await File.WriteAllTextAsync(Path.Combine(officeCache,new string('a',64)+".pdf"),"%PDF-1.4\nfixture");
             officeStats=await office.RequestAsync("cache.stats",[]);
             if(officeStats.GetProperty("cacheCount").GetInt64()!=1)throw new Exception("office cache statistics missing fixture");
+            await using var provider=new CoreNodeHost(root,"provider-preview.cjs",Path.Combine(data,"provider"));
+            var textId=Guid.NewGuid().ToString();var textFile=Path.Combine(data,"preview.txt");await File.WriteAllTextAsync(textFile,"preview fixture");
+            await provider.RequestAsync("text.read",[textId,textFile]);
             var image=Path.Combine(root,"build","notification-icon.png");
             var prepared=await host.RequestAsync("ensure",[image,"skim-thumbnail"]);
             if(!File.Exists(prepared.GetProperty("imagePath").GetString()))throw new Exception("thumbnail missing");
@@ -34,6 +37,12 @@ internal static class WorkerIdleProbe
             var runtimeRestored=await models.RequestAsync("modelSettings.invoke",[context,"runtime.settings",null]);
             var modelsRestored=await models.RequestAsync("modelSettings.invoke",[context,"models.settings",null]);
             if(!models.IsActive||runtimeSettings.GetRawText()!=runtimeRestored.GetRawText()||modelSettings.GetRawText()!=modelsRestored.GetRawText())throw new Exception("model configuration changed on restart");
+            if(!provider.IsActive)throw new Exception("active preview host retired");
+            await provider.RequestAsync("text.cancel",[textId]);
+            await Task.Delay(TimeSpan.FromSeconds(68));
+            if(provider.IsActive)throw new Exception("closed preview host retained");
+            await provider.RequestAsync("text.read",[Guid.NewGuid().ToString(),textFile]);
+            if(!provider.IsActive)throw new Exception("preview host did not restart");
             var officeRestored=await office.RequestAsync("cache.stats",[]);
             if(!office.IsActive||officeStats.GetRawText()!=officeRestored.GetRawText())throw new Exception("office stats did not survive restart");
             await host.RequestAsync("stats",[]);if(!host.IsActive)throw new Exception("host did not restart");

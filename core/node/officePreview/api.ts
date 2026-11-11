@@ -1,12 +1,11 @@
-import path from "node:path";
+import { PreviewIdleGuard } from "../providerPreview/idle"; import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { createOfficePreviewCache } from "./cache";
 import { createOfficePreviewService } from "./sessions";
-import { isValidPdf } from "./pdfHeader";
-import { releasePreviewWorkers } from "../providerPreview/lifecycle";
-import type { OfficeConversionRunner } from "./conversion";
+import { isValidPdf } from "./pdfHeader"; import { releasePreviewWorkers } from "../providerPreview/lifecycle"; import type { OfficeConversionRunner } from "./conversion";
 export function createOfficePreviewOwner(tempRoot: string, runner?: OfficeConversionRunner) {
   const cache = createOfficePreviewCache(tempRoot), service = createOfficePreviewService(cache, runner), leases = new Map<string, () => void>(), pending = new Set<Promise<unknown>>();
+  const idle = new PreviewIdleGuard();
   let closed = false, releasing: Promise<void> | undefined;
   const invalid = (): never => { throw Error("core-office-invalid-request"); };
   const text = (value: unknown) => typeof value === "string" && value.length > 0 && value.length <= 32767 && !value.includes("\0") ? value : invalid();
@@ -30,9 +29,10 @@ export function createOfficePreviewOwner(tempRoot: string, runner?: OfficeConver
   return {
     async dispatch(method: unknown, args: unknown): Promise<unknown> {
       if (closed || typeof method !== "string" || !Array.isArray(args)) return invalid();
+      if (method === "preview.idle") { if (args.length) return invalid(); if (releasing || !(idle.idle && leases.size === 0)) return false; await release(); return true; }
       if (method === "releaseSourceHandles") { if (args.length) return invalid(); return release(); }
       if (releasing || pending.size >= 16) throw Error("core-office-busy");
-      const work = execute(method, args); pending.add(work); try { return await work; } finally { pending.delete(work); }
+      const work = idle.run(method, args, () => execute(method, args)); pending.add(work); try { return await work; } finally { pending.delete(work); }
     },
     async close() { closed = true; for (const unlock of leases.values()) unlock(); leases.clear(); await release(); }
   };

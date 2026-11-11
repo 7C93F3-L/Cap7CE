@@ -210,5 +210,6 @@
   "core/node/providerPreview/psd/source.ts": 45,
   "core/node/providerPreview/psd/worker.ts": 50,
   "core/node/providerPreview/psd/service.ts": 95,
-  "core/shared/psdPreviewTypes.d.ts": 5
+  "core/shared/psdPreviewTypes.d.ts": 5,
+  "core/node/providerPreview/idle.ts": 18
 }

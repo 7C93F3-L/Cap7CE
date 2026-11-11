@@ -4,7 +4,7 @@ internal static class WorkerIdleChecks
     public static async Task RunAsync()
     {
         if(!WorkerIdleLifetime.IsAtomic("office-preview.cjs","cache.stats"))throw new Exception("Office stats cannot retire");
-        foreach(var method in new[]{"office.open","office.close","office.prepare","cache.acquire","cache.release","cache.clear","releaseSourceHandles","unknown"})
+        foreach(var method in new[]{"office.prepare","cache.acquire","cache.release","cache.clear","releaseSourceHandles","unknown"})
             if(WorkerIdleLifetime.IsAtomic("office-preview.cjs",method))throw new Exception("Office session or lease classified as atomic");
         if(WorkerIdleLifetime.IsAtomic("provider-preview.cjs","cache.stats")||WorkerIdleLifetime.IsAtomic("model-runtime.cjs","cache.stats"))throw new Exception("unrelated host retirement enabled");
         foreach(var operation in new[]{"runtime.settings","models.settings"})
@@ -30,7 +30,7 @@ internal static class WorkerIdleChecks
         finish.SetResult();await next;await blocked.LeaveAsync(false);await blocked.CloseAsync();
         var officeCount=0;
         var office=new WorkerIdleLifetime(()=>{officeCount++;return Task.CompletedTask;},TimeSpan.FromMilliseconds(20),_=>{});
-        await office.EnterAsync(WorkerIdleLifetime.IsAtomic("office-preview.cjs","office.open"));await office.LeaveAsync(true);
+        await office.EnterAsync(WorkerIdleLifetime.IsAtomic("office-preview.cjs","cache.acquire"));await office.LeaveAsync(true);
         await office.EnterAsync(WorkerIdleLifetime.IsAtomic("office-preview.cjs","cache.stats"));await office.LeaveAsync(true);
         await Task.Delay(80);if(officeCount!=0)throw new Exception("stats re-enabled retirement after Office session");
         await office.CloseAsync();
