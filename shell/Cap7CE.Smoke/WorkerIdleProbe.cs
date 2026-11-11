@@ -28,12 +28,18 @@ internal static class WorkerIdleProbe
             var image=Path.Combine(root,"build","notification-icon.png");
             var prepared=await host.RequestAsync("ensure",[image,"skim-thumbnail"]);
             if(!File.Exists(prepared.GetProperty("imagePath").GetString()))throw new Exception("thumbnail missing");
+            try { await host.RequestAsync("ensure",[Path.Combine(data,"missing.png"),"skim-thumbnail"]);throw new Exception("missing image unexpectedly succeeded"); }
+            catch(IOException) { }
+            await using var unknown=new CoreNodeHost(root,"visual-cache.cjs",Path.Combine(data,"unknown"));
+            try { await unknown.RequestAsync("unknown",[]);throw new Exception("unknown operation unexpectedly succeeded"); }
+            catch(IOException) { }
             await metadata.RequestAsync("previewMetadata",[Guid.NewGuid().ToString(),image]);
             await Task.WhenAll(host.RequestAsync("stats",[]),host.RequestAsync("skimStats",[]));
             if(!host.IsActive)throw new Exception("host did not start");
             Console.WriteLine("worker active; waiting for idle retirement");
             await Task.Delay(TimeSpan.FromSeconds(68));
             if(host.IsActive||metadata.IsActive||office.IsActive||models.IsActive)throw new Exception("idle host retained");
+            if(!unknown.IsActive)throw new Exception("unknown operation incorrectly allowed idle retirement");
             var runtimeRestored=await models.RequestAsync("modelSettings.invoke",[context,"runtime.settings",null]);
             var modelsRestored=await models.RequestAsync("modelSettings.invoke",[context,"models.settings",null]);
             if(!models.IsActive||runtimeSettings.GetRawText()!=runtimeRestored.GetRawText()||modelSettings.GetRawText()!=modelsRestored.GetRawText())throw new Exception("model configuration changed on restart");
@@ -50,7 +56,7 @@ internal static class WorkerIdleProbe
             if(!metadata.IsActive)throw new Exception("metadata did not restart");
             var restored=await host.RequestAsync("ensure",[image,"skim-thumbnail"]);
             if(!File.Exists(restored.GetProperty("imagePath").GetString()))throw new Exception("cache lost on restart");
-            Console.WriteLine("thumbnail, metadata, Office stats and model configuration idle retirement/restart passed");
+            Console.WriteLine("completed visual failure, preview sessions, metadata, Office stats and model configuration idle retirement/restart passed");
         }finally{Directory.Delete(data,true);}
     }
 }

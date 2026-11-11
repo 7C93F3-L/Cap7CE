@@ -55,7 +55,7 @@ internal sealed class CoreNodeHost : IAsyncDisposable
     }
     public async Task<JsonElement> RequestAsync(string method, object?[] args, CancellationToken token = default)
     {
-        await lifetime.EnterAsync(Atomic(method,args));var success=false;
+        await lifetime.EnterAsync(Atomic(method,args));var settled=false;
         using var trace=worker=="model-runtime.cjs"?SessionDiagnostics.Begin("ai.request",new{method,operation=method=="modelSettings.invoke"?args.ElementAtOrDefault(1) as string:null}):null;
         try {
         await StartAsync();
@@ -72,21 +72,22 @@ internal sealed class CoreNodeHost : IAsyncDisposable
         if (value.TryGetProperty("error", out var error)) {
             var failure=new IOException(error.GetProperty("code").GetString());
             if(error.TryGetProperty("message",out var message))failure.Data["CoreMessage"]=message.GetString();
+            settled=worker=="visual-cache.cjs"&&Atomic(method,args); // Domain reply completed; idle exit still awaits resource release.
             throw failure;
         }
-        var result=value.GetProperty("result").Clone();success=true;return result;
+        var result=value.GetProperty("result").Clone();settled=true;return result;
         }catch(Exception error){trace?.Fail(error);throw;}
-        finally{await lifetime.LeaveAsync(success);}
+        finally{await lifetime.LeaveAsync(settled);}
     }
     public async Task ReleaseAsync() { if (IsActive) await RequestAsync("releaseSourceHandles", []); }
     public async ValueTask DisposeAsync(){closed=true;await lifetime.CloseAsync();}
     private async Task StopIdleAsync()
     {
-        if(!closed && worker is ("provider-preview.cjs" or "office-preview.cjs") && rpc is not null) {
+        if(!closed && worker is ("provider-preview.cjs" or "office-preview.cjs" or "visual-cache.cjs") && rpc is not null) {
             using var timeout=new CancellationTokenSource(TimeSpan.FromSeconds(120));var id=++sequence;
-            var reply=await rpc.RequestAsync(id.ToString(),new{version=1,id,method="preview.idle",args=Array.Empty<object>()},timeout.Token);
+            var reply=await rpc.RequestAsync(id.ToString(),new{version=1,id,method=worker=="visual-cache.cjs"?"releaseSourceHandles":"preview.idle",args=Array.Empty<object>()},timeout.Token);
             if(reply.TryGetProperty("error",out _))throw new IOException("preview-idle-failed");
-            if(!reply.GetProperty("result").GetBoolean())return;
+            if(worker!="visual-cache.cjs"&&!reply.GetProperty("result").GetBoolean())return;
         }
         await StopAsync();
     }
