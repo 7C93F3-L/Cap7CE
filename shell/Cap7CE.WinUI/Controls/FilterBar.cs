@@ -29,7 +29,7 @@ internal sealed class FilterBar : UserControl
         title.TextWrapping=TextWrapping.NoWrap;title.VerticalAlignment=VerticalAlignment.Center;
         var actions=new Grid {Height=80,Margin=new(6,0,2,0)};
         foreach(var height in new[]{24,26,4,26})actions.RowDefinitions.Add(new(){Height=new(height)});
-        actions.Children.Add(title);Grid.SetRow(count,1);actions.Children.Add(count);Grid.SetRow(clear,3);actions.Children.Add(clear);row.Children.Add(actions);
+        actions.Children.Add(title);Grid.SetRow(count,1);actions.Children.Add(count);Grid.SetRow(clear,3);actions.Children.Add(clear);row.Children.Add(new Border {Style=(Style)Application.Current.Resources["CapFilterGroupFrame"],BorderThickness=new(0,0,1,0),Padding=new(0,0,8,0),Child=actions});
         L.Bind(count,ToolTipService.ToolTipProperty,"ui.filters.countHint");
         foreach(var (id,label) in FilterPresets.Times)times.Add(id,FilterSection.Option("ui.filters.time."+id,()=>Set(FilterPresets.Time(Value,id,DateTime.Now)),localized:true));
         timeSection=new("ui.filters.modified",FilterSection.Options(times.Values.Cast<UIElement>().ToArray(),3),editors.Dates,localized:true);row.Children.Add(timeSection);

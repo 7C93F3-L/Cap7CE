@@ -2,12 +2,13 @@ namespace Cap7CE.WinUI.Models;
 
 internal static class FilterPresets
 {
-    public static readonly (string Id,string Label)[] Times=[("week","本周"),("month","本月"),("year","今年"),("last-year","去年"),("older","更早"),("all","不限")];
+    public static readonly (string Id,string Label)[] Times=[("week","本周"),("month","本月"),("year","今年"),("last-year","去年"),("older","更早")];
     private const long MB=1024*1024,GB=1024*MB;
     // Core's maximum file size is inclusive; subtract one for mainline preset upper bounds.
     public static readonly (string Label,long? Min,long? Max)[] Sizes=[("＜1 MB",null,MB-1),("1–10 MB",MB,10*MB-1),("10–100 MB",10*MB,100*MB-1),("100 MB–1 GB",100*MB,GB-1),("≥1 GB",GB,null)];
     public static BrowseFilter Time(BrowseFilter value,string preset,DateTime now)
     {
+        if(preset==value.TimePreset)preset="all";
         var year=new DateTime(now.Year,1,1);var month=new DateTime(now.Year,now.Month,1);
         var monday=now.Date.AddDays(-(((int)now.DayOfWeek+6)%7));
         (DateTimeOffset? after,DateTimeOffset? before)=preset switch {

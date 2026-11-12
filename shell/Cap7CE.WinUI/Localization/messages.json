@@ -1532,10 +1532,6 @@
     "zh-CN": "更早",
     "en-US": "Earlier"
   },
-  "ui.filters.time.all": {
-    "zh-CN": "不限",
-    "en-US": "Any"
-  },
   "ui.filters.sizeTiny": {
     "zh-CN": "＜1 MB",
     "en-US": "＜1 MB"
