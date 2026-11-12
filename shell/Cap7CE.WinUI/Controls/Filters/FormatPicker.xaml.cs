@@ -32,6 +32,8 @@ public sealed partial class FormatPicker : UserControl
     private void ViewChanged(object sender,SemanticZoomViewChangedEventArgs e)
     {
         BackButton.Visibility=Zoom.IsZoomedInViewActive?Visibility.Visible:Visibility.Collapsed;
+        Footer.Visibility=BackButton.Visibility;
+        Summary.Visibility=BackButton.Visibility;
     }
     private void SelectionChanged(object sender,SelectionChangedEventArgs e)
     {
