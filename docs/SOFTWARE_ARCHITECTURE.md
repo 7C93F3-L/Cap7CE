@@ -1,6 +1,6 @@
 # Cap7CE 软件架构
 
-当前正式版本：2.0.6（Windows x64 原生WinUI宿主）。PSD解析依赖锁定ag-psd 31.0.1，psd-memory-limit回归以小型内存样例验证图层解码的totalMemoryLimit生效及元数据模式跳过像素。
+当前正式版本：2.0.7（Windows x64 原生WinUI宿主）。PSD解析依赖锁定ag-psd 31.0.1，psd-memory-limit回归以小型内存样例验证图层解码的totalMemoryLimit生效及元数据模式跳过像素。
 
 ## 桌面快捷操作
 
@@ -30,7 +30,7 @@ ImagePreviewView在图片显示层处理鼠标滚轮，默认复用底部缩放�
 
 GLB/glTF、OBJ、STL及FBX基础预览由Controls/ModelPreview中的独立WebView2控件承载，使用锁定版本Babylon.js离线脚本；仅该可信页面启用脚本，不开放HostObject、外部导航、下载或权限。modelLoader负责解析与OBJ内存灰模回退，modelScene负责相机、灯光及材质切换；不接入Catalog、Node任务或缩略图缓存。ModelPreviewResources唯一拥有显示快照读取，复用FileAccessGuard身份/链接检查，只允许模型及同目录子树内白名单配套文件；主文件和单资源各限64 MiB、累计256 MiB、128次请求、两路读取。控件启动限20秒，关闭、切换、取消和渲染进程失败均释放WebView及响应内存，读取完成立即关闭源文件句柄。STL及FBX复用锁定Babylon.js中的加载器，不增加解析依赖；构建只分发离线脚本与许可证，不分发Sandbox或完整npm库；model-preview-architecture-check及ModelPreview测试守护模块、资源范围与生命周期边界。
 
-当前源码主线为 Windows x64 / C# / WinUI 3，当前版本为 2.0.6。Electron/Renderer/Preload 源码、React/Vite 和旧构建入口已退役；历史实现与迁移记录可从 Git 历史查看。安装布局和数据所有权延续2.0.0，本轮不新增用户数据迁移。
+当前源码主线为 Windows x64 / C# / WinUI 3，当前版本为 2.0.7。Electron/Renderer/Preload 源码、React/Vite 和旧构建入口已退役；历史实现与迁移记录可从 Git 历史查看。安装布局和数据所有权延续2.0.0，本轮不新增用户数据迁移。
 
 global.json固定.NET SDK 10.0.403补丁系列，运行时、NativeAOT及链接工具基线为10.0.14。安装前置清单固定官方Windows x64运行时的下载地址和SHA-512，原生设置页与Setup共用该清单；依赖审计保持启用，锁定文件及架构检查同步维护安全补丁版本。native-build记录原生运行组件的SDK基线，基线变化或记录缺失时重建Configuration、FileOperations及产品Setup载荷，避免沿用旧AOT缓存。
 
@@ -165,7 +165,7 @@ KeywordEditDialog仅承载右键关键词编辑会话，复用DetailsKeywordEdit
 
 WorkspaceNotice统一主窗口底部普通提示、查询、AI、索引、元数据和命令确认/执行的展示，使用固定高度及独立全宽进度行。各领域控制器继续拥有任务观察和取消；浮层只拥有提示显示优先级及隐藏计时，提示实际展示且鼠标未悬停时计时，任务遮挡或卸载时停止，移出后重新计时，不改变任务执行。
 
-2.0.6保持当前安装与数据所有者边界，不新增旧版本兼容迁移。发布目录携带LICENSE、NOTICE和THIRD_PARTY_NOTICES；sharp固定为0.35.5，所有运行库仍由锁文件和现有复制脚本生成。介绍文档沿用2.0.0演示截图，素材来源记录在docs/assets/screenshots/ASSET_SOURCES.md。
+2.0.7保持当前安装与数据所有者边界，不新增旧版本兼容迁移。发布目录携带LICENSE、NOTICE和THIRD_PARTY_NOTICES；sharp固定为0.35.5，所有运行库仍由锁文件和现有复制脚本生成。介绍文档沿用2.0.0演示截图，素材来源记录在docs/assets/screenshots/ASSET_SOURCES.md。
 
 ## 辅助工作宿主空闲退役
 
