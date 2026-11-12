@@ -5,7 +5,7 @@ namespace Cap7CE.WinUI.Controls;
 // Resource identities stay stable across languages; all glyphs use the native symbol set.
 internal static class SettingsCardIcons
 {
-    public static string Glyph(string title)=>char.ConvertFromUtf32((int)(title switch {
+    public static string Glyph(string title)=>title=="ui.diagnostics.path"?"\uE8B7":char.ConvertFromUtf32((int)(title switch {
         "ui.tray.enabled"=>Symbol.DockBottom,
         "ui.tray.showStartup"=>Symbol.OpenPane,
         "settings.language"=>Symbol.Globe,
@@ -28,7 +28,6 @@ internal static class SettingsCardIcons
         "native.maintenance.title"=>Symbol.Repair,
         "ui.diagnostics.status"=>Symbol.ViewAll,
         "ui.diagnostics.recent"=>Symbol.Clock,
-        "ui.diagnostics.path"=>Symbol.Folder,
         "settings.diagnosticsBundle"=>Symbol.Save,
         "settings.versionUpdate"=>Symbol.Sync,
         "settings.projectHomepage"=>Symbol.Link,
