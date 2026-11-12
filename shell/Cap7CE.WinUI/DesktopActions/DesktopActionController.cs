@@ -69,7 +69,6 @@ internal sealed class DesktopActionController : IDisposable
                 if(main.AppWindow.Presenter is Microsoft.UI.Windowing.OverlappedPresenter presenter)presenter.Restore();
                 var area=Microsoft.UI.Windowing.DisplayArea.GetFromWindowId(source,Microsoft.UI.Windowing.DisplayAreaFallback.Nearest).WorkArea;
                 await NativeSnapSequence.PairAsync(new NativeSnapInput(area.X,area.Y,area.Width,area.Height),WinRT.Interop.WindowNative.GetWindowHandle(main),target,(SnapSide)layout,request.Token);
-                notice(UiMessage.Key("ui.desktop.snapDone"));
             }
         }catch(OperationCanceledException){}catch(Exception e){if(!disposed){WindowActivation.Show(main);notice(FailureText.From(e));}}
         finally{operation=null;busy=false;}

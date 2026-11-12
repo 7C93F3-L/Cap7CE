@@ -18,7 +18,6 @@
   "ui.desktop.snapFocus": {"zh-CN": "窗口焦点未就绪或仍有按键按下，已停止贴靠，请松开按键后重试。", "en-US": "Snapping stopped because focus was not ready or keys were held. Release the keys and try again."},
   "ui.desktop.snapInput": {"zh-CN": "系统未接受贴靠按键，请检查目标软件运行权限。", "en-US": "Windows did not accept the snap shortcut. Check the target app permissions."},
   "ui.desktop.snapUnconfirmed": {"zh-CN": "未确认窗口进入原生贴靠，请检查系统贴靠开关及窗口最小尺寸。", "en-US": "Native snapping was not confirmed. Check Windows Snap settings and the window minimum size."},
-  "ui.desktop.snapDone": {"zh-CN": "已确认两个窗口进入系统贴靠。", "en-US": "Both windows are confirmed snapped into opposite halves."},
   "stableSettings.section.desktop": {"zh-CN": "桌面快捷操作", "en-US": "Desktop quick actions"},
   "stableSettings.section.history": {"zh-CN": "搜索历史", "en-US": "Search history"},
   "ui.desktop.capsule": {"zh-CN": "悬浮胶囊", "en-US": "Floating capsule"},
