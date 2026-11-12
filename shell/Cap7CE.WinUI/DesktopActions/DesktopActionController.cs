@@ -70,7 +70,7 @@ internal sealed class DesktopActionController : IDisposable
                 var area=Microsoft.UI.Windowing.DisplayArea.GetFromWindowId(source,Microsoft.UI.Windowing.DisplayAreaFallback.Nearest).WorkArea;
                 await NativeSnapSequence.PairAsync(new NativeSnapInput(area.X,area.Y,area.Width,area.Height),WinRT.Interop.WindowNative.GetWindowHandle(main),target,(SnapSide)layout,request.Token);
             }
-        }catch(OperationCanceledException){}catch(Exception e){if(!disposed){WindowActivation.Show(main);notice(FailureText.From(e));}}
+        }catch(OperationCanceledException){}catch(Exception e){if(!disposed){WindowActivation.Show(main);if(layout<0)notice(FailureText.From(e));}}
         finally{operation=null;busy=false;}
     }
     private bool busy;
