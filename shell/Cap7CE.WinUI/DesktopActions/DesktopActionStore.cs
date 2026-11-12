@@ -28,7 +28,7 @@ internal sealed class DesktopActionStore
     {
         if(File.Exists(path))Current=JsonSerializer.Deserialize<DesktopActionOptions>(await File.ReadAllTextAsync(path),FramedRpc.Json)??new();
         Current=Current with{Vertical=Current.X==int.MinValue||Current.Y==int.MinValue||Current.Vertical,
-            Size=double.IsFinite(Current.Size)?Math.Clamp(Current.Size,24,48):32,HistoryCount=Math.Clamp(Current.HistoryCount,1,20),
+            Size=double.IsFinite(Current.Size)?Math.Clamp(Current.Size,24,48):32,HistoryCount=Math.Clamp(Current.HistoryCount,1,15),
             Programs=(Current.Programs??[]).Where(p=>!string.IsNullOrWhiteSpace(p.Path)&&!string.IsNullOrWhiteSpace(p.Name)).Take(30).ToArray(),
             History=(Current.History??[]).Where(h=>!string.IsNullOrWhiteSpace(h.Query)&&h.Filter is not null).Take(50).ToArray()};
         Changed?.Invoke();

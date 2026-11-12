@@ -75,7 +75,7 @@ internal sealed class DesktopHistorySettings : StackPanel
         Spacing=12;var toggle=LanguageUi.Toggle();toggle.IsOn=store.Current.RecordHistory;
         async void Save(Func<DesktopActionOptions,DesktopActionOptions> update){try{await store.UpdateAsync(update);}catch(Exception error){notice(FailureText.From(error));}}
         toggle.Toggled+=(_,_)=>Save(v=>v with{RecordHistory=toggle.IsOn});Children.Add(DesktopActionSettings.Row("ui.desktop.record",toggle));
-        int[] counts=[3,5,10,20];var count=Ui.Select(counts.Select(i=>i.ToString()),Array.IndexOf(counts,store.Current.HistoryCount),i=>Save(v=>v with{HistoryCount=counts[i]}));
+        int[] counts=[3,5,10,15];var count=Ui.Select(counts.Select(i=>i.ToString()),Array.IndexOf(counts,store.Current.HistoryCount),i=>Save(v=>v with{HistoryCount=counts[i]}));
         Children.Add(DesktopActionSettings.Row("ui.desktop.count",count));
         var clear=new Button{MinWidth=76};LanguageUi.Bind(clear,Button.ContentProperty,"ui.desktop.clear");
         clear.Click+=async(_,_)=>{

@@ -11,6 +11,8 @@ internal static class DesktopActionChecks
             var store=new DesktopActionStore(path);await store.LoadAsync();
             Check(store.Current.Enabled&&!File.Exists(path),"New desktop settings enable the capsule without creating a file during load");
             Check(store.Current.Vertical,"The default right-edge placement must be vertical");
+            Directory.CreateDirectory(directory);await File.WriteAllTextAsync(path,"{\"historyCount\":20}");await store.LoadAsync();
+            Check(store.Current.HistoryCount==15,"The former 20-item display option loads as 15 without clearing saved history");
             Directory.CreateDirectory(directory);await File.WriteAllTextAsync(path,"{\"vertical\":false}");await store.LoadAsync();
             Check(store.Current.Vertical,"Legacy unset coordinates must resolve to the vertical right-edge default");
             await store.UpdateAsync(v=>v with{Enabled=false,X=100,Y=0,Vertical=false});var positioned=new DesktopActionStore(path);await positioned.LoadAsync();
