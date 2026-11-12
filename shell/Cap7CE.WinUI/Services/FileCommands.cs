@@ -93,13 +93,12 @@ internal sealed class FileCommands(ShellServices services, Func<XamlRoot> xamlRo
         var files = await StorageItemsAsync(items); var data = new DataPackage { RequestedOperation = cut?DataPackageOperation.Move:DataPackageOperation.Copy };
         data.SetStorageItems(files, !cut); Clipboard.SetContent(data);
     }
-    public static async Task<IReadOnlyList<IStorageItem>> StorageItemsAsync(IReadOnlyList<AssetItem> items)
+    public static Task<IReadOnlyList<IStorageItem>> StorageItemsAsync(IReadOnlyList<AssetItem> items,CancellationToken token=default,FileTransferProgress? progress=null)
     {
         if (items.Count is < 1 or > 200) throw new UiFailure("ui.error.fileLimit");
-        var result = new List<IStorageItem>();
-        foreach (var item in items) { FileAccessGuard.Validate(item); result.Add(item.Entry.IsDirectory
-            ? await StorageFolder.GetFolderFromPathAsync(item.FullPath) : await StorageFile.GetFileFromPathAsync(item.FullPath)); }
-        return result;
+        return FileTransferRead.RunAsync<AssetItem,IStorageItem>(items,FileAccessGuard.Validate,async(item,cancellation)=>item.Entry.IsDirectory
+            ? await StorageFolder.GetFolderFromPathAsync(item.FullPath).AsTask(cancellation).ConfigureAwait(false)
+            : await StorageFile.GetFileFromPathAsync(item.FullPath).AsTask(cancellation).ConfigureAwait(false),token,progress);
     }
     public async Task DeleteAsync(IReadOnlyList<AssetItem> items)
     {

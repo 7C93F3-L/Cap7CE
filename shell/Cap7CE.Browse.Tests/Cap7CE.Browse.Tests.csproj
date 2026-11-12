@@ -18,5 +18,6 @@
   <ItemGroup><Compile Include="../Cap7CE.WinUI/DesktopActions/ScopedSearchHistory.cs" Link="%(Filename)%(Extension)" /></ItemGroup>
   <ItemGroup><Compile Include="../Cap7CE.WinUI/DesktopActions/CapsuleShadowTexture.cs;../Cap7CE.WinUI/DesktopActions/CapsuleGlowTexture.cs;../Cap7CE.WinUI/DesktopActions/CapsuleShape.cs;../Cap7CE.WinUI/DesktopActions/NativeSnapSequence.cs;../Cap7CE.WinUI/DesktopActions/NativeSnapInput.cs;../Cap7CE.WinUI/DesktopActions/DesktopActionStore.cs;../Cap7CE.WinUI/Services/FramedRpc.cs" Link="%(Filename)%(Extension)" /></ItemGroup>
   <ItemGroup><Compile Include="../Cap7CE.WinUI/Services/WorkerIdleLifetime.cs" Link="WorkerIdleLifetime.cs" /></ItemGroup>
+  <ItemGroup><Compile Include="../Cap7CE.WinUI/Services/FileTransferRead.cs;../Cap7CE.WinUI/Services/DragRequestLifetime.cs" Link="%(Filename)%(Extension)" /></ItemGroup>
   <ItemGroup><Compile Include="../Cap7CE.WinUI/DesktopActions/DesktopProgram.cs;../Cap7CE.WinUI/DesktopActions/DesktopShellApartment.cs;../Cap7CE.WinUI/DesktopActions/DesktopApplicationCatalog.cs;../Cap7CE.WinUI/DesktopActions/DesktopShellImage.cs;../Cap7CE.WinUI/DesktopActions/DesktopApplicationIdentity.cs;../Cap7CE.WinUI/DesktopActions/DesktopProgramWindows.cs" Link="%(Filename)%(Extension)" /></ItemGroup>
 </Project>

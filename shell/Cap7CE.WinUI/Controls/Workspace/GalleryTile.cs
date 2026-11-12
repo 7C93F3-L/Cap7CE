@@ -41,8 +41,8 @@ public sealed class GalleryTile : ToggleButton
         if(!point.Properties.IsLeftButtonPressed){armed=false;return;}
         if(Math.Abs(point.Position.X-pressed.X)<4&&Math.Abs(point.Position.Y-pressed.Y)<4)return;
         armed=false;dragging=true;e.Handled=true;ResultDrag.SetActive(this,true);
-        try {await StartDragAsync(point);}
-        catch(Exception error){DragError?.Invoke(error);}
+        try {ResultDrag.Complete(this,await StartDragAsync(point));}
+        catch(Exception error){ResultDrag.Complete(this,Windows.ApplicationModel.DataTransfer.DataPackageOperation.None);DragError?.Invoke(error);}
         finally {dragging=false;ResultDrag.SetActive(this,false);}
     }
     internal void SetBounds(double width,double height){if(Width==width&&Height==height)return;Width=width;Height=height;tile.SetGalleryBounds(width,height);}

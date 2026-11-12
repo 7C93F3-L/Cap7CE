@@ -71,8 +71,8 @@ internal sealed class ResultsView : UserControl
                 if(!e.InRecycleQueue)container.DragStarting+=OnContainerDragStarting;
             };
             view.DragItemsStarting+=(_,e)=>{if(!e.Cancel)ResultDrag.SetActive(view,true);};
-            view.DragItemsCompleted+=(_,_)=>ResultDrag.SetActive(view,false);
-            view.Unloaded+=(_,_)=>ResultDrag.SetActive(view,false);root.Children.Add(view);
+            view.DragItemsCompleted+=(_,e)=>{ResultDrag.Complete(view,e.DropResult);ResultDrag.SetActive(view,false);};
+            view.Unloaded+=(_,_)=>{ResultDrag.Complete(view,DataPackageOperation.None);ResultDrag.SetActive(view,false);};root.Children.Add(view);
         }
         list.Visibility=Visibility.Collapsed;root.Children.Add(gallery);gallery.SelectionChanged+=()=>{if(IsGallery&&!binding)SelectionChanged?.Invoke(Selection);};
         empty.HorizontalTextAlignment=TextAlignment.Center;emptyHint.HorizontalTextAlignment=TextAlignment.Center;
@@ -153,7 +153,7 @@ internal sealed class ResultsView : UserControl
     private void OnItemsDragStarting(object sender, DragItemsStartingEventArgs e)
     {
         var items=e.Items.OfType<AssetItem>().ToArray();
-        ResultDrag.Prepare(e.Data,items,()=>e.Cancel=true);
+        ResultDrag.Prepare(sender,e.Data,items,()=>e.Cancel=true);
     }
     private void OnContainerDragStarting(UIElement sender,DragStartingEventArgs e)
     {

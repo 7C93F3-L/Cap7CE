@@ -3,6 +3,7 @@ using Cap7CE.WinUI.Controllers;
 using Cap7CE.WinUI.Services;
 
 Environment.SetEnvironmentVariable("CAP7CE_BROWSE_TIMING",null);
+await DragTransferChecks.RunAsync();if(args is ["--drag-transfer"])return;
 if(args is ["--desktop-apps"]){await DesktopActionChecks.RunAsync();await DesktopApplicationChecks.RunAsync();return;}
 await WorkerIdleChecks.RunAsync();
 await DesktopActionChecks.RunAsync();

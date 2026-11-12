@@ -81,7 +81,7 @@ internal sealed class ResultsGallery : UserControl
         if(tile.DataContext is not AssetItem item){e.Cancel=true;return;}
         if(!selection.Contains(item)){selection.Replace([item]);SyncSelection();}
         var items=Selection;
-        ResultDrag.Prepare(e.Data,items,()=>e.Cancel=true);
+        ResultDrag.Prepare(tile,e.Data,items,()=>e.Cancel=true);
         e.AllowedOperations=ResultDrag.AllowedOperations(commands?.CanDelete(items)==true);
     }
     private async Task LoadMore()
