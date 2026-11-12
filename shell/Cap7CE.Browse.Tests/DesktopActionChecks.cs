@@ -31,6 +31,9 @@ internal static class DesktopActionChecks
             await restored.ResetCapsuleAsync();var reset=new DesktopActionStore(path);await reset.LoadAsync();var defaults=new DesktopActionOptions();
             Check(reset.Current.Size==defaults.Size&&reset.Current.X==defaults.X&&reset.Current.Y==defaults.Y&&reset.Current.Vertical==defaults.Vertical,"Capsule reset persists default size, position and orientation");
             Check(reset.Current.Enabled&&reset.Current.RecordHistory&&reset.Current.HistoryCount==10&&reset.Current.Programs.SequenceEqual(new[]{app})&&reset.Current.History.Length==3,"Capsule reset preserves visibility, programs and history settings/data");
+            var registered=new DesktopProgram("Store app",DesktopProgram.AppsPrefix+"Fixture.Package!App"){AppId="Fixture.Package!App"};
+            await reset.UpdateAsync(v=>v with{Programs=[app,registered]});var registeredReload=new DesktopActionStore(path);await registeredReload.LoadAsync();
+            Check(registeredReload.Current.Programs.SequenceEqual(new[]{app,registered}),"Legacy executables and registered apps persist together without migration");
             await restored.UpdateAsync(v=>v with{RecordHistory=false});await restored.RememberAsync(first with{Query="private"});
             Check(restored.Current.History.All(h=>h.Query!="private"),"Disabled history must not record searches");
             await restored.UpdateAsync(v=>v with{RecordHistory=true,HistoryCount=3});

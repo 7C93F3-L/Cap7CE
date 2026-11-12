@@ -4,7 +4,6 @@ using Cap7CE.WinUI.Localization;
 using Cap7CE.WinUI.Themes;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Windows.Storage.Pickers;
 namespace Cap7CE.WinUI.DesktopActions;
 internal sealed class DesktopActionSettings : StackPanel
 {
@@ -45,13 +44,15 @@ internal sealed class DesktopActionSettings : StackPanel
     private async Task SaveOrderAsync(){var items=programs.Select(row=>row.Program).ToArray();try{await store.UpdateAsync(v=>v with{Programs=items});}catch{RestoreRows();throw;}}
     private async void Add()
     {
-        try{var picker=new FileOpenPicker();picker.FileTypeFilter.Add(".exe");WinRT.Interop.InitializeWithWindow.Initialize(picker,WinRT.Interop.WindowNative.GetWindowHandle(owner));
-            if(await picker.PickSingleFileAsync() is not {} file)return;
-            if(programs.Any(p=>string.Equals(p.Program.Path,file.Path,StringComparison.OrdinalIgnoreCase)))return;
+        if(adding)return;adding=true;
+        try{
             if(programs.Count>=30)throw new UiFailure("ui.desktop.appsLimit");
-            programs.Add(new(new DesktopProgram(Path.GetFileNameWithoutExtension(file.Path),file.Path),Remove));await SaveOrderAsync();
-        }catch(Exception error){notice(FailureText.From(error));}
+            if(await DesktopProgramPicker.PickAsync(owner,programs.Select(p=>p.Program).ToArray()) is not {} app||!IsLoaded)return;
+            if(programs.Any(p=>p.Program.SameEntry(app)))return;
+            programs.Add(new(app,Remove));await SaveOrderAsync();
+        }catch(Exception error){notice(FailureText.From(error));}finally{adding=false;}
     }
+    private bool adding;
     private async void Run(Func<Task> action){try{await action();}catch(Exception error){notice(FailureText.From(error));}}
     internal static Grid Row(string key,FrameworkElement control)
     {

@@ -3,6 +3,8 @@ module.exports = read => {
   const base = 'shell/Cap7CE.WinUI/DesktopActions/';
   const limits = { 'ScopedSearchHistory.cs': 25, 'NativeSnapInput.cs': 110, 'NativeSnapSequence.cs': 40, 'DesktopActionStore.cs': 65, 'DesktopActionController.cs': 95, 'DesktopProgramWindows.cs': 55,
     'CapsuleShadowTexture.cs': 35, 'CapsuleLayeredSurface.cs': 55, 'CapsuleShadowWindow.cs': 50, 'CapsuleGlowTexture.cs': 65, 'CapsuleGlowImage.cs': 40, 'CapsuleAppearance.cs': 75, 'CapsuleWindow.cs': 155, 'CapsuleWindowFrame.cs': 75, 'CapsuleTransparentBackdrop.cs': 30, 'CapsuleTransparency.cs': 45, 'CapsuleShape.cs': 25, 'CapsuleMenu.cs': 75, 'DesktopProgramSettingsRow.cs': 45, 'DesktopProgramIcon.cs': 25, 'DesktopActionSettings.cs': 110 };
+  Object.assign(limits, { 'DesktopActionStore.cs': 64, 'DesktopProgramIcon.cs': 22, 'DesktopProgram.cs': 15, 'DesktopShellApartment.cs': 30, 'DesktopApplicationCatalog.cs': 45,
+    'DesktopApplicationIdentity.cs': 45, 'DesktopShellImage.cs': 40, 'DesktopProgramImage.cs': 30, 'DesktopProgramPicker.xaml.cs': 80 });
   for (const [file, limit] of Object.entries(limits)) {
     const source = read(base + file);
     assert(source.trimEnd().split(/\r?\n/).length <= limit, `${file}: desktop action responsibility budget exceeded`);
@@ -12,6 +14,11 @@ module.exports = read => {
     if (file !== 'DesktopProgramWindows.cs') assert(!/Process\.Start|EnumWindows/.test(source), `${file}: external window operations have one owner`);
   }
   const shadow = read(base + 'CapsuleShadowWindow.cs');
+  const catalog = read(base + 'DesktopApplicationCatalog.cs'), picker = read(base + 'DesktopProgramPicker.xaml.cs');
+  assert(catalog.includes('shell:AppsFolder') && catalog.includes('token.ThrowIfCancellationRequested()') && !/Directory\.(Enumerate|GetFiles|GetDirectories)/.test(catalog), 'app discovery must use Windows registrations on demand without scanning installation directories');
+  assert(picker.includes('dialog.Closed+=(_,_)=>lifetime.Cancel()') && picker.includes('if(lifetime.IsCancellationRequested)return') && picker.includes('".lnk"'), 'the app picker must cancel discovery when closed and retain shortcut browsing');
+  assert(read(base + 'DesktopShellApartment.cs').includes('SemaphoreSlim slots=new(2)') && read(base + 'DesktopShellImage.cs').includes('DeleteObject(bitmap)'), 'Shell icons must have bounded concurrency and release their native bitmaps');
+  assert(read(base + 'DesktopApplicationIdentity.cs').includes('SHGetPropertyStoreForWindow') && read(base + 'DesktopApplicationIdentity.cs').includes('GetApplicationUserModelId'), 'app window matching must include window and packaged process identity');
   assert(shadow.includes('0x080800a8') && shadow.includes('SetWindowPos(handle,capsule') && shadow.includes('DestroyWindow(handle)'), 'capsule shadow must be layered, click-through, nonactivating, behind its owner and explicitly destroyed');
   const surface = read(base + 'CapsuleLayeredSurface.cs');
   assert(surface.includes('finally') && surface.includes('DeleteObject(bitmap)') && surface.includes('DeleteDC(dc)') && surface.includes('ReleaseDC(0,screen)'), 'shadow upload must release temporary GDI resources');

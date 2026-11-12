@@ -7,21 +7,21 @@ internal static class DesktopProgramWindows
 {
     public static async Task<nint> OpenAsync(DesktopProgram program,CancellationToken token,bool wait)
     {
-        if(!File.Exists(program.Path))throw new UiFailure("ui.desktop.programMissing");
-        var existing=await Task.Run(()=>Find(program.Path),token);token.ThrowIfCancellationRequested();
+        if(!program.Registered&&!File.Exists(program.Path))throw new UiFailure("ui.desktop.programMissing");
+        var existing=await Task.Run(()=>Find(program),token);token.ThrowIfCancellationRequested();
         if(existing!=0){if(IsIconic(existing))ShowWindowAsync(existing,9);SetForegroundWindow(existing);return existing;}
-        using var process=Process.Start(new ProcessStartInfo(program.Path){UseShellExecute=true,WorkingDirectory=Path.GetDirectoryName(program.Path)!});
+        using var process=Process.Start(new ProcessStartInfo(program.Path){UseShellExecute=true,WorkingDirectory=program.Registered?"":Path.GetDirectoryName(program.Path)!});
         if(!wait)return 0;
-        for(var i=0;i<100;i++){await Task.Delay(200,token);var handle=await Task.Run(()=>Find(program.Path),token);if(handle!=0)return handle;}
+        for(var i=0;i<100;i++){await Task.Delay(200,token);var handle=await Task.Run(()=>Find(program),token);if(handle!=0)return handle;}
         throw new UiFailure("ui.desktop.windowTimeout");
     }
-    private static nint Find(string path)
+    private static nint Find(DesktopProgram program)
     {
         nint found=0;
         EnumWindows((handle,_)=>{
             if(!IsWindowVisible(handle)||GetWindow(handle,4)!=0||GetWindowTextLength(handle)==0)return true;
             GetWindowThreadProcessId(handle,out var pid);
-            try{using var process=Process.GetProcessById((int)pid);if(string.Equals(process.MainModule?.FileName,path,StringComparison.OrdinalIgnoreCase)){
+            try{using var process=Process.GetProcessById((int)pid);if(DesktopApplicationIdentity.Matches(handle,process,program)){
                 var cls=new System.Text.StringBuilder(256);GetClassName(handle,cls,cls.Capacity);
                 if(cls.ToString().Contains("splash",StringComparison.OrdinalIgnoreCase))return true;found=handle;return false;}}
             catch(System.ComponentModel.Win32Exception){}catch(ArgumentException){}catch(InvalidOperationException){}

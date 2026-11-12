@@ -2,7 +2,6 @@ using System.Text.Json;
 using Cap7CE.WinUI.Models;
 using Cap7CE.WinUI.Services;
 namespace Cap7CE.WinUI.DesktopActions;
-internal sealed record DesktopProgram(string Name,string Path);
 internal sealed record DesktopSearch(string Query,string Path,bool Favorite,string EntryPath,BrowseFilter Filter,bool Recursive);
 internal sealed record DesktopActionOptions
 {

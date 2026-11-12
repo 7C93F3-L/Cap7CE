@@ -1,4 +1,9 @@
 {
+  "ui.desktop.chooseApp": {"zh-CN": "添加应用", "en-US": "Add an app"},
+  "ui.desktop.searchApps": {"zh-CN": "搜索应用名称", "en-US": "Search app names"},
+  "ui.desktop.browseFile": {"zh-CN": "浏览文件…", "en-US": "Browse files…"},
+  "ui.desktop.noApps": {"zh-CN": "没有可添加的匹配应用，可尝试浏览文件。", "en-US": "No matching apps to add. Try browsing files."},
+  "ui.desktop.appsUnavailable": {"zh-CN": "暂时无法读取应用列表，仍可浏览文件添加。", "en-US": "The app list is unavailable. You can still browse files."},
   "ui.desktop.removeApp": {"zh-CN": "移除 {name}", "en-US": "Remove {name}"},
   "ui.desktop.reorder": {"zh-CN": "拖动调整顺序", "en-US": "Drag to reorder"},
   "ui.desktop.nativeTop": {"zh-CN": "贴靠：Cap7CE 上半屏", "en-US": "Snap: Cap7CE on top"},
