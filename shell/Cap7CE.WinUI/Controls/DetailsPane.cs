@@ -79,7 +79,9 @@ internal sealed class DetailsPane : UserControl
     {
         var card=context.Path.Length==0?Card(LocationText.Computer):Card(LocationName(context.Path));
         var locationLabel=context.Searching?"ui.details.searchScope":"ui.details.location";
-        if(context.Path.Length==0)L.Message(card.Field(locationLabel,"",true),TextBlock.TextProperty,LocationText.Computer);else card.Field(locationLabel,context.Path,true);
+        var path=context.Path;
+        if(path.Length==0)L.Message(card.Field(locationLabel,"",true),TextBlock.TextProperty,LocationText.Computer);
+        else card.Field(locationLabel,path,true,()=>commands.Run(()=>{FileCommands.OpenDirectoryInExplorer(path);return Task.CompletedTask;}));
         IReadOnlyDictionary<string,object?> Count()=>new Dictionary<string,object?>{{"count",context.Count}};
         // Show only an existing total; pagination progress is not a directory count.
         if(context.Searching){
