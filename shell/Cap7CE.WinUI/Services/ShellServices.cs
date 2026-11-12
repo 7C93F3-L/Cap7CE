@@ -28,6 +28,8 @@ internal sealed class ShellServices : IAsyncDisposable
     public WindowShortcutService? Shortcuts {get;set;}
     public event Action<CatalogRefreshImpact>? CatalogChanged;
     public event Action<CatalogStatusResponse>? IndexStatusChanged;
+    public CatalogChangeNotice? CatalogMaintenance {get;private set;}
+    public event Action? CatalogMaintenanceChanged;
     public event Action? ConnectionChanged;
     public void RefreshViews()=>CatalogChanged?.Invoke(new(null));
     private long catalogRevision;
@@ -58,12 +60,14 @@ internal sealed class ShellServices : IAsyncDisposable
         ObjectDisposedException.ThrowIf(closed, this);
         if(onlyIfDisconnected&&Core?.IsConnected==true)return;
         TaskNotices.ForgetKind("index");TaskNotices.ForgetKind("metadata");
-        changes?.Dispose();changes=null;
+        changes?.Dispose();changes=null;CatalogMaintenance=null;
         if(Core is not null){await Core.DisposeAsync();Core=null;}
         var database = Environment.GetEnvironmentVariable("CAP7CE_PHASEF_CATALOG") ?? Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Cap7CE/Core/v1/catalog.db");
         Core = await CoreConnection.StartAsync(Root, database, interactive: true,product:Environment.GetEnvironmentVariable("CAP7CE_PHASEF_CATALOG") is null,failureLog:NativeDiagnostics.CoreFailure,runtimeLog:NativeDiagnostics.CoreRuntimeFailure); await RefreshVolumesAsync();
-        changes=new(Core,OnCatalogChanged,error=>BackgroundError?.Invoke(UiMessage.Key("ui.error.backgroundDisconnected")));
+        var changeOwner=Core;
+        changes=new(Core,OnCatalogChanged,error=>BackgroundError?.Invoke(UiMessage.Key("ui.error.backgroundDisconnected")),
+            state=>{if(!closed&&ReferenceEquals(changeOwner,Core)){CatalogMaintenance=state;CatalogMaintenanceChanged?.Invoke();}});
         try{await Metadata.RestoreAsync();}catch(Exception error){NativeDiagnostics.CoreFailure(error.ToString());BackgroundError?.Invoke(FailureText.From(error));}
         } finally { connection.Release();ConnectionChanged?.Invoke(); }
     }
@@ -72,7 +76,7 @@ internal sealed class ShellServices : IAsyncDisposable
     public async Task DisconnectAsync()
     {
         await connection.WaitAsync();
-        try{TaskNotices.ForgetKind("index");TaskNotices.ForgetKind("metadata");changes?.Dispose();changes=null;if(Core is not null)await Core.DisposeAsync();Core=null;}
+        try{TaskNotices.ForgetKind("index");TaskNotices.ForgetKind("metadata");changes?.Dispose();changes=null;CatalogMaintenance=null;if(Core is not null)await Core.DisposeAsync();Core=null;}
         finally{connection.Release();ConnectionChanged?.Invoke();}
     }
     private async Task OnCatalogChanged(CatalogChangeNotice notice)

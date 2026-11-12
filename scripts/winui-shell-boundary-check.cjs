@@ -255,6 +255,13 @@ assert(read('shell/Cap7CE.WinUI/Views/IndexOnboardingDialog.cs').includes('new H
   &&read('shell/Cap7CE.WinUI/Views/SettingsWindow.cs').includes('pages.FocusIndex()')
   &&maintenanceSettings.includes('initiallyExpanded:true'), 'onboarding must expose text opt-out and reuse the expanded index settings page');
 assert(read('shell/Cap7CE.WinUI/Services/ShellServices.cs').includes('TaskNotices.IndexStatus('), 'index terminal notices must use shared service snapshots');
+const recoveryNotice=read('shell/Cap7CE.WinUI/Controls/Workspace/IndexRecoveryNotice.cs'),recoveryPolicy=read('shell/Cap7CE.WinUI/Models/IndexRecoveryPolicy.cs');
+assert(recoveryNotice.trimEnd().split(/\r?\n/).length<=60&&recoveryPolicy.trimEnd().split(/\r?\n/).length<=25,'index recovery presentation must stay within its responsibility budgets');
+assert(!/Timer|Task\.Delay|RequestAsync|CoreOperations\.|File\.|Directory\./.test(recoveryNotice+recoveryPolicy)&&recoveryNotice.includes('IndexBuildActions.RetryAsync(services)'),'recovery warnings must observe existing events and share the explicit update action without polling or direct storage access');
+const retryAction=read('shell/Cap7CE.WinUI/Services/IndexBuildActions.cs').split('public static async Task RetryAsync')[1].split('public static async Task<CatalogBuildResponse>')[0];
+assert(retryAction.includes('CoreOperations.CatalogStatus')&&retryAction.includes('CoreOperations.CatalogBuild')&&!/CatalogRebuild|VolumeSelection|Preferences\./.test(retryAction),'recovery retry must recheck current state without forced rebuilding or changing selected volumes');
+assert(read('shell/Cap7CE.WinUI/Services/CatalogChangeSubscription.cs').includes('if(first||value.State!=state||value.Reason!=reason)')&&singleRecoveryLifecycle(),'initial maintenance status must be observed and the recovery UI retired with its main window');
+function singleRecoveryLifecycle(){return read('shell/Cap7CE.WinUI/MainWindow.xaml.cs').includes('indexRecovery.Dispose()');}
 assert(read('shell/Cap7CE.WinUI/Services/AutoKeywordTasks.cs').includes('TaskNotices.Finish('), 'AI batches must publish one aggregate terminal outcome');
 const shortcutCatalog=read('shell/Cap7CE.WinUI/Models/ShortcutCatalog.cs');
 const singleMain=read('shell/Cap7CE.WinUI/MainWindow.xaml.cs');

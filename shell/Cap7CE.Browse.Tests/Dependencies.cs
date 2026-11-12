@@ -36,6 +36,7 @@ namespace Cap7CE.WinUI.Services
     internal sealed class ShellServices
     {
         public CoreConnection? Core {get;set;}
+        public CatalogChangeNotice? CatalogMaintenance {get;set;}
         public PreferenceStore Preferences {get;}=new();
         public VisualConnection Visuals {get;}=new();
         public DeletedPathTracker DeletedPaths {get;set;}=new(_=>false);
@@ -52,6 +53,7 @@ namespace Cap7CE.WinUI.Services
         public bool Queryable {get;set;}=true;
         public CatalogStatusResponse IndexStatus {get;set;}=new([],[],0);
         public Queue<CatalogStatusResponse> IndexSnapshots {get;}=new();
+        public Queue<CatalogChangeNotice> ChangeNotices {get;}=new();
         public CoreVolumeStatus[] IndexVolumes {get;set;}=[];
         public List<(string Operation,object Body)> Requests {get;}=[];
         public TaskCompletionSource? Resolving {get;set;}
@@ -60,7 +62,8 @@ namespace Cap7CE.WinUI.Services
         {
             Requests.Add((operation,body));
             object result;
-            if(operation==CoreOperations.CatalogStatus)result=IndexSnapshots.Count>0?IndexSnapshots.Dequeue():IndexStatus;
+            if(operation is CoreOperations.CatalogAwaitChanges or CoreOperations.CatalogAwaitScopedChanges){if(ChangeNotices.Count==0)await Task.Delay(Timeout.Infinite,token);result=ChangeNotices.Dequeue();}
+            else if(operation==CoreOperations.CatalogStatus)result=IndexSnapshots.Count>0?IndexSnapshots.Dequeue():IndexStatus;
             else if(operation==CoreOperations.VolumeList)result=new VolumeListResponse(IndexVolumes);
             else if(operation==CoreOperations.VolumeSelection)result=new VolumeSelectionResponse(((VolumeSelectionRequest)body).VolumeIds);
             else if(operation is CoreOperations.CatalogBuild or CoreOperations.CatalogRebuild)result=new CatalogBuildResponse("fixture-build",true);

@@ -1,4 +1,9 @@
 {
+  "ui.indexRecovery.title": {"zh-CN": "目录索引需要处理", "en-US": "Directory index needs attention"},
+  "ui.indexRecovery.settings": {"zh-CN": "查看设置", "en-US": "View settings"},
+  "ui.indexRecovery.failed": {"zh-CN": "{drives} 的后台索引更新已停止，搜索结果可能不完整。可以重试，或在设置中查看状态。", "en-US": "Background index updates stopped for {drives}. Search results may be incomplete. Retry or check the status in Settings."},
+  "ui.indexRecovery.unavailable": {"zh-CN": "{drives} 的后台索引更新暂不可用，请在设置中检查搜索组件。", "en-US": "Background index updates are unavailable for {drives}. Check the search components in Settings."},
+  "ui.indexRecovery.incomplete": {"zh-CN": "{drives} 的目录索引尚未完成或需要恢复，搜索结果可能不完整。", "en-US": "The directory index for {drives} is incomplete or needs recovery. Search results may be incomplete."},
   "ui.desktop.chooseApp": {"zh-CN": "添加应用", "en-US": "Add an app"},
   "ui.desktop.searchApps": {"zh-CN": "搜索应用名称", "en-US": "Search app names"},
   "ui.desktop.browseFile": {"zh-CN": "浏览文件…", "en-US": "Browse files…"},

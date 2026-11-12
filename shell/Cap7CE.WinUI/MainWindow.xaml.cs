@@ -30,6 +30,7 @@ public sealed partial class MainWindow : Window
     private readonly PreviewSelectionController<Models.AssetItem> previewLink;
     private readonly AutoKeywordNoticeController keywordNotice;
     private readonly IndexNoticeController indexNotice;
+    private readonly IndexRecoveryNotice indexRecovery;
     private readonly IndexOnboardingController indexOnboarding;
     private readonly MetadataNoticeController metadataNotice;
     private readonly MetadataFilterPromptController metadataFilters;
@@ -62,6 +63,7 @@ public sealed partial class MainWindow : Window
         commands=new(services,()=>Root.XamlRoot,Notice,WinRT.Interop.WindowNative.GetWindowHandle(this));details=new(services,commands,Notice,()=>{OpenSettings();settings?.ShowIndex();});
         keywordNotice=new(services.AutoKeywords,notifications,details.SetAutoKeywordBusy);
         indexNotice=new(services,notifications);
+        indexRecovery=new(services,()=>{OpenSettings();settings?.ShowIndex();},Notice);
         metadataNotice=new(services.Metadata,notifications);
         metadataFilters=new(services,()=>active,()=>Root.XamlRoot,Notice);filters.MetadataUnavailable+=metadataFilters.Request;
         previewLink=new(item=>item.FullPath,item=>!item.Entry.IsDirectory,results.SelectSingle,item=>preview?.FollowSelection(item),()=>preview?.Close());
@@ -71,7 +73,7 @@ public sealed partial class MainWindow : Window
         layout.HorizontalGridChanged+=value=>{results.SetHorizontal(value);toolbar.SetCompact(value);};
         results.SetHorizontal(layout.HorizontalGrid);toolbar.SetCompact(layout.HorizontalGrid);
         SidebarHost.Content=sidebar;ToolbarHost.Content=toolbar;FilterHost.Content=filters;ResultsHost.Content=results;DetailsHost.Content=details;
-        NoticeHost.Content=notifications;
+        NoticeHost.Content=Ui.Column(indexRecovery,notifications);
         results.Configure(commands);results.SelectionChanged+=items=>{if(DetailsBorder.Visibility==Visibility.Visible)details.Select(items);previewLink.SelectionChanged(active,items);QueueCatalogRefresh();};
         services.VisualMaintenance+=busy=>{if(busy){preview?.Close();details.Stop();}results.Suspend(busy||minimized);if(!busy)Refresh();};
         results.Retry+=Refresh;results.ClearFilters+=()=>{if(active is null)return;active.Query="";active.Filter=new();Refresh();};toolbar.Failure+=Notice;
@@ -227,7 +229,7 @@ public sealed partial class MainWindow : Window
     }
     private async void OnClosed(object sender,WindowEventArgs e)
     {
-        closed=true;desktopActions.Dispose();indexOnboarding.Dispose();catalogHealth.Dispose();services.Updates.InstallerStarted-=tray.Exit;tray.Dispose();commandInput.Dispose();services.Notifications.Invoked-=NotificationInvoked;services.Notifications.UpdateInvoked-=UpdateNotificationInvoked;ResultDrag.Changed-=edgeCollapse.Wake;edgeCollapse.Dispose();pointerInput.Dispose();keywordNotice.Dispose();indexNotice.Dispose();metadataNotice.Dispose();metadataFilters.Dispose();notifications.Dispose();filterAvailability.Dispose();services.Preferences.Changed-=ApplyPreferences;layout.Dispose();details.Stop();preview?.Close();settings?.Close();AssetTile.Visuals=null;
+        closed=true;desktopActions.Dispose();indexOnboarding.Dispose();catalogHealth.Dispose();services.Updates.InstallerStarted-=tray.Exit;tray.Dispose();commandInput.Dispose();services.Notifications.Invoked-=NotificationInvoked;services.Notifications.UpdateInvoked-=UpdateNotificationInvoked;ResultDrag.Changed-=edgeCollapse.Wake;edgeCollapse.Dispose();pointerInput.Dispose();keywordNotice.Dispose();indexNotice.Dispose();indexRecovery.Dispose();metadataNotice.Dispose();metadataFilters.Dispose();notifications.Dispose();filterAvailability.Dispose();services.Preferences.Changed-=ApplyPreferences;layout.Dispose();details.Stop();preview?.Close();settings?.Close();AssetTile.Visuals=null;
         active.Changed-=Bind;active.Dispose();
         try{await services.DisposeAsync();}catch{}
     }

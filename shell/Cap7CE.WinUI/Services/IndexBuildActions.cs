@@ -7,6 +7,17 @@ namespace Cap7CE.WinUI.Services;
 // Both settings and onboarding use the same existing Core selection/build actions.
 internal static class IndexBuildActions
 {
+    public static async Task RetryAsync(ShellServices services)
+    {
+        var core=services.Core;if(core?.IsConnected!=true)throw new UiFailure("ui.error.coreDisconnected");
+        var status=await core.RequestAsync<CatalogStatusResponse>(CoreOperations.CatalogStatus,new{});
+        var issue=IndexRecoveryPolicy.Evaluate(status,services.CatalogMaintenance?.State);
+        if(issue is {CanRetry:true}){
+            var reply=await core.RequestAsync<CatalogBuildResponse>(CoreOperations.CatalogBuild,new CatalogBuildRequest(issue.VolumeIds));
+            if(reply.Accepted)services.TaskNotices.Begin("index",reply.TaskId);
+        }
+        await services.RefreshVolumesAsync();
+    }
     public static async Task<CatalogBuildResponse> StartAsync(ShellServices services,string[] ids,bool rebuild=false)
     {
         var core=services.Core;if(core?.IsConnected!=true)throw new UiFailure("ui.error.coreDisconnected");
