@@ -442,9 +442,10 @@ internal sealed partial class ReaderNtfsVolume : IDisposable
             CancellationToken token)
         {
             var page = ReadPage(expectedCursor, maximumRecords, token);
-            var records = page.Records.Select(record =>
+            var pageFacts = ReaderSnapshotFacts.Read(page.Records, owner.TryReadBasicFacts, token);
+            var records = page.Records.Select((record, index) =>
             {
-                var facts = owner.TryReadBasicFacts(record.FileReference, record.IsDirectory);
+                var facts = pageFacts[index];
                 owner.snapshotEntries.Add(record, facts);
                 return new ReaderMftRecordV2(
                     record.FileReference,

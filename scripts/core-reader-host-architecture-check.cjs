@@ -9,7 +9,8 @@ const expectedHostFiles = [
   "Cap7CE.Core.Reader.Host.csproj", "packages.lock.json", "Program.cs", "DirectoryEntries",
   "ReaderFixtureService.cs", "ReaderHostAssembly.cs", "ReaderHostConstants.cs", "ReaderConnectionLifetime.cs",
   "ReaderNativePipe.cs", "ReaderNtfsVolume.cs", "ReaderJournalWaitIo.cs", "ReaderProbeResult.cs", "ReaderServiceConfig.cs",
-  "ReaderJournalWaitCoordinator.cs", "ReaderJournalWaitChannel.cs", "ReaderVolumeService.cs", "ReaderWindowsService.cs"
+  "ReaderJournalWaitCoordinator.cs", "ReaderJournalWaitChannel.cs", "ReaderVolumeService.cs", "ReaderWindowsService.cs",
+  "ReaderSnapshotFacts.cs"
 ];
 const actualHostFiles = fs.readdirSync(hostRoot).filter((name) => !name.startsWith(".")).sort();
 if (JSON.stringify(actualHostFiles) !== JSON.stringify([...expectedHostFiles].sort())) {
@@ -20,6 +21,11 @@ const hostSources = actualHostFiles.filter((name) => name.endsWith(".cs"))
   .map((name) => [name, fs.readFileSync(path.join(hostRoot, name), "utf8")])
   .concat(fs.readdirSync(path.join(hostRoot, "DirectoryEntries")).map(name => [`DirectoryEntries/${name}`, read(`core/src/Cap7CE.Core.Reader.Host/DirectoryEntries/${name}`)]));
 const hostCombined = hostSources.map(([, source]) => source).join("\n"); require("./core-reader-journal-wait-boundary-check.cjs")(root, failures); require("./core-reader-connection-boundary-check.cjs")(root, failures);
+const snapshotFacts = read("core/src/Cap7CE.Core.Reader.Host/ReaderSnapshotFacts.cs");
+for (const anchor of ["ReaderProtocol.MaximumRecordsPerPage", "MaxDegreeOfParallelism = 2", "CancellationToken = token"])
+  if (!snapshotFacts.includes(anchor)) failures.push(`Snapshot facts lost its bounded execution contract: ${anchor}.`);
+if (/ReaderSnapshotEntryCache|ReaderNtfsVolume|Task\.Run|new Thread\b/.test(snapshotFacts))
+  failures.push("Snapshot facts must not own cache, volume lifetime or detached workers.");
 for (const [pattern, capability] of [
   [/System\.Net|HttpClient|Socket\b/, "network API"],
   [/Microsoft\.Data\.Sqlite|System\.Data\.SQLite/, "catalog access"],

@@ -118,6 +118,7 @@ await NativeFileEntryTests.RunAsync();
 await NativeFileEntryCatalogTests.RunAsync();
 await ReaderHardLinkMetadataTests.RunAsync();
 ReaderSnapshotEntryCacheTests.Run();
+await ReaderSnapshotFactsTests.RunAsync();
 ReaderEntryPresenceTests.Run();
 await ReaderFileEntryProtocolTests.RunAsync();
 await ReaderFileEntryClientTests.RunAsync();
