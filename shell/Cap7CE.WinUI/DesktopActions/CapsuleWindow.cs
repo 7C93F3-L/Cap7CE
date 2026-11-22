@@ -64,7 +64,7 @@ internal sealed class CapsuleWindow : Window
         var y=options.Y==int.MinValue?area.Y+Math.Max(0,(area.Height-height)/2):Math.Clamp(options.Y,area.Y,Math.Max(area.Y,area.Y+area.Height-height));
         if(!pressed)AppWindow.MoveAndResize(new(x,y,width,height));
         if(!shown){shown=true;AppWindow.Show(false);}
-        frame.Apply();RefreshShadow();
+        frame.Apply();RefreshShadow();if(menu is Flyout{Content:CapsuleMenu history})history.RefreshHistory();
     }
     private void RefreshShadow(){var pos=AppWindow.Position;var size=AppWindow.Size;shadow.Update(WinRT.Interop.WindowNative.GetWindowHandle(this),pos.X,pos.Y,size.Width,size.Height,Dpi()/96d,AppWindow.IsVisible);}
     private uint Dpi(){var dpi=GetDpiForWindow(WinRT.Interop.WindowNative.GetWindowHandle(this));return dpi==0?96:dpi;}
@@ -116,7 +116,7 @@ internal sealed class CapsuleWindow : Window
             context.Items.Add(new MenuFlyoutSeparator());var quit=new MenuFlyoutItem{Text=AppLanguage.Text("ui.tray.exit")};
             quit.Click+=(_,_)=>{menu?.Hide();exit();};context.Items.Add(quit);next=context;
         }else{
-            var flyout=ThemeService.Flyout(new CapsuleMenu(services.DesktopActions.Current,item=>{menu?.Hide();replay(item);},(app,layout)=>{menu?.Hide();run(app,layout);}));
+            var flyout=ThemeService.Flyout(new CapsuleMenu(()=>services.DesktopActions.Current,item=>{menu?.Hide();replay(item);},(app,layout)=>{menu?.Hide();run(app,layout);},item=>services.DesktopActions.RemoveHistoryAsync([item]),failure));
             var style=new Style(typeof(FlyoutPresenter));style.Setters.Add(new Setter(Control.PaddingProperty,new Thickness(0)));
             style.Setters.Add(new Setter(Control.BackgroundProperty,Application.Current.Resources["CapFlyoutSurfaceBrush"]));
             style.Setters.Add(new Setter(Control.CornerRadiusProperty,Application.Current.Resources["CapPanelRadius"]));

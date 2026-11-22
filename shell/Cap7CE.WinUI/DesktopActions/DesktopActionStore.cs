@@ -47,5 +47,10 @@ internal sealed class DesktopActionStore
         var defaults=new DesktopActionOptions();
         return UpdateAsync(v=>v with{Size=defaults.Size,X=defaults.X,Y=defaults.Y,Vertical=defaults.Vertical});
     }
+    public Task RemoveHistoryAsync(IReadOnlyList<DesktopSearch> items)
+    {
+        var selected=new HashSet<DesktopSearch>(items,ReferenceEqualityComparer.Instance);
+        return UpdateAsync(value=>value with{History=value.History.Where(item=>!selected.Contains(item)).ToArray()});
+    }
     public Task ClearHistoryAsync()=>UpdateAsync(value=>value with{History=[]});
 }

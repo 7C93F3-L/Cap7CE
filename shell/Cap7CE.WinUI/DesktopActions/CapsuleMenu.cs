@@ -7,19 +7,22 @@ using Microsoft.UI.Xaml.Media;
 namespace Cap7CE.WinUI.DesktopActions;
 internal sealed class CapsuleMenu : UserControl
 {
-    public CapsuleMenu(DesktopActionOptions options,Action<DesktopSearch> replay,Action<DesktopProgram,int> run)
+    private readonly StackPanel history=Ui.Column();
+    private readonly Action refreshHistory;public void RefreshHistory()=>refreshHistory();
+    public CapsuleMenu(Func<DesktopActionOptions> read,Action<DesktopSearch> replay,Action<DesktopProgram,int> run,Func<DesktopSearch,Task> remove,Action<Exception> failure)
     {
         var body=Ui.Column();body.Width=260;body.Margin=new(12);
-        if(options.RecordHistory){
-            body.Children.Add(Ui.Text(AppLanguage.Text("ui.desktop.recent"),true));
-            foreach(var item in options.History.Take(options.HistoryCount)){
-                var text=new TextBlock{Text=item.Query,TextTrimming=TextTrimming.CharacterEllipsis};
-                var button=new Button{Content=text,HorizontalAlignment=HorizontalAlignment.Stretch,HorizontalContentAlignment=HorizontalAlignment.Stretch};
-                ToolTipService.SetToolTip(button,item.Query);button.Click+=(_,_)=>replay(item);body.Children.Add(button);
-            }
-            if(options.History.Length==0)body.Children.Add(Description("ui.desktop.historyEmpty"));
-            body.Children.Add(new Border{Height=1,Background=(Microsoft.UI.Xaml.Media.Brush)Application.Current.Resources["DividerStrokeColorDefaultBrush"],Margin=new(0,6,0,6)});
-        }
+        var options=read();
+        refreshHistory=()=>{
+            history.Children.Clear();var current=read();history.Visibility=current.RecordHistory?Visibility.Visible:Visibility.Collapsed;
+            if(!current.RecordHistory)return;
+            history.Children.Add(Ui.Text(AppLanguage.Text("ui.desktop.recent"),true));
+            foreach(var item in current.History.Take(current.HistoryCount))
+                history.Children.Add(new SearchHistoryRow(new(item.Query,()=>remove(item),failure),_=>replay(item),RefreshHistory));
+            if(current.History.Length==0)history.Children.Add(Description("ui.desktop.historyEmpty"));
+            history.Children.Add(new Border{Height=1,Background=(Brush)Application.Current.Resources["DividerStrokeColorDefaultBrush"],Margin=new(0,6,0,6)});
+        };
+        RefreshHistory();body.Children.Add(history);
         body.Children.Add(Ui.Text(AppLanguage.Text("ui.desktop.apps"),true));
         foreach(var app in options.Programs)body.Children.Add(ProgramRow(app,run));
         if(options.Programs.Length==0)body.Children.Add(Description("ui.desktop.appsEmpty"));

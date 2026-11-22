@@ -9,6 +9,7 @@ await DragTransferChecks.RunAsync();if(args is ["--drag-transfer"])return;
 if(args is ["--desktop-apps"]){await DesktopActionChecks.RunAsync();await DesktopApplicationChecks.RunAsync();return;}
 await WorkerIdleChecks.RunAsync();
 await DesktopActionChecks.RunAsync();
+await HistoryDeletionChecks.RunAsync();
 ScopedSearchHistoryChecks.Run();
 await NativeSnapChecks.RunAsync();
 CapsuleClickChecks.Run();

@@ -45,6 +45,10 @@ module.exports = read => {
   assert(!read(base + 'CapsuleWindow.cs').includes('ThemeService.Apply('), 'capsule cannot acquire the main-window caption wrapper');
   const store = read(base + 'DesktopActionStore.cs'), controller = read(base + 'DesktopActionController.cs');
   const historyPopup = read('shell/Cap7CE.WinUI/Controls/Workspace/SearchHistoryPopup.cs');
+  const historyRow = read('shell/Cap7CE.WinUI/Controls/Workspace/SearchHistoryRow.cs');
+  assert(historyRow.trimEnd().split(/\r?\n/).length <= 70 && !/DesktopActionStore|BrowseSession|File\.|RequestAsync|CoreConnection/.test(historyRow), 'history rows must stay bounded presentation controls with injected actions');
+  assert(historyRow.includes('Children.Add(open);Children.Add(remove)') && historyRow.includes('if(busy)return') && historyPopup.includes('IsItemClickEnabled=false'), 'remove clicks cannot route through the search button or parent item-click handler');
+  assert(store.includes('ReferenceEqualityComparer.Instance') && store.includes('RemoveHistoryAsync'), 'history deletion must target captured entries through the sole persistent owner');
   assert(historyPopup.trimEnd().split(/\r?\n/).length <= 90 && !/DesktopActionStore|BrowseSession|File\.|RequestAsync|CoreConnection/.test(historyPopup), 'history popup must remain a bounded presentation component with injected suggestions and submission');
   assert(historyPopup.includes('ThemeService.Flyout(surface)') && historyPopup.includes('popup.ShowAt(input') && historyPopup.includes('FlyoutShowMode.Transient') && !/HorizontalOffset|VerticalOffset|TransformToVisual|new Popup/.test(historyPopup), 'search history must use the shared acrylic flyout anchored to its editor without compounded coordinate offsets or stolen typing focus');
   assert(historyPopup.includes('Control.BackgroundProperty,Application.Current.Resources["CapFlyoutSurfaceBrush"]') && historyPopup.includes('Control.CornerRadiusProperty,Application.Current.Resources["CapPanelRadius"]'), 'local history presenter styling must retain the shared backdrop-transparent surface and panel radius');

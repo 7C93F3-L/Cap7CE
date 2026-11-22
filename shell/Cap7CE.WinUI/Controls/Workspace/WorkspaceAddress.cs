@@ -93,7 +93,7 @@ internal sealed class WorkspaceAddress : UserControl
         editing=false;searchMode=true;search.Text=text;Render();if(!busy)search.Focus(FocusState.Programmatic);
     }
     public void FocusSearch(){editing=false;searchMode=true;Render();search.Focus(FocusState.Programmatic);history.Open();}
-    public void SetSearchHistory(Func<string,IReadOnlyList<string>>? provider,Action? clearHistory)=>history.SetProvider(provider,clearHistory);
+    public void SetSearchHistory(Func<string,IReadOnlyList<SearchHistoryItem>>? provider,Action? clearHistory)=>history.SetProvider(provider,clearHistory);
     public void CloseSearchHistory()=>history.Close();
     public void FocusPath(){CommandCancelled?.Invoke();searchMode=false;editing=true;address.Text=path;Render();address.Focus(FocusState.Programmatic);address.SelectAll();}
     private bool HasButton(DependencyObject? element)

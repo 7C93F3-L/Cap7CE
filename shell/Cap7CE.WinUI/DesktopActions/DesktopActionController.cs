@@ -32,7 +32,10 @@ internal sealed class DesktopActionController : IDisposable
         capsule??=new(services,Replay,RunProgram,settings,()=>WindowActivation.Show(main),exit,error=>notice(FailureText.From(error)));
         capsule.Configure();
     });
-    private IReadOnlyList<string> History(string text)=>!ready||disposed?[]:ScopedSearchHistory.Select(services.DesktopActions.Current,session.PathValue,session.PreferenceScope==WorkspacePreferenceScope.Favorites,session.EntryPath,text);
+    private IReadOnlyList<SearchHistoryItem> History(string text)=>!ready||disposed?[]:
+        ScopedSearchHistory.Groups(services.DesktopActions.Current,session.PathValue,session.PreferenceScope==WorkspacePreferenceScope.Favorites,session.EntryPath,text)
+            .Select(group=>new SearchHistoryItem(group[0].Query,()=>services.DesktopActions.RemoveHistoryAsync(group),
+                error=>{if(!disposed)notice(FailureText.From(error));})).ToArray();
     private async void ClearHistory()
     {
         if(disposed)return;toolbar.CloseSearchHistory();
