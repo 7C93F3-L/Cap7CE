@@ -14,7 +14,9 @@ internal static class CatalogTextCandidateSql
         if (!entries || FirstTerm(query) is not { } term) { CatalogQueryScopeSql.Append(sql, command, query.Scope, entries); return; }
         command.Parameters.AddWithValue("$candidateTerm", Pattern(term));
         sql.Append("WITH text_candidates(volume_id,file_reference,entry_key) AS MATERIALIZED (");
-        sql.Append("SELECT n.volume_id,n.file_reference,'' FROM catalog_nodes_v2 n WHERE n.exists_flag=1 AND (");
+        // This broad text predicate needs node fields, not an extension-index scan
+        // followed by primary-key lookups. The WITHOUT ROWID primary key covers them.
+        sql.Append("SELECT n.volume_id,n.file_reference,'' FROM catalog_nodes_v2 n INDEXED BY sqlite_autoindex_catalog_nodes_v2_1 WHERE n.exists_flag=1 AND (");
         sql.Append(Match("n", query.TextTarget, true));
         sql.Append("""
             ) AND (n.is_directory=1 OR NOT EXISTS(SELECT 1 FROM catalog_file_entry_sets s

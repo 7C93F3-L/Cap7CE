@@ -21,6 +21,9 @@ internal static class CatalogTextCandidateTests
                 ('text-c','0000000000000021','0000000000000011','leaf.txt','.txt',0,34,1,20,1,3),
                 ('text-c','0000000000000030','0000000000000099','detached','',1,16,1,NULL,1,2),
                 ('text-c','0000000000000031','0000000000000099','legacy.png','.png',0,32,1,30,1,4),
+                ('text-c','0000000000000040','0000000000000010','灯10.png','.png',0,32,1,10,1,2),
+                ('text-c','0000000000000041','0000000000000010','灯2.png','.png',0,32,1,10,1,2),
+                ('text-c','0000000000000042','0000000000000010','quote''s.png','.png',0,32,1,10,1,2),
                 ('text-d','0000000000000005','0000000000000005','.','',1,16,1,NULL,1,2),
                 ('text-d','0000000000000020','0000000000000005','d-only.bin','.bin',0,34,1,10,1,2);
                 INSERT INTO catalog_directory_paths_v2 VALUES
@@ -29,6 +32,9 @@ internal static class CatalogTextCandidateTests
                 INSERT INTO catalog_manual_keywords VALUES
                 ('text-c','0000000000000020','1','["logo","sea_wave"]','logo sea_wave',0),
                 ('text-c','0000000000000020','2','["obsolete"]','obsolete',0);
+                WITH RECURSIVE retired(i) AS (VALUES(1) UNION ALL SELECT i+1 FROM retired WHERE i<256)
+                INSERT INTO catalog_nodes_v2
+                SELECT 'text-c',printf('%016X',4096+i),'0000000000000010','retired logo blue 灯.png','.png',0,32,0,10,1,2 FROM retired;
                 """);
             if (entries) await new CatalogFileEntryStore(catalog).ReplaceAsync(new("text-c", "0000000000000020"), new(1, 2, 10), 0,
                 [new("0000000000000010", "logo%_A.png"), new("0000000000000011", "other.png"),
@@ -38,7 +44,7 @@ internal static class CatalogTextCandidateTests
                 if (retired) await Sql("UPDATE catalog_nodes_v2 SET exists_flag=0 WHERE volume_id='text-c' AND file_reference='0000000000000011';");
                 var all = (await catalog.QueryAsync(basis)).Items;
                 foreach (var text in new[] { "", "logo", "blue", "sea_wave", "obsolete", "%", "_", "logo%_a", ".", "蓝", "detached",
-                    "C:", "c:\\", "C: leaf", "Projects\\blue", "logo blue", "logo Projects\\blue", "Projects\\blue logo", " projects    blue " })
+                    "C:", "c:\\", "C: leaf", "Projects\\blue", "logo blue", "logo Projects\\blue", "Projects\\blue logo", " projects    blue ", "灯", "quote's" })
                 foreach (var target in Enum.GetValues<CatalogQueryTextTarget>()) {
                     var expected = all.Where(item => Matches(item, text, target)).Select(Key).Order().ToArray();
                     var actual = (await catalog.QueryAsync(basis with { Query = text, TextTarget = target })).Items.Select(Key).Order().ToArray();
@@ -62,12 +68,14 @@ internal static class CatalogTextCandidateTests
                 foreach (var sort in Enum.GetValues<CatalogQuerySort>())
                 foreach (var seed in new uint?[] { null, 42 }) {
                     var query = basis with { Query = "png", TextTarget = CatalogQueryTextTarget.NamePathOrKeywords, PageSize = 1, Sort = sort, RandomSeed = seed };
+                    var ordered = (await catalog.QueryAsync(query with { PageSize = 100 })).Items.Select(Key).ToArray();
                     var paged = new List<string>();
                     do {
                         var page = await catalog.QueryAsync(query); paged.AddRange(page.Items.Select(Key)); query = query with { After = page.Next };
                         TestAssert.True(paged.Count <= all.Count, "text candidate cursor cannot repeat entries");
                     } while (query.After is not null);
                     TestAssert.True(all.Where(item => Matches(item, "png", query.TextTarget)).Select(Key).Order().SequenceEqual(paged.Order()), "all sort and random cursors preserve each alias exactly once");
+                    TestAssert.True(ordered.SequenceEqual(paged), "text candidate paging preserves the complete sorted result order");
                 }
             }
             async Task Sql(string text)
