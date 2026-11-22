@@ -57,6 +57,7 @@ namespace Cap7CE.WinUI.Services
         public CoreVolumeStatus[] IndexVolumes {get;set;}=[];
         public List<(string Operation,object Body)> Requests {get;}=[];
         public TaskCompletionSource? Resolving {get;set;}
+        public Func<CancellationToken,Task<SearchPageResponse>>? NextPage {get;set;}
         public bool Supports(string operation)=>true;
         public async Task<T> RequestAsync<T>(string operation,object body,CancellationToken token=default,int deadlineMs=15000)
         {
@@ -68,6 +69,7 @@ namespace Cap7CE.WinUI.Services
             else if(operation==CoreOperations.VolumeSelection)result=new VolumeSelectionResponse(((VolumeSelectionRequest)body).VolumeIds);
             else if(operation is CoreOperations.CatalogBuild or CoreOperations.CatalogRebuild)result=new CatalogBuildResponse("fixture-build",true);
             else if(operation==CoreOperations.CatalogResolveScope){if(Resolving is {} wait)await wait.Task.WaitAsync(token);result=new CatalogResolveScopeResponse(Queryable,"v","5","E:","ready",Queryable,"5");}
+            else if(operation==CoreOperations.SearchNextPage&&NextPage is { } next)result=await next(token);
             else result=new SearchPageResponse([new("file","file.txt","file.txt",".txt",false,"v")],operation==CoreOperations.SearchStart?"next":null,operation!=CoreOperations.SearchStart,1);
             token.ThrowIfCancellationRequested();return (T)result;
         }
@@ -77,12 +79,12 @@ namespace Cap7CE.WinUI.Services
         public List<(string Kind,string Id)> Started {get;}=[];
         public void Begin(string kind,string id)=>Started.Add((kind,id));
     }
-    internal sealed class VisualConnection {public List<(string Path,bool Recursive)> Reads {get;}=[];public IReadOnlyList<AssetItem> Items {get;set;}=[];}
+    internal sealed class VisualConnection {public bool IsActive=>true;public List<(string Path,bool Recursive)> Reads {get;}=[];public IReadOnlyList<AssetItem> Items {get;set;}=[];public bool HasMore {get;set;}public Exception? NextFailure {get;set;}}
     internal sealed class DirectoryBrowseSession(VisualConnection visuals) : IDisposable
     {
         public Task<DirectoryBrowsePage> StartAsync(string path,string sort,bool hidden,bool recursive,CancellationToken token)
-        {token.ThrowIfCancellationRequested();visuals.Reads.Add((path,recursive));return Task.FromResult(new DirectoryBrowsePage(visuals.Items,null,visuals.Items.Count));}
-        public Task<DirectoryBrowsePage> NextAsync(string cursor,CancellationToken token)=>throw new Exception("Unexpected filesystem continuation");
+        {token.ThrowIfCancellationRequested();visuals.Reads.Add((path,recursive));return Task.FromResult(new DirectoryBrowsePage(visuals.Items,visuals.HasMore?"next":null,visuals.Items.Count));}
+        public Task<DirectoryBrowsePage> NextAsync(string cursor,CancellationToken token)=>Task.FromException<DirectoryBrowsePage>(visuals.NextFailure??new Exception("Unexpected filesystem continuation"));
         public void Dispose(){}
     }
     internal sealed record DirectoryBrowsePage(IReadOnlyList<AssetItem> Items,string? NextCursor,long? TotalCount);

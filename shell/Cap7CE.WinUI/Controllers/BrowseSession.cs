@@ -122,7 +122,7 @@ internal sealed class BrowseSession(ShellServices services) : IDisposable
                 }
                 volumes = [resolved.VolumeId!]; scope = new(BrowseScopeRules.DirectoryScope(Query, Recursive, Filter.Count > 0), resolved.VolumeId, resolved.DirectoryFileReference);
             }
-            var result = new AssetCollection(); string? cursor = null;
+            var result = new AssetCollection(); string? cursor = null;var cursorCore=services.Core;var liveContinuation=false;
             if (path.Length == 0 && string.IsNullOrWhiteSpace(Query) && Filter.Count == 0 && !Random)
             {
                 foreach (var item in HomeEntries.Create()) result.Add(item);
@@ -135,6 +135,7 @@ internal sealed class BrowseSession(ShellServices services) : IDisposable
                     TextTarget: "name-path-or-keywords", Facts: Filter.Facts, FileConditions: Filter.ToConditions(), ExcludeHidden: !ShowHidden, RandomSeed: Random ? Seed : null, IncludeTotalCount: false,
                     Continuation: services.Core.Supports(CoreOperations.SearchLive)?"live":null);
                 var page = await services.Core.RequestAsync<SearchPageResponse>(CoreOperations.SearchStart, request, token);
+                liveContinuation=request.Continuation=="live";
                 timing.Mark("first-page");
                 if (version != generation) return false;
                 Append(result, page); cursor = page.NextCursor; result.HasMoreItems = cursor is not null;
@@ -153,19 +154,22 @@ internal sealed class BrowseSession(ShellServices services) : IDisposable
             Remember(path,remember,origin);
             PathValue = path; Title = path.Length == 0 ? SystemLocations.Current.Computer?.Name??"" : SystemLocations.Current.NameForPath(path)??System.IO.Path.GetFileName(path.TrimEnd('\\'));
             var loading = false;
+            var pageDiagnostics=new BrowsePageDiagnostics(BrowsePageSource.Catalog,version);
             result.LoadPage = async () => {
                 if (loading || !result.HasMoreItems || version != generation) return 0;
                 loading = true;
+                var started=pageDiagnostics.Start();var stage=BrowsePageStage.Request;
                 try
                 {
                     var page = await services.Core.RequestAsync<SearchPageResponse>(CoreOperations.SearchNextPage, new SearchNextPageRequest(cursor!), token);
                     if (version != generation) return 0;
+                    stage=BrowsePageStage.Append;
                     Append(result, page); cursor = page.NextCursor; result.HasMoreItems = cursor is not null;
-                    Changed?.Invoke();
+                    stage=BrowsePageStage.Notify;Changed?.Invoke();pageDiagnostics.Succeeded();
                     return (uint)page.Items.Count;
                 }
                 catch (OperationCanceledException) { return 0; }
-                catch (Exception error) { if(version==generation){result.HasMoreItems = false; Error = FailureText.Refresh(error); Changed?.Invoke();} return 0; }
+                catch (Exception error) { pageDiagnostics.Failed(error,started,stage,()=>new(result.Count,version==generation,services.Core?.IsConnected==true,!ReferenceEquals(cursorCore,services.Core),liveContinuation));if(version==generation){result.HasMoreItems = false; Error = FailureText.Refresh(error); Changed?.Invoke();} return 0; }
                 finally { loading = false; }
             };
             Items = result;FilesystemBrowsing=false;
@@ -195,14 +199,17 @@ internal sealed class BrowseSession(ShellServices services) : IDisposable
         if(version!=generation)return false;
         var result=new AssetCollection{TotalCount=page.TotalCount};foreach(var item in page.Items)if(!IsDeleted(item.FullPath))result.Add(item);else if(result.TotalCount is { } count)result.TotalCount=Math.Max(0,count-1);
         var cursor=page.NextCursor;result.HasMoreItems=cursor is not null;var loading=false;
+        var pageDiagnostics=new BrowsePageDiagnostics(BrowsePageSource.Filesystem,version);
         result.LoadPage=async()=>{
             if(loading||!result.HasMoreItems||version!=generation)return 0;loading=true;
+            var started=pageDiagnostics.Start();var stage=BrowsePageStage.Request;
             try{
                 var next=await owner.NextAsync(cursor!,token);if(version!=generation)return 0;
+                stage=BrowsePageStage.Append;
                 foreach(var item in next.Items)if(!IsDeleted(item.FullPath))result.Add(item);else if(result.TotalCount is { } count)result.TotalCount=Math.Max(0,count-1);
-                cursor=next.NextCursor;result.HasMoreItems=cursor is not null;Changed?.Invoke();return (uint)next.Items.Count;
+                cursor=next.NextCursor;result.HasMoreItems=cursor is not null;stage=BrowsePageStage.Notify;Changed?.Invoke();pageDiagnostics.Succeeded();return (uint)next.Items.Count;
             }catch(OperationCanceledException){return 0;}
-            catch(Exception error){if(version==generation){result.HasMoreItems=false;Error=UiMessage.Key("ui.error.refresh",new Dictionary<string,object?>{{"error",FailureText.From(error)}});Changed?.Invoke();}return 0;}
+            catch(Exception error){pageDiagnostics.Failed(error,started,stage,()=>new(result.Count,version==generation,services.Core?.IsConnected==true,VisualWorkerActive:services.Visuals.IsActive));if(version==generation){result.HasMoreItems=false;Error=UiMessage.Key("ui.error.refresh",new Dictionary<string,object?>{{"error",FailureText.From(error)}});Changed?.Invoke();}return 0;}
             finally{loading=false;}
         };
         Remember(path,remember,origin);

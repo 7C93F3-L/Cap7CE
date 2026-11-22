@@ -59,6 +59,14 @@ assert(startup.indexOf('InstallerSearchSetup.IsRequest(args)')<startup.indexOf('
 assert(startup.indexOf('ApplicationIdentity.Initialize()')>=0 && startup.indexOf('ApplicationIdentity.Initialize()')<startup.indexOf('WinRT.ComWrappersSupport.InitializeComWrappers()'), 'public AUMID must be set before WinRT notification or window initialization');
 assert(!read('shell/Cap7CE.WinUI/Themes/ThemeService.cs').includes('window.Title = ""'), 'theme changes cannot erase system window titles');
 const browseRouting = read('shell/Cap7CE.WinUI/Controllers/BrowseSession.cs');
+const pageDiagnostics = read('shell/Cap7CE.WinUI/Services/BrowsePageDiagnostics.cs');
+assert(pageDiagnostics.trimEnd().split(/\r?\n/).length <= 100, 'paging diagnostics must remain a bounded domain observer');
+assert(!/SessionDiagnostics\.Error|error\.ToString|error\.StackTrace|GetFileName|File\.|Directory\.|RequestAsync|Task\.Run/.test(pageDiagnostics),
+  'paging diagnostics cannot serialize raw errors, own IO or replay operations');
+assert(pageDiagnostics.includes('SafeCode(error.Message)') && pageDiagnostics.includes('SafeCode(error.Data["CoreMessage"] as string)')
+  && pageDiagnostics.includes('new StackTrace(error, false)'), 'paging errors must use closed codes and stacks without file information');
+assert((browseRouting.match(/pageDiagnostics\.Failed\(error,started,stage/g) || []).length === 2,
+  'Catalog and filesystem continuations must both report failures');
 const catalogRefresh = read('shell/Cap7CE.WinUI/MainWindow.xaml.cs');
 assert(catalogRefresh.includes('sidebar.SetActiveEntry(active.EntryPath,active.PreferenceScope')
   && !catalogRefresh.includes('sidebar.SetActivePath(active.PathValue)'),

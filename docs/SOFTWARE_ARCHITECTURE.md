@@ -167,6 +167,8 @@ KeywordEditDialog仅承载右键关键词编辑会话，复用DetailsKeywordEdit
 
 WorkspaceNotice统一主窗口底部普通提示、查询、AI、索引、元数据和命令确认/执行的展示，使用固定高度及独立全宽进度行。各领域控制器继续拥有任务观察和取消；浮层只拥有提示显示优先级及隐藏计时，提示实际展示且鼠标未悬停时计时，任务遮挡或卸载时停止，移出后重新计时，不改变任务执行。
 
+BrowsePageDiagnostics仅在Catalog或文件系统续页发生非取消异常时向既有会话日志写browse.page.error，记录导航代次、请求/追加/通知阶段、已有数量、连接/会话变化、live模式、本次续页总耗时和距上次成功页的单调时间间隔。错误只保留固定白名单代码、类型、HRESULT、原生错误号和无文件信息的方法栈；不记录异常原文、目录/文件名、搜索正文或原始游标。成功续页和OperationCanceledException取消不写日志，不增加计时器、自动重试或新存储；过期/陈旧结果的原有界面处理保持不变。
+
 2.0.7保持当前安装与数据所有者边界，不新增旧版本兼容迁移。发布目录携带LICENSE、NOTICE和THIRD_PARTY_NOTICES；sharp固定为0.35.5，所有运行库仍由锁文件和现有复制脚本生成。介绍文档沿用2.0.0演示截图，素材来源记录在docs/assets/screenshots/ASSET_SOURCES.md。
 
 ## 辅助工作宿主空闲退役
