@@ -165,6 +165,7 @@ internal sealed class BrowseSession(ShellServices services) : IDisposable
                 var started=pageDiagnostics.Start();var stage=BrowsePageStage.Request;
                 try
                 {
+                    Changed?.Invoke();
                     var page = await services.Core.RequestAsync<SearchPageResponse>(CoreOperations.SearchNextPage, new SearchNextPageRequest(cursor!), token);
                     if (version != generation) return 0;
                     pagedResults=true;stage=BrowsePageStage.Append;
@@ -208,7 +209,7 @@ internal sealed class BrowseSession(ShellServices services) : IDisposable
             if(Busy||loading||!result.HasMoreItems||version!=generation)return 0;loading=true;pageLoads++;
             var started=pageDiagnostics.Start();var stage=BrowsePageStage.Request;
             try{
-                var next=await owner.NextAsync(cursor!,token);if(version!=generation)return 0;
+                Changed?.Invoke();var next=await owner.NextAsync(cursor!,token);if(version!=generation)return 0;
                 stage=BrowsePageStage.Append;
                 foreach(var item in next.Items)if(!IsDeleted(item.FullPath))result.Add(item);else if(result.TotalCount is { } count)result.TotalCount=Math.Max(0,count-1);
                 cursor=next.NextCursor;result.HasMoreItems=cursor is not null;stage=BrowsePageStage.Notify;Changed?.Invoke();pageDiagnostics.Succeeded();return (uint)next.Items.Count;

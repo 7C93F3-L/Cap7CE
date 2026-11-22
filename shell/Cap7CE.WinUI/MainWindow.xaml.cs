@@ -156,7 +156,7 @@ public sealed partial class MainWindow : Window
         var preserveSelection=active.PreserveSelection;
         results.Bind(active.Items,active.PathValue.Length==0&&active.Query.Trim().Length==0&&active.Filter.Count==0&&!active.Random,active.ForegroundBusy,active.Error,active.Filter.Count>0||active.Query.Trim().Length>0,preserveSelection);
         details.SetContext(active.PathValue,active.ForegroundBusy?null:active.Items.TotalCount??(!active.Items.HasMoreItems?(long?)active.Items.Count:null),active.Filter.Count>0||active.Query.Trim().Length>0,active.Filter.Count,active.Items.Count,active.ForegroundBusy);
-        notifications.SetBusy(active.ForegroundBusy);if(active.Error is {} error&&active.Items.Count>0)Notice(error);
+        notifications.SetBusy(active.ForegroundBusy||active.LoadingPage);if(active.Error is {} error&&active.Items.Count>0)Notice(error);
         if(!active.Busy)QueueCatalogRefresh();
     }
     private void Refresh(){if(active is not null)commands.Run(()=>active.NavigateAsync(active.PathValue,false));}

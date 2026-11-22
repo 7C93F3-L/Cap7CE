@@ -22,7 +22,8 @@ internal sealed class ResultsGallery : UserControl
     public event Action? SelectionChanged;
     public ResultsGallery()
     {
-        repeater.Layout=layout;repeater.ItemTemplate=(DataTemplate)Application.Current.Resources["CapGalleryTileTemplate"];scroll.Content=repeater;Content=scroll;
+        repeater.Layout=layout;repeater.ItemTemplate=(DataTemplate)Application.Current.Resources["CapGalleryTileTemplate"];scroll.Content=repeater;
+        Content=scroll;
         IdleScrollBars.Attach(this);
         repeater.ElementPrepared+=(_,e)=>{
             if(e.Element is not GalleryTile tile)return;tiles.Add(tile);tile.Pick=Pick;tile.Open=Open;tile.Context=Context;tile.Drag=Drag;
@@ -87,12 +88,15 @@ internal sealed class ResultsGallery : UserControl
     }
     private void QueueLoadMore()
     {
-        if(pageQueued||loading||!IsLoaded||Visibility!=Visibility.Visible)return;pageQueued=true;
-        if(!DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Normal,async()=>{pageQueued=false;if(IsLoaded)await LoadMore();}))pageQueued=false;
+        if(pageQueued||loading||!IsLoaded||Visibility!=Visibility.Visible||items is not {HasMoreItems:true})return;pageQueued=true;
+        if(!DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Normal,async()=>{
+            try{if(IsLoaded)scroll.UpdateLayout();}finally{pageQueued=false;}
+            if(IsLoaded)await LoadMore();
+        }))pageQueued=false;
     }
     private async Task LoadMore()
     {
-        if(loading||Visibility!=Visibility.Visible||items is not {HasMoreItems:true,LoadPage:not null} source||scroll.ScrollableHeight-scroll.VerticalOffset>scroll.ViewportHeight)return;
+        if(loading||Visibility!=Visibility.Visible||items is not {HasMoreItems:true,LoadPage:not null} source||scroll.ViewportHeight<=0||scroll.ScrollableHeight-scroll.VerticalOffset>2*scroll.ViewportHeight)return;
         var before=source.Count;loading=true;
         try{await source.LoadPage();}
         finally{loading=false;if(source.Count>before||!ReferenceEquals(source,items))QueueLoadMore();}
