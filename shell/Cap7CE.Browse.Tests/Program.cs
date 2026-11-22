@@ -11,6 +11,7 @@ await WorkerIdleChecks.RunAsync();
 await DesktopActionChecks.RunAsync();
 ScopedSearchHistoryChecks.Run();
 await NativeSnapChecks.RunAsync();
+CapsuleClickChecks.Run();
 CapsuleShapeChecks.Run();
 CapsuleGlowChecks.Run();
 CapsuleShadowChecks.Run();

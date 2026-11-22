@@ -2,7 +2,7 @@ const assert = require('node:assert/strict');
 module.exports = read => {
   const base = 'shell/Cap7CE.WinUI/DesktopActions/';
   const limits = { 'ScopedSearchHistory.cs': 25, 'NativeSnapInput.cs': 110, 'NativeSnapSequence.cs': 40, 'DesktopActionStore.cs': 65, 'DesktopActionController.cs': 95, 'DesktopProgramWindows.cs': 55,
-    'CapsuleShadowTexture.cs': 35, 'CapsuleLayeredSurface.cs': 55, 'CapsuleShadowWindow.cs': 50, 'CapsuleGlowTexture.cs': 65, 'CapsuleGlowImage.cs': 40, 'CapsuleAppearance.cs': 75, 'CapsuleWindow.cs': 155, 'CapsuleWindowFrame.cs': 75, 'CapsuleTransparentBackdrop.cs': 30, 'CapsuleTransparency.cs': 45, 'CapsuleShape.cs': 25, 'CapsuleMenu.cs': 75, 'DesktopProgramSettingsRow.cs': 45, 'DesktopProgramIcon.cs': 25, 'DesktopActionSettings.cs': 110 };
+    'CapsuleClickGesture.cs': 40, 'CapsuleShadowTexture.cs': 35, 'CapsuleLayeredSurface.cs': 55, 'CapsuleShadowWindow.cs': 50, 'CapsuleGlowTexture.cs': 65, 'CapsuleGlowImage.cs': 40, 'CapsuleAppearance.cs': 75, 'CapsuleWindow.cs': 155, 'CapsuleWindowFrame.cs': 75, 'CapsuleTransparentBackdrop.cs': 30, 'CapsuleTransparency.cs': 45, 'CapsuleShape.cs': 25, 'CapsuleMenu.cs': 75, 'DesktopProgramSettingsRow.cs': 45, 'DesktopProgramIcon.cs': 25, 'DesktopActionSettings.cs': 110 };
   Object.assign(limits, { 'DesktopActionStore.cs': 64, 'DesktopProgramIcon.cs': 22, 'DesktopProgram.cs': 15, 'DesktopShellApartment.cs': 30, 'DesktopApplicationCatalog.cs': 45,
     'DesktopApplicationIdentity.cs': 45, 'DesktopShellImage.cs': 40, 'DesktopProgramImage.cs': 30, 'DesktopProgramPicker.xaml.cs': 80 });
   for (const [file, limit] of Object.entries(limits)) {
@@ -13,6 +13,10 @@ module.exports = read => {
     if (file !== 'NativeSnapInput.cs') assert(!/SendInput|keybd_event/.test(source), `${file}: keyboard injection belongs to the native snap driver`);
     if (file !== 'DesktopProgramWindows.cs') assert(!/Process\.Start|EnumWindows/.test(source), `${file}: external window operations have one owner`);
   }
+  const clicks = read(base + 'CapsuleClickGesture.cs'), capsule = read(base + 'CapsuleWindow.cs');
+  assert(!/Microsoft.UI|DllImport|Task\.|File\.|Directory\.|Process\.|ShellServices/.test(clicks), 'click arbitration must remain pure without window, clock or resource ownership');
+  assert(capsule.includes('GetDoubleClickTime()') && capsule.includes('GetSystemMetricsForDpi(36,Dpi())') && capsule.includes('GetSystemMetricsForDpi(37,Dpi())'), 'double clicks require system timing and physical distance thresholds');
+  assert(capsule.includes('closed=true;CancelClick()') && capsule.includes('if(pressed){pressed=false;CancelClick();}') && capsule.includes('if(clicks.Release())'), 'close, lost input capture and double clicks must retire delayed menu actions');
   const shadow = read(base + 'CapsuleShadowWindow.cs');
   const catalog = read(base + 'DesktopApplicationCatalog.cs'), picker = read(base + 'DesktopProgramPicker.xaml.cs');
   assert(catalog.includes('shell:AppsFolder') && catalog.includes('token.ThrowIfCancellationRequested()') && !/Directory\.(Enumerate|GetFiles|GetDirectories)/.test(catalog), 'app discovery must use Windows registrations on demand without scanning installation directories');
@@ -28,7 +32,6 @@ module.exports = read => {
   assert(!/Key\(0x5a/.test(native), 'the first experiment uses fixed native halves without dynamic layout numbers');
   assert(!read(base + 'CapsuleAppearance.cs').includes('glowBands') && read(base + 'CapsuleGlowTexture.cs').includes('Math.Exp('), 'capsule glow must use a continuous distance profile rather than stacked border rings');
   assert(read(base + 'CapsuleGlowImage.cs').includes('version==revision') && read(base + 'CapsuleGlowImage.cs').includes('writer.DetachStream()'), 'transient glow decoding must retire stale results and release memory streams');
-  const capsule = read(base + 'CapsuleWindow.cs');
   assert(capsule.includes('next.Opened+=') && capsule.includes('next.Closed+=') && capsule.includes('ReferenceEquals(menu,next)')
     && capsule.includes('pill.SetExpanded(false,inside)'), 'capsule highlight follows the current flyout lifetime and reconciles pointer position after closing');
   const frame = read(base + 'CapsuleWindowFrame.cs');

@@ -22,6 +22,8 @@ internal sealed class CapsuleWindow : Window
     private readonly Grid root=new();
     private readonly CapsuleWindowFrame frame;
     private readonly CapsuleShadowWindow shadow=new();
+    private readonly CapsuleClickGesture clicks=new();
+    private readonly DispatcherTimer clickTimer=new();
     private FlyoutBase? menu;
     private bool pressed,moved,shown,closed;
     private uint appliedDpi;
@@ -37,12 +39,14 @@ internal sealed class CapsuleWindow : Window
         frame=new(this,presenter);SystemBackdrop=new CapsuleTransparentBackdrop();
         pill.PointerPressed+=Pressed;pill.PointerMoved+=Moved;pill.PointerReleased+=Released;
         pill.RightTapped+=(_,e)=>{e.Handled=true;ShowMenu(true);};
-        pill.PointerCanceled+=(_,_)=>pressed=false;pill.PointerCaptureLost+=(_,_)=>pressed=false;
+        pill.PointerCanceled+=(_,_)=>{pressed=false;CancelClick();};
+        pill.PointerCaptureLost+=(_,_)=>{if(pressed){pressed=false;CancelClick();}};
+        clickTimer.Tick+=(_,_)=>{clickTimer.Stop();if(closed)return;if(clicks.TakeMenu(Environment.TickCount64))ShowMenu();else ArmClick();};
         pill.KeyDown+=(_,e)=>{if(e.Key is Windows.System.VirtualKey.Enter or Windows.System.VirtualKey.Space){e.Handled=true;ShowMenu();}};
         pill.IsTabStop=true;Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(pill,AppLanguage.Text("ui.desktop.capsule"));
         AppWindow.Changed+=(_,_)=>{if(shown&&!closed){RefreshShadow();if(!pressed&&Dpi()!=appliedDpi)DispatcherQueue.TryEnqueue(()=>{if(!closed&&!pressed)Configure();});}};
-        Activated+=(_,_)=>{if(shown&&!closed)RefreshShadow();};
-        Closed+=(_,_)=>{closed=true;shadow.Dispose();menu?.Hide();SystemBackdrop=null;frame.Dispose();};
+        Activated+=(_,e)=>{if(e.WindowActivationState==WindowActivationState.Deactivated&&!pressed)CancelClick();if(shown&&!closed)RefreshShadow();};
+        Closed+=(_,_)=>{closed=true;CancelClick();shadow.Dispose();menu?.Hide();SystemBackdrop=null;frame.Dispose();};
     }
     public void Configure()
     {
@@ -67,18 +71,23 @@ internal sealed class CapsuleWindow : Window
     private void Pressed(object sender,PointerRoutedEventArgs e)
     {
         if(!e.GetCurrentPoint(pill).Properties.IsLeftButtonPressed)return;
-        menu?.Hide();GetCursorPos(out start);origin=AppWindow.Position;moved=false;pressed=true;pill.CapturePointer(e.Pointer);e.Handled=true;
+        clickTimer.Stop();menu?.Hide();GetCursorPos(out start);origin=AppWindow.Position;moved=false;pressed=true;
+        clicks.Press(Environment.TickCount64,start.X,start.Y,GetDoubleClickTime(),GetSystemMetricsForDpi(36,Dpi()),GetSystemMetricsForDpi(37,Dpi()));
+        pill.CapturePointer(e.Pointer);e.Handled=true;
     }
     private void Moved(object sender,PointerRoutedEventArgs e)
     {
         if(!pressed)return;GetCursorPos(out var next);var dx=next.X-start.X;var dy=next.Y-start.Y;
         if(!moved&&Math.Abs(dx)+Math.Abs(dy)<6*Dpi()/96d)return;
-        moved=true;AppWindow.Move(new(origin.X+dx,origin.Y+dy));
+        CancelClick();moved=true;AppWindow.Move(new(origin.X+dx,origin.Y+dy));
     }
     private async void Released(object sender,PointerRoutedEventArgs e)
     {
         if(!pressed)return;pressed=false;pill.ReleasePointerCapture(e.Pointer);e.Handled=true;
-        if(!moved){ShowMenu();return;}
+        if(!moved){
+            if(clicks.Release()){try{menu?.Hide();openMain();}catch(Exception error){failure(error);}}
+            else ArmClick();return;
+        }
         try{
             var area=DisplayArea.GetFromWindowId(AppWindow.Id,DisplayAreaFallback.Nearest).WorkArea;
             var pos=AppWindow.Position;var size=AppWindow.Size;
@@ -91,9 +100,12 @@ internal sealed class CapsuleWindow : Window
             await services.DesktopActions.UpdateAsync(v=>v with{X=x,Y=y,Vertical=vertical});
         }catch(Exception error){failure(error);}
     }
+    private void CancelClick(){clickTimer.Stop();clicks.Cancel();}
+    private void ArmClick()
+    {var remaining=clicks.Remaining(Environment.TickCount64);if(remaining>0){clickTimer.Interval=TimeSpan.FromMilliseconds(remaining);clickTimer.Start();}}
     private void ShowMenu(bool management=false)
     {
-        FlyoutBase next;
+        CancelClick();FlyoutBase next;
         if(management){
             var context=new MenuFlyout();var open=new MenuFlyoutItem{Text=AppLanguage.Text("ui.tray.open")};
             open.Click+=(_,_)=>{menu?.Hide();openMain();};context.Items.Add(open);
@@ -124,6 +136,8 @@ internal sealed class CapsuleWindow : Window
         try{pill.SetExpanded(true);next.ShowAt(pill);}
         catch(Exception error){pill.SetExpanded(false);failure(error);}
     }
+    [DllImport("user32.dll")] private static extern uint GetDoubleClickTime();
+    [DllImport("user32.dll")] private static extern int GetSystemMetricsForDpi(int index,uint dpi);
     private struct NativePoint {public int X,Y;}
     [DllImport("user32.dll")] private static extern bool GetCursorPos(out NativePoint point);
     [DllImport("user32.dll")] private static extern uint GetDpiForWindow(nint handle);
