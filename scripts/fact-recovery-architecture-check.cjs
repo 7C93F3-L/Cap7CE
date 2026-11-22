@@ -6,6 +6,7 @@ const synchronization = read('core/src/Cap7CE.Core.Host/CatalogSynchronizationSe
 const publication = read('core/src/Cap7CE.Core.Catalog/Snapshots/CatalogSnapshotPublication.cs');
 const client = read('core/src/Cap7CE.Core.Host/ReaderV2CatalogSession.cs');
 const monitor = read('core/src/Cap7CE.Core.Host/CatalogMaintenance/CatalogJournalMonitor.cs');
+const retention = read('core/src/Cap7CE.Core.Catalog/Snapshots/CatalogSnapshotRetention.cs');
 const failures = [];
 if (recovery.split(/\r?\n/).length > 170) failures.push('Recovery staging exceeds its single-purpose size limit.');
 for (const pattern of [/DeviceIoControl|DllImport|Reader\.Host|FileStream/, /Process\.|System\.Net|HttpClient/, /ALTER TABLE|UPDATE catalog_nodes_v2|UPDATE file_fact_volumes/])
@@ -23,8 +24,19 @@ if (!synchronization.includes('CaptureFactRecoveryAsync(current, inspection, rea
   failures.push('Catch-up discontinuity recovery must preserve verified facts through the same snapshot publication owner.');
 if (!client.includes('hello.Capabilities.HasFlag(ReaderCapabilities.SnapshotFileUsn)') || !client.includes('response.Payload.Span, supportsSnapshotFileUsn'))
   failures.push('Snapshot USNs must use explicit capability negotiation.');
-if (publication.indexOf('factRecovery.RestoreAsync') > publication.indexOf('INSERT INTO catalog_nodes_v2')
-    || publication.indexOf('factRecovery.RestoreAsync') < publication.indexOf('connection.BeginTransaction()'))
+if (publication.indexOf('retention.PrepareAsync') > publication.indexOf('INSERT INTO catalog_nodes_v2')
+    || publication.indexOf('retention.PrepareAsync') < publication.indexOf('connection.BeginTransaction()'))
   failures.push('Fact restoration must share snapshot publication transaction before source replacement.');
+if (retention.split(/\r?\n/).length > 100) failures.push('Retained snapshot owner exceeds its size limit.');
+const beginRetention = retention.slice(retention.indexOf('public async Task<CatalogV2SnapshotBuild> BeginRetainedSnapshotBuildAsync'));
+if (/ApplyVolumeAsync|SET journal_id|SET checkpoint_usn|DELETE FROM|ALTER TABLE|File\.|Directory\.|Process\./.test(beginRetention))
+  failures.push('Retained staging must keep the original durable source and checkpoint without sidecar lifecycle or schema changes.');
+for (const anchor of ['recovery.CatalogPath', 'volume.CatalogRevision != recovery.SourceRevision', 'volume.CheckpointUsn != recovery.Checkpoint',
+    'state=\'catchingUp\'', 'RequireEpochAsync', 'FileFactCatalogInvalidation.ApplyVolumeAsync', 'recovery.RestoreAsync', 'checked(recovery.Epoch + 1)'])
+  if (!retention.includes(anchor)) failures.push(`Retained source fence is missing ${anchor}.`);
+if (!monitor.includes('includeInterrupted && (volume.State is CatalogV2VolumeState.NeedsRebuild or CatalogV2VolumeState.CatchingUp)'))
+  failures.push('Startup must resume retained catching-up snapshots.');
+if (!synchronization.includes('BeginRetainedSnapshotBuildAsync') || !synchronization.includes('if (factRecovery is null) current = await catalog.MarkNeedsRebuildAsync'))
+  failures.push('Retained snapshots must bypass pre-publication invalidation.');
 if (failures.length) throw Error(failures.join('\n'));
 console.log('Checkpoint-expiry fact recovery boundaries passed.');

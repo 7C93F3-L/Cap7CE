@@ -2,7 +2,7 @@ using Microsoft.Data.Sqlite;
 
 namespace Cap7CE.Core.Catalog.FileFacts;
 
-// Disposable evidence for one uninterrupted checkpoint-expiry rebuild, never a lasting extraction grant.
+// Per-attempt evidence, recaptured from the retained source after interruption; never an extraction grant.
 public sealed class CatalogFactRecovery : IAsyncDisposable
 {
     private readonly SqliteConnection staging;
@@ -12,11 +12,13 @@ public sealed class CatalogFactRecovery : IAsyncDisposable
     internal string Path { get; }
     internal string VolumeId { get; }
     internal long Epoch { get; }
+    internal long SourceRevision { get; }
+    internal string CatalogPath { get; }
     internal long Checkpoint { get; }
     internal string Journal { get; }
 
-    private CatalogFactRecovery(string path, string volume, long epoch, long checkpoint, string journal, SqliteConnection staging)
-    { Path = path; VolumeId = volume; Epoch = epoch; Checkpoint = checkpoint; Journal = journal; this.staging = staging; transaction = staging.BeginTransaction(); }
+    private CatalogFactRecovery(string path, string volume, long epoch, long checkpoint, string journal, long sourceRevision, string catalogPath, SqliteConnection staging)
+    { Path = path; VolumeId = volume; Epoch = epoch; Checkpoint = checkpoint; Journal = journal; SourceRevision = sourceRevision; CatalogPath = catalogPath; this.staging = staging; transaction = staging.BeginTransaction(); }
 
     public static async Task<CatalogFactRecovery?> CaptureAsync(CatalogV2Database catalog,
         CatalogV2VolumeSnapshot volume, CancellationToken token = default)
@@ -71,7 +73,7 @@ public sealed class CatalogFactRecovery : IAsyncDisposable
                     try
                     {
                         await staging.OpenAsync(token);
-                        var recovery = new CatalogFactRecovery(path, volume.VolumeId, epoch, volume.CheckpointUsn.Value, volume.JournalId, staging);
+                        var recovery = new CatalogFactRecovery(path, volume.VolumeId, epoch, volume.CheckpointUsn.Value, volume.JournalId, volume.CatalogRevision, catalog.DatabasePath, staging);
                         transferred = true;
                         return recovery;
                     }
@@ -109,12 +111,12 @@ public sealed class CatalogFactRecovery : IAsyncDisposable
         command.Parameters.AddWithValue("$path", Path); await command.ExecuteNonQueryAsync(token);
     }
 
-    internal async Task RestoreAsync(SqliteConnection connection, SqliteTransaction tx, CatalogV2VolumeSnapshot volume, CancellationToken token)
+    internal async Task RestoreAsync(SqliteConnection connection, SqliteTransaction tx, CatalogV2VolumeSnapshot volume, long targetEpoch, CancellationToken token)
     {
         if (volume.VolumeId != VolumeId || volume.JournalId != Journal || volume.CheckpointUsn is not { } checkpoint || checkpoint < Checkpoint) return;
         using var command = connection.CreateCommand(); command.Transaction = tx;
         command.Parameters.AddWithValue("$volume", VolumeId); command.Parameters.AddWithValue("$oldEpoch", Epoch);
-        command.Parameters.AddWithValue("$epoch", checked(Epoch + 2)); command.Parameters.AddWithValue("$checkpoint", Checkpoint);
+        command.Parameters.AddWithValue("$epoch", targetEpoch); command.Parameters.AddWithValue("$checkpoint", Checkpoint);
         command.CommandText = """
             CREATE TABLE fact_recovery.eligible AS
             SELECT f.file_reference,f.kind FROM fact_recovery.facts f

@@ -117,6 +117,8 @@ public sealed class CatalogSynchronizationService
             : CatalogPreparationDiagnostics.RebuildReason(catalogVolume, inspection)
                 ?? (forceRebuild ? "explicit-rebuild" : "marked-for-rebuild");
         await using var factRecovery = await CaptureFactRecoveryAsync(catalogVolume, inspection, reason, forceRebuild, token);
+        if (factRecovery is not null)
+            return await BuildSnapshotAsync(reader, readerVolume, catalogVolume, inspection, true, activity, reason, token, factRecovery);
         if (forceRebuild && catalogVolume.State is not (CatalogV2VolumeState.Disabled or CatalogV2VolumeState.NeedsRebuild))
         {
             catalogVolume = await catalog.MarkNeedsRebuildAsync(catalogVolume.VolumeId, token);
@@ -182,7 +184,7 @@ public sealed class CatalogSynchronizationService
         }
         var reason = CatalogPreparationDiagnostics.RebuildReason(current, inspection) ?? "journal-discontinuity";
         await using var factRecovery = await CaptureFactRecoveryAsync(current, inspection, reason, false, token);
-        current = await catalog.MarkNeedsRebuildAsync(current.VolumeId, token);
+        if (factRecovery is null) current = await catalog.MarkNeedsRebuildAsync(current.VolumeId, token);
         return await BuildSnapshotAsync(reader, readerVolume, current, inspection, true, activity, reason, token, factRecovery);
     }
 
@@ -225,7 +227,11 @@ public sealed class CatalogSynchronizationService
         CatalogV2SnapshotBuildResult? result = null;
         try
         {
-            build = await catalog.BeginSnapshotBuildAsync(
+            build = factRecovery is not null
+                ? await catalog.BeginRetainedSnapshotBuildAsync(volume.VolumeId, snapshot.JournalId.ToString("X16"),
+                    snapshot.JournalStartingUsn, inspection.FirstUsn, inspection.LowestValidUsn,
+                    snapshot.RecordCount == 0 ? null : checked((long)snapshot.RecordCount), factRecovery, token, captureFileEntries)
+                : await catalog.BeginSnapshotBuildAsync(
                 volume.VolumeId,
                 snapshot.JournalId.ToString("X16"),
                 snapshot.JournalStartingUsn,
@@ -234,7 +240,6 @@ public sealed class CatalogSynchronizationService
                 snapshot.RecordCount == 0 ? (long?)null : checked((long)snapshot.RecordCount),
                 rebuild,
                 token, captureFileEntries);
-            build.FactRecovery = factRecovery;
             activity?.Stage("snapshot-read-and-stage");
             var scanned = 0L;
             var total = snapshot.RecordCount == 0 ? (long?)null : checked((long)snapshot.RecordCount);

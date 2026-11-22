@@ -50,7 +50,7 @@ public sealed class CatalogJournalMonitor
                     continue;
                 }
                 var inspection = await timing.RunAsync(CatalogMonitorStage.Inspect,volume.DisplayName,()=>reader.InspectAsync(available, token));
-                if (volume.State==CatalogV2VolumeState.NeedsRebuild || !IsContinuous(volume, inspection)) await RecoverAsync(reader, volume.VolumeId, token, volume.State==CatalogV2VolumeState.NeedsRebuild?"monitor-resume":"monitor-startup");
+                if ((volume.State is CatalogV2VolumeState.NeedsRebuild or CatalogV2VolumeState.CatchingUp) || !IsContinuous(volume, inspection)) await RecoverAsync(reader, volume.VolumeId, token, volume.State==CatalogV2VolumeState.NeedsRebuild?"monitor-resume":"monitor-startup");
             }
             ready = await ReadReadyAsync(token);
             var roots = await timing.RunAsync(CatalogMonitorStage.OwnedRoots,null,()=>resolveRoots(ready, token));
@@ -112,7 +112,7 @@ public sealed class CatalogJournalMonitor
         }
     }
     private async Task<IReadOnlyList<CatalogV2VolumeSnapshot>> ReadReadyAsync(CancellationToken token,bool includeInterrupted=false) =>
-        (await catalog.ReadVolumesAsync(token)).Where(volume => volume.Selected && (volume.State == CatalogV2VolumeState.Ready || includeInterrupted && volume.State==CatalogV2VolumeState.NeedsRebuild)).ToArray();
+        (await catalog.ReadVolumesAsync(token)).Where(volume => volume.Selected && (volume.State == CatalogV2VolumeState.Ready || includeInterrupted && (volume.State is CatalogV2VolumeState.NeedsRebuild or CatalogV2VolumeState.CatchingUp))).ToArray();
     private Task<CatalogJournalPageOwner> CreateOwnerAsync(ICatalogReaderSession reader, CatalogReaderVolume native,
         CatalogV2VolumeSnapshot volume, IReadOnlyList<FileFactOwnedStorageRoot> roots, CancellationToken token) =>
         CatalogJournalPageOwner.CreateAsync(catalog, volume, roots, token,

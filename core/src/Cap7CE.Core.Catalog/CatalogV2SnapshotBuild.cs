@@ -28,7 +28,8 @@ public sealed partial class CatalogV2SnapshotBuild : IAsyncDisposable
     private bool nodesCommitted;
     private bool completed;
     private bool published;
-    public FileFacts.CatalogFactRecovery? FactRecovery { get; set; }
+    internal FileFacts.CatalogFactRecovery? FactRecovery { get; set; }
+    internal CatalogSnapshotRetention? Retention { get; set; }
     private bool disposed;
 
     private CatalogV2SnapshotBuild(
@@ -165,7 +166,7 @@ public sealed partial class CatalogV2SnapshotBuild : IAsyncDisposable
 
         await connection.CloseAsync();
         var publishWatch = Stopwatch.StartNew();
-        var volume = await owner.PublishSnapshotBuildAsync(volumeId, databasePath, records, token, CaptureFileEntries, ExpectedVolumeRevision, FactRecovery);
+        var volume = await owner.PublishSnapshotBuildAsync(volumeId, databasePath, records, token, CaptureFileEntries, ExpectedVolumeRevision, FactRecovery, Retention);
         publishWatch.Stop();
         completed = true;
         published = true;

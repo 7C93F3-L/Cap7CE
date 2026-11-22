@@ -8,7 +8,7 @@ public sealed partial class CatalogV2Database
         string volumeId,
         string snapshotPath,
         long recordCount,
-        CancellationToken token, bool captureFileEntries, long expectedVolumeRevision, FileFacts.CatalogFactRecovery? factRecovery = null)
+        CancellationToken token, bool captureFileEntries, long expectedVolumeRevision, FileFacts.CatalogFactRecovery? factRecovery = null, CatalogSnapshotRetention? retention = null)
     {
         RequireText(volumeId, 64, nameof(volumeId));
         RequireNonNegative(recordCount, nameof(recordCount));
@@ -26,12 +26,13 @@ public sealed partial class CatalogV2Database
             await DirectoryEntries.CatalogFileEntryMode.RequireWriterAsync(connection, transaction, captureFileEntries, token);
             var volume = await ReadVolumeAsync(connection, transaction, volumeId, token)
                 ?? throw new CatalogConcurrencyException("Catalog volume is not registered.");
-            if (volume.State != CatalogV2VolumeState.Building)
+            if (volume.State != (retention is null ? CatalogV2VolumeState.Building : CatalogV2VolumeState.CatchingUp))
             {
                 throw new CatalogStateTransitionException("Catalog snapshot can publish only while building.");
             }
             if (volume.CatalogRevision != expectedVolumeRevision) throw new CatalogConcurrencyException("Snapshot build owner changed.");
-            if (factRecovery is not null) await factRecovery.RestoreAsync(connection, transaction, volume, token);
+            if (retention is not null) volume = await retention.PrepareAsync(connection, transaction, volume,
+                factRecovery ?? throw new CatalogConcurrencyException("Recovery evidence is missing."), token);
             using (var publish = connection.CreateCommand())
             {
                 publish.Transaction = transaction;
@@ -82,13 +83,12 @@ public sealed partial class CatalogV2Database
                 update.Transaction = transaction;
                 update.CommandText = """
                     UPDATE catalog_volumes_v2
-                    SET state = 'ready', processed = $count, total = COALESCE(total, $count),
-                        catalog_revision = $revision
-                    WHERE volume_id = $volume AND state = 'building';
+                    SET state = 'ready', processed = $count,
+                        catalog_revision = $revision, journal_id=$journal, checkpoint_usn=$checkpoint,
+                        journal_first_usn=$first, journal_lowest_valid_usn=$lowest, total=$total
+                    WHERE volume_id = $volume AND state = $state;
                     """;
-                update.Parameters.AddWithValue("$count", recordCount);
-                update.Parameters.AddWithValue("$revision", revision);
-                update.Parameters.AddWithValue("$volume", volumeId);
+                BindSnapshotPublication(update, volume, recordCount, revision);
                 if (await update.ExecuteNonQueryAsync(token) != 1)
                 {
                     throw new CatalogConcurrencyException("Catalog build state changed before publish.");
