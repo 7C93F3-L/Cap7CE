@@ -18,6 +18,10 @@ internal sealed class BrowseSession(ShellServices services) : IDisposable
     public long AddressRevision {get;private set;}
     public bool Random { get; set; }
     public uint Seed { get; set; } = (uint)System.Random.Shared.Next();
+    private bool pagedResults;
+    public bool DeferSearchRefresh=>pagedResults&&!string.IsNullOrWhiteSpace(Query);
+    private int pageLoads;
+    public bool LoadingPage=>pageLoads>0;
     public bool Busy { get; private set; }
     public bool ForegroundBusy=>Busy&&!PreserveSelection;
     public bool PreserveSelection {get;private set;}
@@ -72,7 +76,7 @@ internal sealed class BrowseSession(ShellServices services) : IDisposable
         if(PreferenceScope==WorkspacePreferenceScope.Computer&&!string.Equals(path.Trim().TrimEnd('\\','/'),PathValue.TrimEnd('\\','/'),StringComparison.OrdinalIgnoreCase))Recursive=false;
         SyncWorkspaceOptions();
         PreserveSelection=preserveSelection;
-        Invalidated=false;var version = ++generation;if(!preserveSelection)Items.HasMoreItems = false;
+        Invalidated=false;pagedResults=false;var version = ++generation;if(!preserveSelection)Items.HasMoreItems = false;
         query.Cancel(); query.Dispose(); query = new(); var token = query.Token;
         filesystem?.Dispose();filesystem=null;
         Busy = true;Error=null;Changed?.Invoke();
@@ -142,7 +146,7 @@ internal sealed class BrowseSession(ShellServices services) : IDisposable
             }
             while(preserveSelection&&result.Count<Items.Count&&cursor is not null) {
                 var continuation=await services.Core.RequestAsync<SearchPageResponse>(CoreOperations.SearchNextPage,new SearchNextPageRequest(cursor),token);
-                if(version!=generation)return false;Append(result,continuation);cursor=continuation.NextCursor;
+                if(version!=generation)return false;pagedResults=true;Append(result,continuation);cursor=continuation.NextCursor;
             }
             if(preserveSelection) {
                 var previous=Items.ToDictionary(item=>item.FullPath,StringComparer.OrdinalIgnoreCase);
@@ -156,21 +160,21 @@ internal sealed class BrowseSession(ShellServices services) : IDisposable
             var loading = false;
             var pageDiagnostics=new BrowsePageDiagnostics(BrowsePageSource.Catalog,version);
             result.LoadPage = async () => {
-                if (loading || !result.HasMoreItems || version != generation) return 0;
-                loading = true;
+                if (Busy || loading || !result.HasMoreItems || version != generation) return 0;
+                loading = true;pageLoads++;
                 var started=pageDiagnostics.Start();var stage=BrowsePageStage.Request;
                 try
                 {
                     var page = await services.Core.RequestAsync<SearchPageResponse>(CoreOperations.SearchNextPage, new SearchNextPageRequest(cursor!), token);
                     if (version != generation) return 0;
-                    stage=BrowsePageStage.Append;
+                    pagedResults=true;stage=BrowsePageStage.Append;
                     Append(result, page); cursor = page.NextCursor; result.HasMoreItems = cursor is not null;
                     stage=BrowsePageStage.Notify;Changed?.Invoke();pageDiagnostics.Succeeded();
                     return (uint)page.Items.Count;
                 }
                 catch (OperationCanceledException) { return 0; }
                 catch (Exception error) { pageDiagnostics.Failed(error,started,stage,()=>new(result.Count,version==generation,services.Core?.IsConnected==true,!ReferenceEquals(cursorCore,services.Core),liveContinuation));if(version==generation){result.HasMoreItems = false; Error = FailureText.Refresh(error); Changed?.Invoke();} return 0; }
-                finally { loading = false; }
+                finally { loading = false;pageLoads--;Changed?.Invoke(); }
             };
             Items = result;FilesystemBrowsing=false;
             return true;
@@ -201,7 +205,7 @@ internal sealed class BrowseSession(ShellServices services) : IDisposable
         var cursor=page.NextCursor;result.HasMoreItems=cursor is not null;var loading=false;
         var pageDiagnostics=new BrowsePageDiagnostics(BrowsePageSource.Filesystem,version);
         result.LoadPage=async()=>{
-            if(loading||!result.HasMoreItems||version!=generation)return 0;loading=true;
+            if(Busy||loading||!result.HasMoreItems||version!=generation)return 0;loading=true;pageLoads++;
             var started=pageDiagnostics.Start();var stage=BrowsePageStage.Request;
             try{
                 var next=await owner.NextAsync(cursor!,token);if(version!=generation)return 0;
@@ -210,7 +214,7 @@ internal sealed class BrowseSession(ShellServices services) : IDisposable
                 cursor=next.NextCursor;result.HasMoreItems=cursor is not null;stage=BrowsePageStage.Notify;Changed?.Invoke();pageDiagnostics.Succeeded();return (uint)next.Items.Count;
             }catch(OperationCanceledException){return 0;}
             catch(Exception error){pageDiagnostics.Failed(error,started,stage,()=>new(result.Count,version==generation,services.Core?.IsConnected==true,VisualWorkerActive:services.Visuals.IsActive));if(version==generation){result.HasMoreItems=false;Error=UiMessage.Key("ui.error.refresh",new Dictionary<string,object?>{{"error",FailureText.From(error)}});Changed?.Invoke();}return 0;}
-            finally{loading=false;}
+            finally{loading=false;pageLoads--;Changed?.Invoke();}
         };
         Remember(path,remember,origin);
         PathValue=path;Title=SystemLocations.Current.NameForPath(path)??System.IO.Path.GetFileName(path.TrimEnd('\\'));Items=result;FilesystemBrowsing=true;return true;

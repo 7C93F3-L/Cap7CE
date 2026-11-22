@@ -45,8 +45,8 @@ internal static class CatalogRefreshRules
         return roots.Any(root=>normalized.Equals(root.TrimEnd('\\'),StringComparison.OrdinalIgnoreCase)
             || normalized.StartsWith(root.TrimEnd('\\')+"\\",StringComparison.OrdinalIgnoreCase));
     }
-    public static bool CanRefresh(bool invalidated,bool busy,int selected,bool previewOpen,bool minimized)
-        =>invalidated&&!busy&&selected==0&&!previewOpen&&!minimized;
+    public static bool CanRefresh(bool invalidated,bool busy,int selected,bool previewOpen,bool minimized,bool pagedSearch=false)
+        =>invalidated&&!busy&&selected==0&&!previewOpen&&!minimized&&!pagedSearch;
     public static T[] RetainSelection<T>(IEnumerable<T> selected,IEnumerable<T> next,Func<T,string> identity)
     {
         var keys=selected.Select(identity).ToHashSet(StringComparer.OrdinalIgnoreCase);

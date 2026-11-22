@@ -17,7 +17,7 @@ internal sealed class ResultsGallery : UserControl
     private readonly HashSet<GalleryTile> tiles=[];
     private AssetCollection? items;
     private FileCommands? commands;
-    private bool queued,loading,suspended,preserveImages;
+    private bool queued,pageQueued,loading,suspended,preserveImages;
     public IReadOnlyList<AssetItem> Selection=>selection.Ordered(items??[]);
     public event Action? SelectionChanged;
     public ResultsGallery()
@@ -31,15 +31,16 @@ internal sealed class ResultsGallery : UserControl
             tile.Suspend(suspended,preserveImages);
         };
         repeater.ElementClearing+=(_,e)=>{if(e.Element is GalleryTile tile){tiles.Remove(tile);tile.Pick=tile.Open=null;tile.Context=null;tile.Drag=null;tile.DragError=null;}};
-        scroll.ViewChanged+=async(_,_)=>await LoadMore();scroll.SizeChanged+=async(_,_)=>await LoadMore();
-        PreviewKeyDown+=NavigateKey;Unloaded+=(_,_)=>Detach();Loaded+=(_,_)=>Observe();
+        scroll.ViewChanged+=(_,_)=>QueueLoadMore();scroll.SizeChanged+=(_,_)=>QueueLoadMore();
+        scroll.LayoutUpdated+=(_,_)=>QueueLoadMore();
+        PreviewKeyDown+=NavigateKey;Unloaded+=(_,_)=>Detach();Loaded+=(_,_)=>{Observe();QueueLoadMore();};
     }
     public void Configure(FileCommands value)=>commands=value;
     public void Bind(AssetCollection value,bool preserveViewport=false)
     {
-        if(ReferenceEquals(items,value))return;var offset=preserveViewport?scroll.VerticalOffset:0;
+        if(ReferenceEquals(items,value)){QueueLoadMore();return;}var offset=preserveViewport?scroll.VerticalOffset:0;
         Detach();items=value;selection.Clear();repeater.ItemsSource=value;Observe();
-        DispatcherQueue.TryEnqueue(()=>{if(ReferenceEquals(items,value))scroll.ChangeView(null,offset,null,true);});
+        DispatcherQueue.TryEnqueue(()=>{if(ReferenceEquals(items,value)){scroll.ChangeView(null,offset,null,true);QueueLoadMore();}});
     }
     private void Detach(){if(items is not null)items.CollectionChanged-=ItemsChanged;foreach(var item in observed)item.AspectChanged-=RatioChanged;observed.Clear();}
     private void Observe(){if(items is null)return;items.CollectionChanged-=ItemsChanged;items.CollectionChanged+=ItemsChanged;foreach(var item in items)if(observed.Add(item))item.AspectChanged+=RatioChanged;}
@@ -84,10 +85,17 @@ internal sealed class ResultsGallery : UserControl
         ResultDrag.Prepare(tile,e.Data,items,()=>e.Cancel=true);
         e.AllowedOperations=ResultDrag.AllowedOperations(commands?.CanDelete(items)==true);
     }
+    private void QueueLoadMore()
+    {
+        if(pageQueued||loading||!IsLoaded||Visibility!=Visibility.Visible)return;pageQueued=true;
+        if(!DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Normal,async()=>{pageQueued=false;if(IsLoaded)await LoadMore();}))pageQueued=false;
+    }
     private async Task LoadMore()
     {
         if(loading||Visibility!=Visibility.Visible||items is not {HasMoreItems:true,LoadPage:not null} source||scroll.ScrollableHeight-scroll.VerticalOffset>scroll.ViewportHeight)return;
-        loading=true;try{await source.LoadPage();}finally{loading=false;}
+        var before=source.Count;loading=true;
+        try{await source.LoadPage();}
+        finally{loading=false;if(source.Count>before||!ReferenceEquals(source,items))QueueLoadMore();}
     }
     private void NavigateKey(object sender,KeyRoutedEventArgs e)
     {
@@ -109,7 +117,7 @@ internal sealed class ResultsGallery : UserControl
     {
         if(layout.Box(index) is {} target) {
             var offset=GalleryGeometry.RevealOffset(target,scroll.VerticalOffset,scroll.ViewportHeight,scroll.ScrollableHeight);
-            if(Math.Abs(offset-scroll.VerticalOffset)>.5){scroll.ChangeView(null,offset,null,true);repeater.UpdateLayout();}
+            if(Math.Abs(offset-scroll.VerticalOffset)>.5){{scroll.ChangeView(null,offset,null,true);QueueLoadMore();}repeater.UpdateLayout();}
         }
     }
 }

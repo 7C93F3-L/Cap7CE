@@ -66,6 +66,8 @@ internal static class BrowsePageDiagnosticChecks
             Check(json.RootElement.GetProperty("state").ValueKind == JsonValueKind.Null,
                 "failed state observation cannot block either the original error record or UI handling");
         await FailureBehaviorAsync();
+        await PagingRefreshAsync();
+        await PagedSearchRefreshAsync();
         Console.WriteLine("Paging diagnostics passed: failure-only, redacted codes/stacks, timing, stale connection, both routes, cancellation and unchanged no-retry behavior.");
     }
     private static async Task FailureBehaviorAsync()
@@ -102,6 +104,35 @@ internal static class BrowsePageDiagnosticChecks
             Check(ReferenceEquals(browse.Items, current) && current.HasMoreItems && browse.Error is null,
                 "a late failure cannot damage the new navigation");
         }
+    }
+    private static async Task PagingRefreshAsync()
+    {
+        var services=new ShellServices{Core=new()};using var browse=new BrowseSession(services);
+        await browse.OpenLocationAsync(@"E:\",true);
+        var page=new TaskCompletionSource<SearchPageResponse>(TaskCreationOptions.RunContinuationsAsynchronously);
+        services.Core.NextPage=_=>page.Task;
+        var loading=browse.Items.LoadPage!();browse.Invalidate();
+        Check(browse.LoadingPage&&!CatalogRefreshRules.CanRefresh(browse.Invalidated,browse.Busy||browse.LoadingPage,0,false,false),"automatic refresh waits for an in-flight page");
+        Check(await browse.Items.LoadPage!()==0,"overlapping viewport checks do not replay a page");
+        page.SetResult(new SearchPageResponse([new("second","second.txt","second.txt",".txt",false,"v")],null,true,2));
+        await loading;
+        Check(!browse.LoadingPage&&browse.Items.Count==2&&!browse.Items.HasMoreItems,"completed paging releases refresh protection and appends results");
+        Check(CatalogRefreshRules.CanRefresh(browse.Invalidated,browse.Busy||browse.LoadingPage,0,false,false),"pending refresh remains eligible after paging");
+    }
+    private static async Task PagedSearchRefreshAsync()
+    {
+        var services=new ShellServices{Core=new()};using var browse=new BrowseSession(services);
+        await browse.OpenLocationAsync(@"E:\",true);browse.Query="fixture";
+        await browse.NavigateAsync(@"E:\");
+        Check(!browse.DeferSearchRefresh,"first-page searches retain automatic refresh");
+        await browse.Items.LoadPage!();browse.Invalidate();
+        Check(browse.DeferSearchRefresh&&!browse.Items.HasMoreItems,"paged searches keep their result even after the last page");
+        Check(!CatalogRefreshRules.CanRefresh(true,false,0,false,false,browse.DeferSearchRefresh),"background changes do not replay paged search results");
+        Check(browse.Invalidated,"deferred changes remain recorded");
+        await browse.NavigateAsync(@"E:\",false);
+        Check(!browse.DeferSearchRefresh&&browse.Items.Count==1,"explicit refresh starts a fresh search and resets paging state");
+        await browse.Items.LoadPage!();browse.Query="";await browse.NavigateAsync(@"E:\");
+        Check(!browse.DeferSearchRefresh,"leaving search restores normal browsing refresh");
     }
     private sealed class Clock : TimeProvider
     {

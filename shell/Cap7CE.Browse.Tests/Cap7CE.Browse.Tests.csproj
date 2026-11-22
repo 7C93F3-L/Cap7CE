@@ -21,4 +21,5 @@
   <ItemGroup><Compile Include="../Cap7CE.WinUI/Services/FileTransferRead.cs;../Cap7CE.WinUI/Services/DragRequestLifetime.cs" Link="%(Filename)%(Extension)" /></ItemGroup>
   <ItemGroup><Compile Include="../Cap7CE.WinUI/Models/IndexRecoveryPolicy.cs;../Cap7CE.WinUI/Services/CatalogChangeSubscription.cs" Link="%(Filename)%(Extension)" /></ItemGroup>
   <ItemGroup><Compile Include="../Cap7CE.WinUI/DesktopActions/DesktopProgram.cs;../Cap7CE.WinUI/DesktopActions/DesktopShellApartment.cs;../Cap7CE.WinUI/DesktopActions/DesktopApplicationCatalog.cs;../Cap7CE.WinUI/DesktopActions/DesktopShellImage.cs;../Cap7CE.WinUI/DesktopActions/DesktopApplicationIdentity.cs;../Cap7CE.WinUI/DesktopActions/DesktopProgramWindows.cs" Link="%(Filename)%(Extension)" /></ItemGroup>
+  <ItemGroup><Compile Include="../Cap7CE.WinUI/Models/CatalogRefreshRules.cs" Link="CatalogRefreshRules.cs" /></ItemGroup>
 </Project>

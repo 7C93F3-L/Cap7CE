@@ -160,11 +160,11 @@ public sealed partial class MainWindow : Window
         if(!active.Busy)QueueCatalogRefresh();
     }
     private void Refresh(){if(active is not null)commands.Run(()=>active.NavigateAsync(active.PathValue,false));}
-    private bool CanCatalogRefresh()=>!closed&&active is {UsesCatalogResults:true} session&&Models.CatalogRefreshRules.CanRefresh(session.Invalidated,session.Busy,results.Selection.Count,preview is not null,minimized);
+    private bool CanCatalogRefresh()=>!closed&&active is {UsesCatalogResults:true} session&&Models.CatalogRefreshRules.CanRefresh(session.Invalidated,session.Busy||session.LoadingPage,results.Selection.Count,preview is not null,minimized,session.DeferSearchRefresh);
     private void QueueCatalogRefresh()
     {
         if(closed||catalogRefreshQueued)return;catalogRefreshQueued=true;
-        DispatcherQueue.TryEnqueue(()=>{catalogRefreshQueued=false;if(CanCatalogRefresh()&&active is {} session)commands.Run(()=>session.NavigateAsync(session.PathValue,false,true));});
+        DispatcherQueue.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Low,()=>{catalogRefreshQueued=false;if(CanCatalogRefresh()&&active is {} session)commands.Run(()=>session.NavigateAsync(session.PathValue,false,true));});
     }
     private void OpenLocation(string path)
     {
