@@ -10,7 +10,7 @@ namespace Cap7CE.WinUI.Views;
 internal sealed class CoreMaintenanceView
 {
     public SettingsSection Section {get;}
-    public CoreMaintenanceView(ShellServices services,Window owner)
+    public CoreMaintenanceView(ShellServices services,Window owner,Func<Task>? refreshed=null)
     {
         var status=Ui.Text("",true);
         var reconnect=L.Button("ui.maintenance.reconnect",()=>{});
@@ -22,7 +22,7 @@ internal sealed class CoreMaintenanceView
             install.IsEnabled=reconnect.IsEnabled=false;
             try{await services.ConnectAsync();ReportResource("ui.maintenance.reconnected");}
             catch(Exception error){Report(FailureText.From(error));}
-            finally{install.IsEnabled=reconnect.IsEnabled=true;}
+            finally{install.IsEnabled=reconnect.IsEnabled=true;if(refreshed is not null)await refreshed();}
         };
         install.Click+=async(_,_)=>{
             var dialog=L.Dialog(owner.Content.XamlRoot,"ui.maintenance.setupTitle","ui.maintenance.setupDescription","ui.maintenance.setupAction",ContentDialogButton.Primary);
@@ -37,7 +37,7 @@ internal sealed class CoreMaintenanceView
                 await services.ConnectAsync();
                 ReportResource("ui.maintenance.configured");
             }catch(Exception error){Report(FailureText.From(error));}
-            finally{install.IsEnabled=reconnect.IsEnabled=true;}
+            finally{install.IsEnabled=reconnect.IsEnabled=true;if(refreshed is not null)await refreshed();}
         };
     }
 }

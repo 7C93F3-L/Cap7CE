@@ -27,7 +27,7 @@ module.exports = root => {
   for (const match of read(ui + 'Models/ShortcutCatalog.cs').split('public static ShortcutBinding')[0].matchAll(/new\("([^"]+)"/g))
     keys.add('ui.shortcuts.action.' + match[1]);
   for (const state of ['running', 'stopped', 'missing', 'unknown', 'transition']) keys.add('ui.diagnostics.reader.' + state);
-  for (const state of ['disabled', 'allowed', 'blocked', 'unknown']) keys.add('ui.diagnostics.notification.' + state);
+  for (const state of ['watching', 'idle', 'starting', 'paused', 'failed', 'unavailable', 'unknown', 'disconnected']) keys.add('ui.diagnostics.update.' + state);
   for (const state of ['index', 'metadata', 'ai', 'completed', 'partial', 'failed']) keys.add('ui.taskNotifications.' + state);
   for (const [file, family, start, end] of [
     ['Models/FormatRegistry.cs', 'kind', 'Categories', '};'],

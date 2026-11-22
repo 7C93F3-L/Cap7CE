@@ -101,7 +101,6 @@ internal sealed class SettingsCatalog
     }
     private void Diagnostics()
     {
-        Entries.Add(new("诊断","stableSettings.section.application","native.maintenance.title","native.maintenance.description",()=>new CoreMaintenanceView(services,owner).Section));
         Entries.Add(new("诊断","stableSettings.section.application","","",()=>new DiagnosticsView(services,owner)));
     }
     private void About()

@@ -518,14 +518,6 @@
     "zh-CN": "读取尺寸、颜色等属性，用于筛选。",
     "en-US": "Read dimensions, colors, and other properties for filters."
   },
-  "native.maintenance.title": {
-    "zh-CN": "服务维护",
-    "en-US": "Service maintenance"
-  },
-  "native.maintenance.description": {
-    "zh-CN": "连接或索引服务异常时，重新连接或修复。",
-    "en-US": "Reconnect or repair the service if the connection or indexing fails."
-  },
   "native.material.description": {
     "zh-CN": "选择云母效果，不可用时使用纯色背景。",
     "en-US": "Choose a Mica effect. Uses a solid color if unavailable."
@@ -2566,8 +2558,8 @@
     "en-US": "{ready} / {total} drive indexes ready"
   },
   "ui.index.disconnected": {
-    "zh-CN": "后台未连接，请到“诊断 → 服务维护”重新连接。",
-    "en-US": "Disconnected. Reconnect under Diagnostics → Service maintenance."
+    "zh-CN": "后台未连接，请到“诊断 → 运行状态”重新连接。",
+    "en-US": "Disconnected. Reconnect under Diagnostics → Runtime status."
   },
   "ui.index.actionFailed": {
     "zh-CN": "索引操作失败：{error}",
@@ -2738,8 +2730,8 @@
     "en-US": "Stop the current folder and clear the queue. Extracted results are preserved."
   },
   "ui.metadata.disconnected": {
-    "zh-CN": "元数据服务未连接或不可用，请到“诊断 → 服务维护”中重新连接。",
-    "en-US": "The metadata service is disconnected or unavailable. Reconnect in Diagnostics → Service maintenance."
+    "zh-CN": "元数据服务未连接或不可用，请到“诊断 → 运行状态”中重新连接。",
+    "en-US": "The metadata service is disconnected or unavailable. Reconnect in Diagnostics → Runtime status."
   },
   "ui.metadata.current": {
     "zh-CN": "当前目录：{path}",
@@ -3590,8 +3582,8 @@
     "en-US": "Drag to reorder; use Alt+↑/↓ to adjust"
   },
   "ui.error.metadataService": {
-    "zh-CN": "元数据服务未连接，请到“诊断 → 服务维护”中重新连接。",
-    "en-US": "The metadata service is disconnected. Reconnect under Diagnostics → Service maintenance."
+    "zh-CN": "元数据服务未连接，请到“诊断 → 运行状态”中重新连接。",
+    "en-US": "The metadata service is disconnected. Reconnect under Diagnostics → Runtime status."
   },
   "ui.error.metadataIndex": {
     "zh-CN": "请先建立可用的目录索引，再提取元数据。",
@@ -3753,8 +3745,8 @@
     "en-US": "Generate AI keywords for selection"
   },
   "ui.diagnostics.status": {
-    "zh-CN": "当前状态",
-    "en-US": "Current status"
+    "zh-CN": "运行状态",
+    "en-US": "Runtime status"
   },
   "ui.diagnostics.recent": {
     "zh-CN": "最近异常记录",
@@ -3773,16 +3765,12 @@
     "en-US": "Disconnected"
   },
   "ui.diagnostics.coreLabel": {
-    "zh-CN": "Core",
-    "en-US": "Core"
+    "zh-CN": "后台连接",
+    "en-US": "Background connection"
   },
   "ui.diagnostics.readerLabel": {
     "zh-CN": "读取服务",
     "en-US": "Reader service"
-  },
-  "ui.diagnostics.edgeLabel": {
-    "zh-CN": "边缘模式",
-    "en-US": "Edge mode"
   },
   "ui.diagnostics.recordTime": {
     "zh-CN": "最近记录：{time}",
@@ -3797,8 +3785,8 @@
     "en-US": "Running"
   },
   "ui.diagnostics.reader.stopped": {
-    "zh-CN": "已停止",
-    "en-US": "Stopped"
+    "zh-CN": "已安装，未运行",
+    "en-US": "Installed, not running"
   },
   "ui.diagnostics.reader.missing": {
     "zh-CN": "未安装",
@@ -3811,22 +3799,6 @@
   "ui.diagnostics.reader.transition": {
     "zh-CN": "状态切换中",
     "en-US": "Changing state"
-  },
-  "ui.diagnostics.notification.disabled": {
-    "zh-CN": "应用内已关闭",
-    "en-US": "Disabled in app"
-  },
-  "ui.diagnostics.notification.allowed": {
-    "zh-CN": "允许",
-    "en-US": "Allowed"
-  },
-  "ui.diagnostics.notification.blocked": {
-    "zh-CN": "未获系统允许或未注册",
-    "en-US": "Blocked or not registered"
-  },
-  "ui.diagnostics.notification.unknown": {
-    "zh-CN": "无法读取",
-    "en-US": "Unavailable"
   },
   "ui.settings.more": {
     "zh-CN": "更多操作",
@@ -3869,8 +3841,8 @@
     "en-US": "Start or stop the local AI service."
   },
   "ui.diagnostics.statusHint": {
-    "zh-CN": "查看后台连接、读取服务、边缘模式和通知状态。",
-    "en-US": "View background connection, Reader service, edge mode, and notification status."
+    "zh-CN": "读取服务按需启动，未运行不一定表示异常。",
+    "en-US": "The reader service starts on demand; not running does not necessarily indicate a problem."
   },
   "ui.command.invalid": {
     "zh-CN": "指令或参数无效，请查看设置中的快捷指令。",
@@ -4057,5 +4029,49 @@
   "ui.preview.modelResources": {
     "zh-CN": "此模型的配套资源超过预览上限，请在默认应用中打开。",
     "en-US": "This model exceeds the preview resource limit. Open it in the default app."
+  },
+  "ui.diagnostics.updateLabel": {
+      "zh-CN": "后台索引更新",
+      "en-US": "Background index updates"
+  },
+  "ui.diagnostics.update.watching": {
+      "zh-CN": "监视中",
+      "en-US": "Monitoring changes"
+  },
+  "ui.diagnostics.update.idle": {
+      "zh-CN": "空闲",
+      "en-US": "Idle"
+  },
+  "ui.diagnostics.update.starting": {
+      "zh-CN": "正在启动",
+      "en-US": "Starting"
+  },
+  "ui.diagnostics.update.paused": {
+      "zh-CN": "已暂停",
+      "en-US": "Paused"
+  },
+  "ui.diagnostics.update.failed": {
+      "zh-CN": "更新异常",
+      "en-US": "Update failed"
+  },
+  "ui.diagnostics.update.unavailable": {
+      "zh-CN": "不可用",
+      "en-US": "Unavailable"
+  },
+  "ui.diagnostics.update.unknown": {
+      "zh-CN": "等待状态",
+      "en-US": "Waiting for status"
+  },
+  "ui.diagnostics.update.disconnected": {
+      "zh-CN": "未连接",
+      "en-US": "Disconnected"
+  },
+  "ui.diagnostics.update.repairHint": {
+      "zh-CN": "后台更新不可用，请尝试安装或修复服务。",
+      "en-US": "Background updates are unavailable. Try installing or repairing the service."
+  },
+  "ui.diagnostics.update.reconnectHint": {
+      "zh-CN": "后台更新已停止，请尝试重新连接；仍失败时可导出诊断包。",
+      "en-US": "Background updates have stopped. Try reconnecting; if the problem persists, export a diagnostics bundle."
   }
 }
