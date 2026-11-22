@@ -1,6 +1,6 @@
 # Cap7CE 软件架构
 
-当前正式版本：2.0.7（Windows x64 原生WinUI宿主）。PSD解析依赖锁定ag-psd 31.0.1，psd-memory-limit回归以小型内存样例验证图层解码的totalMemoryLimit生效及元数据模式跳过像素。
+当前正式版本：2.0.8（Windows x64 原生WinUI宿主）。PSD解析依赖锁定ag-psd 31.0.1，psd-memory-limit回归以小型内存样例验证图层解码的totalMemoryLimit生效及元数据模式跳过像素。
 
 ## 桌面快捷操作
 
@@ -30,7 +30,7 @@ ImagePreviewView在图片显示层处理鼠标滚轮，默认复用底部缩放�
 
 GLB/glTF、OBJ、STL及FBX基础预览由Controls/ModelPreview中的独立WebView2控件承载，使用锁定版本Babylon.js离线脚本；仅该可信页面启用脚本，不开放HostObject、外部导航、下载或权限。modelLoader负责解析与OBJ内存灰模回退，modelScene负责相机、灯光及材质切换；不接入Catalog、Node任务或缩略图缓存。ModelPreviewResources唯一拥有显示快照读取，复用FileAccessGuard身份/链接检查，只允许模型及同目录子树内白名单配套文件；主文件和单资源各限64 MiB、累计256 MiB、128次请求、两路读取。控件启动限20秒，关闭、切换、取消和渲染进程失败均释放WebView及响应内存，读取完成立即关闭源文件句柄。STL及FBX复用锁定Babylon.js中的加载器，不增加解析依赖；构建只分发离线脚本与许可证，不分发Sandbox或完整npm库；model-preview-architecture-check及ModelPreview测试守护模块、资源范围与生命周期边界。
 
-当前源码主线为 Windows x64 / C# / WinUI 3，当前版本为 2.0.7。Electron/Renderer/Preload 源码、React/Vite 和旧构建入口已退役；历史实现与迁移记录可从 Git 历史查看。安装布局和数据所有权延续2.0.0，本轮不新增用户数据迁移。
+当前源码主线为 Windows x64 / C# / WinUI 3，当前版本为 2.0.8。Electron/Renderer/Preload 源码、React/Vite 和旧构建入口已退役；历史实现与迁移记录可从 Git 历史查看。安装布局和数据所有权延续2.0.0，本轮不新增用户数据迁移。
 
 global.json固定.NET SDK 10.0.403补丁系列，运行时、NativeAOT及链接工具基线为10.0.14。安装前置清单固定官方Windows x64运行时的下载地址和SHA-512，原生设置页与Setup共用该清单；依赖审计保持启用，锁定文件及架构检查同步维护安全补丁版本。native-build记录原生运行组件的SDK基线，基线变化或记录缺失时重建Configuration、FileOperations及产品Setup载荷，避免沿用旧AOT缓存。
 
@@ -83,6 +83,8 @@ Core 独占 Catalog 与属性调度；Reader 负责受限 NTFS 读取，普通 C
 目录路径增量发布由CatalogDirectoryPathChanges在原事务内读取结构变化身份，最多保留32项及一个超限标记身份。节点写入后由CatalogLeafDirectoryPaths先核验整批目录均为末级目录，父路径可用且父身份不在变化集合内；全部通过后才逐项局部写入或删除路径。写入阶段仍复核，出现异常或验证变化时回滚，不在部分写入后切换重建。父子联动、目录子树、根目录、超过32项或无法确认父路径时，回退原完整路径解析与重建。路径、节点、修订号和USN检查点仍在同一事务提交；失败或取消全部回滚，不延后更新、不新增授权缓存。规模测试覆盖十万无关目录下32项批量创建/删除的有界内存分配，模块体量及整批核验先于写入的边界由自动检查限制。
 
 Catalog v2 保留私有 SQLite 连接缓存和 WAL；前台读取已提交快照，后台写事务不通过 shared-cache 表锁串行化查询。源文件读取、派生图像、缓存发布和数据库写入分别由各自领域持有，不在界面层直接执行。
+
+全盘文本候选由CatalogTextCandidateSql在当前只读快照内构造；物理节点分支显式采用WITHOUT ROWID主键扫描，避免宽文本谓词经扩展名索引逐项回查节点。仅沿用既有候选启用条件，完整逐词谓词、有效文件名集合、源版本、卷状态、排序及游标继续由原查询校验；不改Schema、不创建新索引、不保留跨页候选缓存。目录范围、纯名称及事实筛选查询保持各自原路径。
 
 FileFactDatabase的日常元数据读写复用Microsoft.Data.Sqlite私有缓存连接池，每次借用仍应用既有安全配置；初次初始化继续使用非池化连接，打开或配置失败时清除对应池。连接归还前由原调用释放读者与事务；离线维护沿既有ClearAllPools及独占预检链路清理空闲连接，不共享活跃连接或放宽FULL持久化级别。
 
@@ -169,7 +171,7 @@ WorkspaceNotice统一主窗口底部普通提示、查询、AI、索引、元数
 
 BrowsePageDiagnostics仅在Catalog或文件系统续页发生非取消异常时向既有会话日志写browse.page.error，记录导航代次、请求/追加/通知阶段、已有数量、连接/会话变化、live模式、本次续页总耗时和距上次成功页的单调时间间隔。错误只保留固定白名单代码、类型、HRESULT、原生错误号和无文件信息的方法栈；不记录异常原文、目录/文件名、搜索正文或原始游标。成功续页和OperationCanceledException取消不写日志，不增加计时器、自动重试或新存储；过期/陈旧结果的原有界面处理保持不变。
 
-2.0.7保持当前安装与数据所有者边界，不新增旧版本兼容迁移。发布目录携带LICENSE、NOTICE和THIRD_PARTY_NOTICES；sharp固定为0.35.5，所有运行库仍由锁文件和现有复制脚本生成。介绍文档沿用2.0.0演示截图，素材来源记录在docs/assets/screenshots/ASSET_SOURCES.md。
+2.0.8保持当前安装与数据所有者边界，不新增旧版本兼容迁移。发布目录携带LICENSE、NOTICE和THIRD_PARTY_NOTICES；sharp固定为0.35.5，所有运行库仍由锁文件和现有复制脚本生成。介绍文档沿用2.0.0演示截图，素材来源记录在docs/assets/screenshots/ASSET_SOURCES.md。
 
 ## 辅助工作宿主空闲退役
 
